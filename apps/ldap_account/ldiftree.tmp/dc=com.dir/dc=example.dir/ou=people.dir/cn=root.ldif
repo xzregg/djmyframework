@@ -1,0 +1,14 @@
+dn: cn=root,ou=people,dc=example,dc=com
+objectClass: posixAccount
+uid: root
+cn: root
+sn: 系
+alias: 系统管理员
+uidNumber: 1
+status: 0
+email: 
+mail: 
+employeeId: 
+userPassword: {SSHA}MZROKm50pqzDyvHAoqpswBWhHXtujdF6
+
+
