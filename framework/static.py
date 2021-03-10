@@ -21,6 +21,7 @@ import settings
 from django.views import static
 from .views import notauth
 from django.contrib.staticfiles import finders
+from django.conf import settings
 
 @notauth
 def serve(request, path, insecure=False, **kwargs):
@@ -41,7 +42,7 @@ def serve(request, path, insecure=False, **kwargs):
     """
 
     normalized_path = posixpath.normpath(path).lstrip('/')
-    absolute_path = finders.find(normalized_path)
+    absolute_path = finders.find(normalized_path) or os.path.join(settings.STATIC_ROOT, normalized_path)
     if not absolute_path:
         if path.endswith('/') or path == '':
             raise Http404("Directory indexes are not allowed here.")

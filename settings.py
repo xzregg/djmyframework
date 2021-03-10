@@ -19,19 +19,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 from __future__ import absolute_import
-
 import sys
-
 import jinja2
 # 使用 pymysql 替代mysqldb
 import pymysql
-
 pymysql.install_as_MySQLdb()
 import os
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
 SECRET_KEY = 'sub6!jx!fuo+%lugsjabk0=il21grymbqwx0-+v5psvb=itq#$'
+DEBUG = False
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -59,8 +57,8 @@ INDEX_VIEW = 'myadmin.views.index'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-TEMPLATE_DEBUG = True
+
+TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = 'myadmin.User'
 

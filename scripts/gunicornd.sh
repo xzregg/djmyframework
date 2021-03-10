@@ -5,8 +5,8 @@
 #
 # http://docs.gunicorn.org/en/latest/signals.html,supervisorctl signal HUP all
 
-PWD=`pwd`
-MY_PATH=$(cd `dirname $0`; pwd)
+PWD=$(cd `dirname $0`; pwd)
+MY_PATH=`dirname $PWD`
 cd $MY_PATH
 PROGRAM="${MY_PATH##*/}"
 
@@ -14,8 +14,8 @@ ARGV=$2
 
 LOG_FILE="$MY_PATH/logs/gunicorn.log"
 PID_FILE="$MY_PATH/tmp/gunicorn.pid"
-CONFIG_FILE="$MY_PATH/config/gunicorn_config.py"
-
+CONFIG_FILE="$MY_PATH/gunicorn_config.py"
+PROGRAM="myadmin_gunicornd"
 APP="wsgi"
 BIND="0.0.0.0:8080"
 

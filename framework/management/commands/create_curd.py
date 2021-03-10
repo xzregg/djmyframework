@@ -98,6 +98,7 @@ class Command(BaseCommand):
     help = '创建MTV模型命令,%s app_name.model' % __file__
 
     def add_arguments(self, parser):
+
         parser.add_argument('-f', '--force', action='store_true',
                             dest='force', default=False,
                             help='强制创建')

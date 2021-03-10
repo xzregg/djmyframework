@@ -4,8 +4,8 @@
 # 使用 init.d需要修改MY_PATH
 #
 
+PWD=`pwd`
 MY_PATH=$(cd `dirname $0`; pwd)
-
 cd $MY_PATH
 mkdir -pv tmp/
 export PYTHONUNBUFFERED=TRUE
@@ -14,7 +14,7 @@ DATE=`date +%F_%T`
 ARGV=$2
 APP=""
 LOG_FILE="$MY_PATH/logs/uwsgi.log"
-CONFIG_FILE="$MY_PATH/uwsgi.ini"
+CONFIG_FILE="$MY_PATH/config/uwsgi.ini"
 PID_FILE="$MY_PATH/tmp/uwsgi.pid"
 
 #基本启动命令不使用daemon模式

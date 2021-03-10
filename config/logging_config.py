@@ -7,9 +7,6 @@
 import os
 
 
-
-
-
 def get_log_dir():
     from django.conf import settings
     return os.path.join(settings.BASE_DIR, 'logs')

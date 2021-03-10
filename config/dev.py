@@ -31,9 +31,8 @@ BASE_DIR = settings.BASE_DIR
 #         }
 # }
 
-# STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-# STATIC_ROOT = None
-STATIC_URL = '/static_dev/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = None
 _DATABASES = {
         'default': {
                 'ENGINE': 'django.db.backends.sqlite3',

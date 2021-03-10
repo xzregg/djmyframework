@@ -97,6 +97,7 @@ class DaemonService(object):
 
 
 def read_parmas():
+    import argparse
     argv = sys.argv
     if len(argv) >= 2:
         action = argv[1]

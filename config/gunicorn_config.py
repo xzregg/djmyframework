@@ -14,7 +14,7 @@ import os
 LOGS_DIR = 'logs'
 loglevel = 'INFO'
 bind = "0.0.0.0:9102"
-pidfile = "tmp/gunicorn.pid"
+#pidfile = "tmp/gunicorn.pid"
 APP = "wsgi"
 
 # 将stdout / stderr重定向到errorlog中的指定文件
@@ -22,7 +22,7 @@ capture_output = True
 errorlog = "%s/gunicorn.log" % LOGS_DIR
 accesslog = errorlog
 #通过启动脚本控制daemon模式,配合在supervisord监控
-#daemon = True
+daemon = True
 workers = multiprocessing.cpu_count() + 1
 
 worker_class = 'sync'
