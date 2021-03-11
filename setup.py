@@ -18,7 +18,7 @@ if sys.argv[-1] == 'publish':
     os.system("twine upload dist/*")
     shutil.rmtree('dist')
     shutil.rmtree('build')
-    shutil.rmtree('dj_framework.egg-info')
+    shutil.rmtree('dj_myframework.egg-info')
     sys.exit()
 
 with open("README.md", "r") as fh:
@@ -41,7 +41,7 @@ setuptools.setup(
                 "License :: OSI Approved :: MIT License",  # 根据MIT许可证开源
                 "Operating System :: OS Independent",  # 与操作系统无关
         ],
-        data_files=['requirements.txt'],
+        include_package_data=True,
         install_requires=install_requires,  # 依赖的包
         python_requires='>=3.6',
         scripts=['gunicornd.sh', 'uwsgid.sh']
