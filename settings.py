@@ -29,12 +29,14 @@ import pymysql
 pymysql.install_as_MySQLdb()
 import os
 from django.utils.translation import ugettext_lazy as _
-from framework.utils import sort_set_list
+
+from objectdict import sort_set_list
 from django.conf import settings
 
 DEBUG = False
 SECRET_KEY = 'sub6!jx!fuo+%lugsjabk0=il21grymbqwx0-+v5psvb=itq#$'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+APPS = []
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 

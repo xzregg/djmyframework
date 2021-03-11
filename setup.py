@@ -43,5 +43,13 @@ setuptools.setup(
         ],
         data_files=['requirements.txt'],
         install_requires=install_requires,  # 依赖的包
-        python_requires='>=3.6'
+        python_requires='>=3.6',
+        entry_points={
+                'console_scripts': [
+                        'supervisord = supervisor.supervisord:main',
+                        'supervisorctl = supervisor.supervisorctl:main',
+                        'echo_supervisord_conf = supervisor.confecho:main',
+                        'pidproxy = supervisor.pidproxy:main',
+                ],
+        },
 )
