@@ -1,3 +1,3 @@
 #!/bin/sh
 
-celery -A celery_app worker -l info -P gevent -c 1000 -E -n `hostname` $*
+celery -A config.celery_app worker -l info -P gevent -c 1000 -E -n `hostname` $*
