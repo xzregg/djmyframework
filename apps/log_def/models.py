@@ -17,7 +17,7 @@ try:
 except ImportError:
     import pickle
 import json
-from settings import PROJECT_ROOT
+from framework.settings import settings
 import traceback
 import os
 
@@ -237,7 +237,7 @@ class DBDictType(DictBaseType):
         return _r
 
 
-ROOT_PATH = os.path.dirname(PROJECT_ROOT)
+ROOT_PATH = settings.BASE_DIR
 
 
 class FileDicType(DictBaseType):

@@ -20,6 +20,7 @@ from ldaptor import ldiftree
 from .settings import LDAP_ACCOUNT_SERVER_PORT
 from twisted.internet import reactor
 from framework.utils import signle_process
+from framework.settings import settings
 
 
 class LDAPServerFactory(ServerFactory):
@@ -36,8 +37,9 @@ class LDAPServerFactory(ServerFactory):
 
 
 from framework.apps import get_app_path
+
 DBPATH = os.path.join(get_app_path('ldap_account'), 'ldiftree')
-TMPDBPATH = '%s.tmp' % DBPATH
+TMPDBPATH = os.path.join(settings.PROJECT_ROOT, 'ldiftree.tmp')
 if not os.path.exists(TMPDBPATH):
     shutil.rmtree(TMPDBPATH, ignore_errors=True)
     shutil.copytree(DBPATH, TMPDBPATH)

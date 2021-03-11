@@ -11,14 +11,17 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from drf_yasg.utils import swagger_auto_schema
 
-import settings
+
 from framework.connections import connections
 from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilter
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, PaginationSerializer, s
 from framework.views import CurdViewSet, HttpResponse, notauth, render
 from log_def.models import DictDefine
-from settings import PROJECT_ROOT
+
+
+
+from framework.settings import settings
 from framework.utils import json_dumps, md5, trace_msg,ObjectDict
 from addict import Dict
 from framework.utils.cache import cache_func, CACHE_TYPE, clear_cache
@@ -544,17 +547,7 @@ def get_query_result(conn, sql):
 
 ip_db = None
 
-
-def ip_transform(ip):
-    import ipdb
-    global ip_db
-    if not ip_db:
-        # 服务依赖：https://www.ipip.net/product/client.html IPv4 免费地址库
-        file_path = os.path.join(PROJECT_ROOT, "ipipfree.ipdb")
-        ip_db = ipdb.BaseStation(file_path)
-    location = ip_db.find_map(ip, "CN")
-
-    return "{country_name}|{region_name}|{city_name}".format(**location)
+from framework.utils.ip import ip_transform
 
 
 def query_display_process(query_analysis, list_data, page_num, page_size):

@@ -5,15 +5,9 @@
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
 # @Desc    :
-import jinja2
-
-import settings
 
 
-STATIC_DIR = ''
-STATIC_URL = ''
+from django.conf import LazySettings,settings
 
 
 
-
-locals().update(settings.__dict__)

@@ -18,7 +18,7 @@ from . import logging_config
 DEBUG = True
 
 from django.conf import settings
-BASE_DIR = settings.BASE_DIR
+
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
@@ -31,14 +31,14 @@ BASE_DIR = settings.BASE_DIR
 #         }
 # }
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
 STATIC_ROOT = None
 _DATABASES = {
         'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
-                'NAME'  : os.path.join(BASE_DIR, 'db.sqlite3'),
+                'NAME'  : os.path.join(settings.BASE_DIR, 'db.sqlite3'),
                 'TEST'  : {
-                        'NAME': os.path.join(BASE_DIR, 'test.db.sqlite3')
+                        'NAME': os.path.join(settings.BASE_DIR, 'test.db.sqlite3')
 
                 }
         },
@@ -95,7 +95,7 @@ DEBUG_TOOLBAR_CONFIG = {
         'JQUERY_URL': '',
 }
 logging.warning('This env is dev,DEBUG = True')
-logging.warning('BASE_DIR: %s' % BASE_DIR)
+logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
 # 日志打印 sql
 logging_config.LOGGING['loggers']['1django.db.backends'] = {

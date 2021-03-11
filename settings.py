@@ -19,25 +19,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 from __future__ import absolute_import
+
 import sys
+
 import jinja2
 # 使用 pymysql 替代mysqldb
 import pymysql
+
 pymysql.install_as_MySQLdb()
 import os
 from django.utils.translation import ugettext_lazy as _
+from framework.utils import sort_set_list
 from django.conf import settings
 
-SECRET_KEY = 'sub6!jx!fuo+%lugsjabk0=il21grymbqwx0-+v5psvb=itq#$'
 DEBUG = False
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+SECRET_KEY = 'sub6!jx!fuo+%lugsjabk0=il21grymbqwx0-+v5psvb=itq#$'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
-sys.path.insert(1, BASE_DIR)
-sys.path.insert(2, APPS_ROOT)
+PROJECT_ROOT = BASE_DIR
 
-PROJECT_ROOT = settings.BASE_DIR
+sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -54,15 +57,13 @@ LOGIN_URL = '/myadmin/login'
 INDEX_URL = '/'
 INDEX_VIEW = 'myadmin.views.index'
 
-
-
 # SECURITY WARNING: don't run with debug turned on in production!
 
 TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = 'myadmin.User'
 
-APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model']
+APPS = sort_set_list(['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model'] + settings.APPS)
 INSTALLED_APPS = ['framework',
                   'django.contrib.auth',
                   'django.contrib.contenttypes',
@@ -75,8 +76,6 @@ INSTALLED_APPS = ['framework',
                   'django_celery_results',
                   'drf_yasg',
                   'django_extensions'
-                  '',
-
                   ] + APPS
 
 # from rest_framework.renderers import JSONRenderer
@@ -145,13 +144,13 @@ MIDDLEWARE = [
 
 # from django.template.context_processors import request
 # from django.template.backends.jinja2 import Jinja2
-TEMPLATE_DIR = os.path.join(PROJECT_ROOT, 'templates')
+TEMPLATE_DIR = os.path.join(settings.BASE_DIR, 'templates')
 
 TEMPLATES = [
 
         {
                 'BACKEND' : 'framework.jinja2_env.TemplateJinja2Backend',
-                'DIRS'    : [TEMPLATE_DIR] ,
+                'DIRS'    : [TEMPLATE_DIR],
                 'APP_DIRS': True,
                 'OPTIONS' : {
                         'context_processors': [
@@ -213,7 +212,7 @@ LANGUAGES = (
         ('zh-hant', _('繁体')),
 )
 TIME_ZONE = 'Asia/Shanghai'
-LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'),os.path.join(BASE_DIR, 'locale')]
+LOCALE_PATHS = [os.path.join(settings.BASE_DIR, 'locale'), os.path.join(PROJECT_ROOT, 'locale')]
 USE_I18N = True
 
 USE_L10N = True
@@ -221,11 +220,11 @@ USE_L10N = True
 USE_TZ = False
 
 # https://docs.djangoproject.com/en/2.0/howto/static-files/https://docs.djangoproject.com/en/2.0/howto/static-files/
-STATIC_DIR = os.path.join(PROJECT_ROOT, 'static/')
+STATIC_DIR = os.path.join(settings.BASE_DIR, 'static/')
 STATIC_URL = '/static/'
 STATIC_ROOT = STATIC_DIR
 # MEDIA_ROOT = STATIC_DIR
-MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media/')
+MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media/')
 
 ######### 环境判断 #########
 if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:
@@ -233,6 +232,8 @@ if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:
 else:
     from config.prod import *
 ###########################
+
+BASE_DIR = settings.BASE_DIR
 
 _settings_data = locals()
 
@@ -245,6 +246,3 @@ def update_settings(origin_map):
     new_sys_path = list(set(sys.path))
     new_sys_path.sort(key=sys.path.index)
     sys.path = new_sys_path
-
-
-
