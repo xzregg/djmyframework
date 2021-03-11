@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import setuptools
 import os
 import shutil
 import sys
+
+import setuptools
 
 if sys.argv[-1] == 'publish':
     if os.system("pip freeze | grep twine"):
@@ -20,7 +21,6 @@ if sys.argv[-1] == 'publish':
     shutil.rmtree('dj_framework.egg-info')
     sys.exit()
 
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -30,7 +30,7 @@ setuptools.setup(
         version="0.0.1",  # 版本号, 版本号规范：https://www.python.org/dev/peps/pep-0440/
         author="xzregg",  # 作者名字
         author_email="xzregg@gmail.com",  # 作者邮箱
-        description="dj_myframework",  # 包的简介描述
+        description="django myframework",  # 包的简介描述
         long_description=long_description,  # 包的详细介绍(一般通过加载README.md)
         long_description_content_type="text/markdown",  # 和上条命令配合使用，声明加载的是markdown文件
         url="https://github.com/xzregg/dj_myframework.git",  # 项目开源地址，我这里写的是同性交友官网，大家可以写自己真实的开源网址
@@ -44,12 +44,13 @@ setuptools.setup(
         data_files=['requirements.txt'],
         install_requires=install_requires,  # 依赖的包
         python_requires='>=3.6',
-        entry_points={
-                'console_scripts': [
-                        'supervisord = supervisor.supervisord:main',
-                        'supervisorctl = supervisor.supervisorctl:main',
-                        'echo_supervisord_conf = supervisor.confecho:main',
-                        'pidproxy = supervisor.pidproxy:main',
-                ],
-        },
+        scripts=['gunicornd.sh', 'uwsgid.sh']
+        # entry_points={
+        #         'console_scripts': [
+        #                 'supervisord = supervisor.supervisord:main',
+        #                 'supervisorctl = supervisor.supervisorctl:main',
+        #                 'echo_supervisord_conf = supervisor.confecho:main',
+        #                 'pidproxy = supervisor.pidproxy:main',
+        #         ],
+        # },
 )

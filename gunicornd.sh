@@ -7,6 +7,7 @@
 
 PWD=`pwd`
 MY_PATH=$(cd `dirname $0`; pwd)
+MY_PATH=$PWD
 cd $MY_PATH
 PROGRAM="${MY_PATH##*/}"
 
@@ -16,12 +17,14 @@ LOG_FILE="$MY_PATH/logs/gunicorn.log"
 PID_FILE="$MY_PATH/tmp/gunicorn.pid"
 CONFIG_FILE="$MY_PATH/config/gunicorn_config.py"
 
-APP="wsgi"
+[ ! -f "$CONFIG_FILE" ] && echo "$CONFIG_FILE not exists" && exit
+
+
 BIND="0.0.0.0:8080"
 
 
 #基本启动命令不使用daemon模式
-BASE_CMD="gunicorn $APP -c $CONFIG_FILE"
+BASE_CMD="gunicorn -c $CONFIG_FILE"
 
 export PYTHONUNBUFFERED=TRUE
 START_CMD="$BASE_CMD --error-logfile $LOG_FILE --access-logfile $LOG_FILE --pid $PID_FILE"
