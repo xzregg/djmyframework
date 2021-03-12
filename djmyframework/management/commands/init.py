@@ -16,6 +16,10 @@ class Command(BaseCommand):
         config_dir = os.path.join(PROJECT_ROOT, dir_name)
         project_dir = BASE_DIR
         project_conf_dir = os.path.join(project_dir, dir_name)
+
+        requirements_file = os.path.join(BASE_DIR, 'requirements.txt')
+        if not os.path.isfile(requirements_file):
+            open(requirements_file).write('')
         if not os.path.isdir(project_conf_dir):
             shutil.copytree(config_dir, project_conf_dir)
             print('add config %s' % project_conf_dir)
