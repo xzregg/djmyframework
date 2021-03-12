@@ -15,7 +15,7 @@ LOGS_DIR = 'logs'
 loglevel = 'INFO'
 bind = "0.0.0.0:9102"
 #pidfile = "tmp/gunicorn.pid"
-APP = "wsgi"
+
 
 # 将stdout / stderr重定向到errorlog中的指定文件
 capture_output = True

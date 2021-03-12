@@ -19,12 +19,12 @@ CONFIG_FILE="$MY_PATH/config/gunicorn_config.py"
 
 [ ! -f "$CONFIG_FILE" ] && echo "$CONFIG_FILE not exists" && exit
 
-
+APP="wsgi"
 BIND="0.0.0.0:8080"
 
 
 #基本启动命令不使用daemon模式
-BASE_CMD="gunicorn -c $CONFIG_FILE"
+BASE_CMD="gunicorn $APP -c $CONFIG_FILE"
 
 export PYTHONUNBUFFERED=TRUE
 START_CMD="$BASE_CMD --error-logfile $LOG_FILE --access-logfile $LOG_FILE --pid $PID_FILE"
