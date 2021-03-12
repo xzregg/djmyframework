@@ -34,16 +34,18 @@ def init_djframework():
     project_conf_dir = os.path.join(project_dir, dir_name)
 
     requirements_file = os.path.join(target_project_dir, 'requirements.txt')
-
+    settings_file = os.path.join(project_dir, 'settings.py')
     if not os.path.isfile(requirements_file):
         open(requirements_file).write('')
     if not os.path.isdir(project_conf_dir):
         shutil.copytree(config_dir, project_conf_dir)
         print('add config %s' % project_conf_dir)
 
-        shutil.copyfile(os.path.join(djframework_dir, 'wsig.py'), os.path.join(project_dir, 'wsig.py'))
+        shutil.copyfile(os.path.join(djframework_dir, 'wsgi.py'), os.path.join(project_dir, 'wsgi.py'))
         shutil.copyfile(os.path.join(djframework_dir, 'manage.py'), os.path.join(project_dir, 'manage.py'))
-        open(os.path.join(project_dir, 'settings')).write(settings_text)
+        if not os.path.isfile(settings_file):
+            open(os.path.join(project_dir, 'settings.py'), 'w').write(settings_text)
+        os.mkdir(os.path.join(project_dir, 'apps'))
     else:
         raise Exception('%s 已经存在' % project_conf_dir)
 
