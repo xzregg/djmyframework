@@ -1,1 +1,0 @@
-default_app_config = 'ws_geteway.apps.WsGetewayConfig'
