@@ -37,6 +37,7 @@ class AdminTestCase(LoginUserTestCase):
         request = self.factory.get(reverse_view('myadmin.test.test_task'))
         request.user = self.user
         response = test_task(request)
+        from .settings import DEBUG
         self.assertEqual(response.status_code, 200)
 
     def test_userset_view(self):

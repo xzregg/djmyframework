@@ -33,12 +33,14 @@ from django.utils.translation import ugettext_lazy as _
 from objectdict import sort_set_list
 from django.conf import settings
 
-DEBUG = False
+DEBUG = True
 SECRET_KEY = 'sub6!jx!fuo+%lugsjabk0=il21grymbqwx0-+v5psvb=itq#$'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-APPS = []
+
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
+
+APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model']
 
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
@@ -60,12 +62,12 @@ INDEX_URL = '/'
 INDEX_VIEW = 'myadmin.views.index'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-
+DEBUG=settings.DEBUG
 TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = 'myadmin.User'
 
-APPS = sort_set_list(['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model'] + settings.APPS)
+APPS = sort_set_list(APPS + settings.APPS)
 INSTALLED_APPS = ['framework',
                   'django.contrib.auth',
                   'django.contrib.contenttypes',
@@ -228,6 +230,11 @@ STATIC_ROOT = STATIC_DIR
 # MEDIA_ROOT = STATIC_DIR
 MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media/')
 
+BASE_DIR = settings.BASE_DIR
+SECRET_KEY = settings.SECRET_KEY
+APPS_ROOT = settings.APPS_ROOT
+
+
 ######### 环境判断 #########
 if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:
     from config.dev import *
@@ -235,16 +242,4 @@ else:
     from config.prod import *
 ###########################
 
-BASE_DIR = settings.BASE_DIR
 
-_settings_data = locals()
-
-
-def update_settings(origin_map):
-    print('update_settings ')
-    # origin_map.update(_settings_data)
-    sys.path.insert(0, settings.BASE_DIR)
-    sys.path.insert(1, settings.APPS_ROOT)
-    new_sys_path = list(set(sys.path))
-    new_sys_path.sort(key=sys.path.index)
-    sys.path = new_sys_path

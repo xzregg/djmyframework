@@ -13,3 +13,4 @@ LDAP_ACCOUNT_FOLLOW_START = False
 LDAP_ACCOUNT_SERVER_PORT = 3891
 
 
+from settings import *

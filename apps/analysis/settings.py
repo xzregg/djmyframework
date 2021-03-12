@@ -8,3 +8,9 @@
 
 from django.utils.translation import ugettext_lazy as _
 from .models.query import QueryAnalysis
+
+
+
+
+
+from settings import *

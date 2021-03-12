@@ -8,7 +8,6 @@
 
 import os
 
-import settings
 
 SVN_ROOT = '/Users/xzr/Desktop/svn'
 
@@ -17,4 +16,4 @@ SVN_PASSWORD_DB_FILE = os.path.join(SVN_ROOT, 'password.ini')
 # 对应  svnserve.conf authz-db 文件路径
 SVN_AUTH_DB_FILE = os.path.join(SVN_ROOT, 'authz.ini')
 
-locals().update(settings.__dict__)
+from settings import *

@@ -6,6 +6,7 @@ import datetime
 import os
 import os.path
 
+from django.apps import apps
 from django.core.management.base import BaseCommand
 from django.db.models.fields.related import ForeignKey
 from django.forms import ModelForm
@@ -14,9 +15,8 @@ from mako.lookup import TemplateLookup
 from framework.filters import MyFilterBackend
 from framework.models import BaseModel
 from framework.route import reverse_view
-from settings import APPS_ROOT, TEMPLATE_DIR
 from ...utils import mkdirs, ObjectDict
-from django.apps import apps
+
 
 class ModelTemplateCreater(object):
     def __init__(self, app_name, model_name, model, params={}, options={}):

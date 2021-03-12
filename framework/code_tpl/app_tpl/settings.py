@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import settings
 
 
 
@@ -8,4 +7,10 @@ import settings
 
 
 
-locals().update(settings.__dict__)
+
+
+
+
+
+# 全局配置覆盖项目
+from settings import *
