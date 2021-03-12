@@ -4,6 +4,26 @@ import os
 import shutil
 
 djframework_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from django.core.management.utils import get_random_secret_key
+
+settings_text = '''
+from __future__ import absolute_import
+
+import os
+import sys
+
+DEBUG = True
+SECRET_KEY = '%s'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+APPS = ['djmyframework']
+APPS_ROOT = os.path.join(BASE_DIR, 'apps')
+
+from djmyframework.settings import *
+
+PROJECT_ROOT = BASE_DIR
+
+''' % get_random_secret_key()
 
 
 def init_djframework():
@@ -14,11 +34,16 @@ def init_djframework():
     project_conf_dir = os.path.join(project_dir, dir_name)
 
     requirements_file = os.path.join(target_project_dir, 'requirements.txt')
+
     if not os.path.isfile(requirements_file):
         open(requirements_file).write('')
     if not os.path.isdir(project_conf_dir):
         shutil.copytree(config_dir, project_conf_dir)
         print('add config %s' % project_conf_dir)
+
+        shutil.copyfile(os.path.join(djframework_dir, 'wsig.py'), os.path.join(project_dir, 'wsig.py'))
+        shutil.copyfile(os.path.join(djframework_dir, 'manage.py'), os.path.join(project_dir, 'manage.py'))
+        open(os.path.join(project_dir, 'settings')).write(settings_text)
     else:
         raise Exception('%s 已经存在' % project_conf_dir)
 
