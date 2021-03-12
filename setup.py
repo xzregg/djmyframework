@@ -44,13 +44,10 @@ setuptools.setup(
         include_package_data=True,
         install_requires=install_requires,  # 依赖的包
         python_requires='>=3.6',
-        scripts=['djmyframework/gunicornd.sh', 'djmyframework/uwsgid.sh']
-        # entry_points={
-        #         'console_scripts': [
-        #                 'supervisord = supervisor.supervisord:main',
-        #                 'supervisorctl = supervisor.supervisorctl:main',
-        #                 'echo_supervisord_conf = supervisor.confecho:main',
-        #                 'pidproxy = supervisor.pidproxy:main',
-        #         ],
-        # },
+        scripts=['djmyframework/gunicornd.sh', 'djmyframework/uwsgid.sh'],
+        entry_points={
+                'console_scripts': [
+                        'djmyframework_init = djmyframework.scripts.init:init_djframework',
+                ],
+        },
 )

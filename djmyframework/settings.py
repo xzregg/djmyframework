@@ -94,7 +94,7 @@ REST_FRAMEWORK = {
         'EXCEPTION_HANDLER'             : 'framework.middleware.exception_handler',
         'DEFAULT_AUTHENTICATION_CLASSES': ('framework.authentication.MySessionAuthentication',)
 }
-SUPPRESS_CONTEXT_WARNING = True
+DRF_DYNAMIC_FIELDS = {'SUPPRESS_CONTEXT_WARNING':True}
 if DEBUG:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
 #######################################

@@ -56,7 +56,7 @@ class ModelTemplateCreater(object):
         self._create_base_file(template_file, target_file)
 
     def create_model_v_file(self):
-        template_file = 'view.py'
+        template_file = 'view.py.ptl'
         single_view_file = os.path.join(self.get_app_path(), 'views.py')
         if os.path.isfile(single_view_file):
             target_file = single_view_file
