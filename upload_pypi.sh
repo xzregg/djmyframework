@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 
-rm -rf dj_myframework.egg-info/
-rm -rf build/
-rm -rf dist/
+
+
+function del_build_cacne() {
+    rm -rf djmyframework.egg-info/
+    rm -rf djmyframework-*/
+    rm -rf build/
+    rm -rf dist/
+}
+
+
+
+del_build_cacne
+
 python setup.py sdist build
 twine upload dist/* $*
 
-read -p "delete dict y/n?" ask
+read -p "delete build cache y/n?" ask
 if [ $ask == "y" ] ; then
-rm -rf dj_myframework.egg-info/
-rm -rf build/
-rm -rf dist/
+del_build_cacne
 fi
