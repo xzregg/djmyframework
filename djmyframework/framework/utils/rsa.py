@@ -26,7 +26,7 @@ public_key_tpl = '''-----BEGIN PUBLIC KEY-----
 -----END PUBLIC KEY-----'''
 
 def ensure_utf8(s):
-    if isinstance(s, unicode):
+    if isinstance(s, str):
         return s.encode('utf8')
     return s
 
@@ -49,9 +49,9 @@ def base64ToString(s):
     return base64.decodestring(s)
     try:
         return base64.b64decode(s)
-    except binascii.Error, e:
+    except binascii.Error as e:
         raise SyntaxError(e)
-    except binascii.Incomplete, e:
+    except binascii.Incomplete as e:
         raise SyntaxError(e)
 
 
@@ -69,7 +69,7 @@ def decrypt_with_rsa(msg, key):
 
     modBits = number.size(key.n)
     k = ceil_div(modBits, 8)  # Convert from bits to bytes
-    print "K: ", k
+    print("K: ", k)
 
     msglen = len(msg)
     msg_encryted = ""
@@ -95,7 +95,7 @@ def encrypt_with_rsa(msg, key):
 
     modBits = number.size(key.n)
     k = ceil_div(modBits, 8) - 28  # 11 # Convert from bits to bytes
-    print "K: ", k
+    print("K: ", k)
 
     msglen = len(msg)
     msg_encryted = ""
