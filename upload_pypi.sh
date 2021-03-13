@@ -15,8 +15,7 @@ del_build_cacne
 
 read -p "build and upload y/n?" ask
 if [ $ask == "y" ] ; then
-    python setup.py sdist build
-    twine upload dist/* $*
+    python setup.py publish
 else
     exit
 fi

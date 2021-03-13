@@ -1,10 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os
 import shutil
 
 djframework_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 
 def init_djframework():
@@ -39,9 +39,8 @@ PROJECT_ROOT = BASE_DIR
     settings_file = os.path.join(project_dir, 'settings.py')
     apps_dir = os.path.join(project_dir, 'apps')
 
-
     if not os.path.isfile(requirements_file):
-        open(requirements_file,'w').write('')
+        open(requirements_file, 'w').write('')
 
     if not os.path.isdir(apps_dir):
         os.mkdir(apps_dir)
@@ -60,7 +59,7 @@ PROJECT_ROOT = BASE_DIR
 
 
     else:
-        raise Exception('%s 已经存在' % project_conf_dir)
+        raise Exception('%s already exists' % project_conf_dir)
 
 
 if __name__ == '__main__':
