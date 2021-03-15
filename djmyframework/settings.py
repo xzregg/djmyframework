@@ -235,6 +235,8 @@ SECRET_KEY = settings.SECRET_KEY
 APPS_ROOT = settings.APPS_ROOT
 
 
+
+
 ######### 环境判断 #########
 if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:
     from config.dev import *
@@ -242,4 +244,4 @@ else:
     from config.prod import *
 ###########################
 
-
+from config.logging_config import LOGGING
