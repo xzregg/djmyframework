@@ -29,7 +29,7 @@ import os
 import jinja2
 
 from django.utils.translation import ugettext_lazy as _
-from .framework.utils import sort_set_list
+from framework.utils import sort_set_list
 from django.conf import settings
 
 DEBUG = True

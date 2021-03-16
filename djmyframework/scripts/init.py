@@ -45,7 +45,12 @@ PROJECT_ROOT = BASE_DIR
     if not os.path.isdir(apps_dir):
         os.mkdir(apps_dir)
 
+    project_configfile_dir = os.path.join(project_dir, 'configfile')
+    if not os.path.isdir(project_configfile_dir):
+        shutil.copytree(os.path.join(djframework_dir, 'configfile'), project_configfile_dir)
+
     if not os.path.isdir(project_conf_dir):
+
         shutil.copytree(config_dir, project_conf_dir)
         print('add config %s' % project_conf_dir)
 
