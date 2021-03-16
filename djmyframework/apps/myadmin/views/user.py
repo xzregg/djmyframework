@@ -8,9 +8,9 @@ from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilte
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, \
     PaginationSerializer, ParamsSerializer, s
+from framework.utils import DATETIMEFORMAT
 from framework.views import action, CurdViewSet, notcheck, Request, Response, RspError
 from myadmin.models import User
-from framework.utils import DATETIMEFORMAT
 
 
 class UserSerializer(BaseModelSerializer):
@@ -64,7 +64,7 @@ class UserSet(CurdViewSet):
             request.data.pop('password')
         if not request.data.get('role', ''):
             request.data['role'] = []
-            #raise RspError(_('至少选择一个角色'))
+            # raise RspError(_('至少选择一个角色'))
         return super(UserSet, self).save(request, *args, **kwargs)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
@@ -136,3 +136,4 @@ class UserSet(CurdViewSet):
                 return HttpResponseRedirect('/myadmin/index')
         user_list = User.objects.all()
         return Response(locals())
+

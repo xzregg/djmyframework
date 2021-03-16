@@ -368,7 +368,7 @@ class BaseModel(models.Model, SqlModelMixin):
                 d[attr] = getattr(self, attr).strftime('%Y-%m-%d')
             # 特殊处理datetime的数据
             elif isinstance(getattr(self, attr), BaseModel):
-                d[attr] = getattr(self, attr).getDict()
+                d[attr] = getattr(self, attr).get_dict()
             # 递归生成BaseModel类的dict
             elif self.is_attr_instance(attr, int) or self.is_attr_instance(attr, float) \
                     or self.is_attr_instance(attr, str):

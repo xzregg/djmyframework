@@ -20,17 +20,16 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 from __future__ import absolute_import
 
-import sys
-
-import jinja2
-# 使用 pymysql 替代mysqldb
 import pymysql
 
+# 使用 pymysql 替代mysqldb
 pymysql.install_as_MySQLdb()
+import sys
 import os
-from django.utils.translation import ugettext_lazy as _
+import jinja2
 
-from objectdict import sort_set_list
+from django.utils.translation import ugettext_lazy as _
+from .framework.utils import sort_set_list
 from django.conf import settings
 
 DEBUG = True
@@ -43,8 +42,6 @@ PROJECT_ROOT = BASE_DIR
 APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model']
 
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
-
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -62,7 +59,7 @@ INDEX_URL = '/'
 INDEX_VIEW = 'myadmin.views.index'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG=settings.DEBUG
+DEBUG = settings.DEBUG
 TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = 'myadmin.User'
@@ -88,13 +85,13 @@ REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES'      : [
                 # 这里顺序不要更换
                 'rest_framework.renderers.TemplateHTMLRenderer',
-                'rest_framework.renderers.JSONRenderer'
+                'framework.renderers.JSONRenderer'
         ],
         'DEFAULT_SCHEMA_CLASS'          : 'rest_framework.schemas.coreapi.AutoSchema',
         'EXCEPTION_HANDLER'             : 'framework.middleware.exception_handler',
         'DEFAULT_AUTHENTICATION_CLASSES': ('framework.authentication.MySessionAuthentication',)
 }
-DRF_DYNAMIC_FIELDS = {'SUPPRESS_CONTEXT_WARNING':True}
+DRF_DYNAMIC_FIELDS = {'SUPPRESS_CONTEXT_WARNING': True}
 if DEBUG:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
 #######################################
@@ -103,7 +100,6 @@ if DEBUG:
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
 # SESSION_SAVE_EVERY_REQUEST = True
-
 
 ############# CELERY 配置 #############
 # https://docs.celeryproject.org/en/v5.0.5/userguide/configuration.html
@@ -233,9 +229,6 @@ MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media/')
 BASE_DIR = settings.BASE_DIR
 SECRET_KEY = settings.SECRET_KEY
 APPS_ROOT = settings.APPS_ROOT
-
-
-
 
 ######### 环境判断 #########
 if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:

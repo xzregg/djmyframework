@@ -103,6 +103,7 @@ class ParamsSerializer(s.Serializer):
 
     @property
     def o(self):
+        # type: () -> self
         # 返回自己 用来代码提示
         return self
 

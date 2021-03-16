@@ -75,14 +75,14 @@
         </div>
     </div>
 
-    <div class="col-sm-12 text-center">
+    <div class="col-sm-12 text-center mT10">
 
         <button @click="doSearch"
                 type="button"
                 class="btn btn-sm btn-success filter-btn search-btn"
                 aria-label="Left Align">
             <i class="glyphicon glyphicon-search"></i>
-            {{ _('搜 索') }}
+            {{ _('筛 选') }}
         </button>
 
         <input @click='reset' type='button' class="btn btn-sm btn-default" value='{{ _('重 置') }}'>
@@ -91,7 +91,7 @@
             <button type="button" class="btn btn-sm btn-default dropdown-toggle"
                     data-toggle="dropdown" data-hover="dropdown">
                 <span class="glyphicon glyphicon-plus"></span>
-                {{ _('筛选条件') }}
+                {{ _('条 件') }}
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu dropdown-menu-right">
