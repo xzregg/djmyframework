@@ -16,7 +16,7 @@ Including another URLconf
 import re
 
 from django.urls import include, re_path
-from drf_yasg import openapi
+
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.documentation import include_docs_urls
@@ -25,16 +25,9 @@ from framework.route import get_urlpatterns
 from framework.utils import import_view
 from settings import settings
 
-API_INFO = openapi.Info(
-        title="Myadmin API",
-        default_version='v1',
-        description="Myadmin description",
-        terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="contact@snippets.local"),
-        license=openapi.License(name="BSD License")
-)
+
 schema_view = get_schema_view(
-        API_INFO,
+        settings.API_INFO,
         public=True,
         permission_classes=(permissions.AllowAny,),
 )
