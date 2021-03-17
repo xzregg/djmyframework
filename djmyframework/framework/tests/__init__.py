@@ -22,6 +22,9 @@ class BaseTestCase(TestCase):
 
 class TestFrameWork(BaseTestCase):
 
+    def test_client_req(self):
+        cleint = self.factory.request()
+
     def test_response(self):
         self.assertEqual(0, RspData(data={}, msg='asd').code)
         rsp = RspData()
