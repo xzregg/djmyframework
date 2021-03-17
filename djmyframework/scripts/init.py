@@ -59,8 +59,13 @@ PROJECT_ROOT = BASE_DIR
         if not os.path.isfile(settings_file):
             open(os.path.join(project_dir, 'settings.py'), 'w').write(settings_text)
 
-        os.symlink(os.path.join(djframework_dir, 'framework'), os.path.join(project_dir, 'framework'))
-        os.symlink(os.path.join(djframework_dir), os.path.join(project_dir, os.path.split(djframework_dir)[-1]))
+        framework_link_dir = os.path.join(project_dir, 'framework')
+        if not os.path.isdir(framework_link_dir):
+            os.symlink(os.path.join(djframework_dir, 'framework'),framework_link_dir)
+
+        djframework_link_dir = os.path.join(project_dir, os.path.split(djframework_dir)[-1])
+        if not os.path.isdir(djframework_link_dir):
+            os.symlink(os.path.join(djframework_dir), djframework_link_dir)
 
 
     else:
