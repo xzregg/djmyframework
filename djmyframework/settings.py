@@ -150,7 +150,7 @@ TEMPLATES = [
 
         {
                 'BACKEND' : 'framework.jinja2_env.TemplateJinja2Backend',
-                'DIRS'    : [TEMPLATE_DIR],
+                'DIRS'    : [os.path.join(settings.BASE_DIR, 'jinja2_templates')],
                 'APP_DIRS': True,
                 'OPTIONS' : {
                         'context_processors': [
@@ -229,17 +229,6 @@ MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media/')
 BASE_DIR = settings.BASE_DIR
 SECRET_KEY = settings.SECRET_KEY
 APPS_ROOT = settings.APPS_ROOT
-
-from drf_yasg import openapi
-API_INFO = openapi.Info(
-        title="Myadmin API",
-        default_version='v1',
-        description="Myadmin description",
-        terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="contact@snippets.local"),
-        license=openapi.License(name="BSD License")
-)
-
 
 
 ######### 环境判断 #########
