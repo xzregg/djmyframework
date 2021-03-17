@@ -4,7 +4,7 @@
 # @File    : api
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
-# @Desc    : 不能在 import settings 前导入
+# @Desc    : 不能在 import settings 前导入, 导致 REST_FRAMEWORK DEFAULT_RENDERER_CLASSES 配置失效问题
 
 from drf_yasg import openapi
 API_INFO = openapi.Info(
