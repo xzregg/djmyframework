@@ -9,11 +9,8 @@ import sys
 pwd = os.getcwd()
 supervisor_config_dir = os.path.join(pwd, 'configfile')
 
-from config.daemon_service import DAEMON_SERVICE_MAP, INET_HTTP_SERVER_LISTEN, INET_HTTP_SERVER_PASSWORD, \
-    INET_HTTP_SERVER_USERNAME
 
-
-def genrate_supervisor_conf(is_force=False):
+def genrate_supervisor_conf(daemon_service_map,is_force=False):
     supervisor_config_ini_tpl = '''
 # http://supervisord.org/configuration.html
 
@@ -38,7 +35,7 @@ killasgroup=true
     '''
 
     supervisord_configs_dir = os.path.join(supervisor_config_dir, 'supervisord.conf.d')
-    for name, config in DAEMON_SERVICE_MAP.items():
+    for name, config in daemon_service_map.items():
         config_file_path = os.path.join(supervisord_configs_dir, '%s.ini' % name)
         if not os.path.isfile(config_file_path) or is_force:
             open(config_file_path, 'w').write(supervisor_config_ini_tpl.format(name=name, **config))
@@ -46,8 +43,12 @@ killasgroup=true
 
 def main():
     supervisor_configfile = os.path.join(supervisor_config_dir, 'supervisord.ini')
+
     if not os.path.isfile(supervisor_configfile):
         raise Exception('%s not exists' % supervisor_configfile)
+    from .config.daemon_service import DAEMON_SERVICE_MAP, INET_HTTP_SERVER_LISTEN, INET_HTTP_SERVER_PASSWORD, \
+        INET_HTTP_SERVER_USERNAME
+
     supervisord_cmd = 'supervisord -c %s' % supervisor_configfile
     cmd = supervisorctl_cmd = 'supervisorctl -c %s' % (supervisor_configfile)
     os.environ.setdefault('INET_HTTP_SERVER_LISTEN', INET_HTTP_SERVER_LISTEN)
@@ -79,7 +80,7 @@ def main():
     if not is_supervisord_running and action != 'shutdown':
         print('supervisord not running,start now!\n%s' % supervisord_cmd)
         os.system(supervisord_cmd)
-    genrate_supervisor_conf(is_force=action=='update')
+    genrate_supervisor_conf(DAEMON_SERVICE_MAP,is_force=action=='update')
     print(cmd)
     os.system(cmd)
 
