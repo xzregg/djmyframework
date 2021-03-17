@@ -5,6 +5,7 @@
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
 # @Desc    :
+import logging
 import os
 import re
 from functools import lru_cache
@@ -21,7 +22,7 @@ from rest_framework.response import Response as RestResponse
 
 from .renderers import JSONRenderer
 from .serializer import DataSerializer
-from .utils import json_dumps, ObjectDict
+from .utils import json_dumps, ObjectDict, trace_msg
 
 SUCCESS_CODE = 0
 FAIL_CODE = 1001
@@ -39,7 +40,6 @@ class RspStruct(ObjectDict):
 
 class RspData(RspStruct):
     def __init__(self, code=RspStruct.code, msg=RspStruct.msg, data=RspStruct.data):
-        # super(RspData, self).__init__()
         self.code = code
         self.msg = msg
         self.data = data
@@ -89,7 +89,7 @@ class Response(RestResponse):
 
     def resolve_data(self, request):
         if request.is_json():
-            self.resilve_json_data()
+            self.resolve_json_data()
         return self.context
 
     @property
@@ -107,6 +107,7 @@ class Response(RestResponse):
             try:
                 return super(Response, self).rendered_content
             except TemplateDoesNotExist:
+                logging.warning(trace_msg())
                 self.resolve_json_data()
                 return HttpResponse(json_dumps(self.context))
 

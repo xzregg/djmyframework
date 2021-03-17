@@ -40,13 +40,12 @@ class LoginError(RspError): pass
 
 
 class LoginErrors(RspErrorEnum):
-    VERIFY_CODE_ERROR = RspError(_("验证码错误"), 111)
-    LOGIN_TIMES_ERROR = RspError(_("登录次数过多"), 222)
-    USERNAME_OR_PASSWORD_FAIL = RspError(_("账号密码错误"), 333)
+    VERIFY_CODE_ERROR = RspError(_("验证码错误"), 1021)
+    LOGIN_TIMES_ERROR = RspError(_("登录次数过多"), 1022)
+    USERNAME_OR_PASSWORD_FAIL = RspError(_("账号密码错误"), 1023)
     SAME_PASSWORD = RspError(_('请联系管理员修改密码!'))
-
-    ACCOUNT_NOT_EXIST = RspError(_('账户不存在!'))
-    ACCOUNT_STATUS_ERROR = RspError(_('账户状态错误'))
+    ACCOUNT_NOT_EXIST = RspError(_('账户不存在!'),1024)
+    ACCOUNT_STATUS_ERROR = RspError(_('账户状态错误'),1025)
 
 
 class LoginRspSer(s.Serializer):

@@ -87,8 +87,9 @@ class DateEncoder(json.JSONEncoder):
 class MyJsonEncoder(JSONEncoder):
     def default(self, obj):
         from rest_framework import serializers
+        from framework.models import BaseModel
         if isinstance(obj, QuerySet):
-            return [m.to_dict() for m in obj]
+            return [m.to_dict() for m in obj if isinstance(m,BaseModel)]
         if isinstance(obj, serializers.Serializer):
             return obj.data
         return super(MyJsonEncoder, self).default(obj)

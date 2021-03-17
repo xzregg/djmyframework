@@ -5,7 +5,7 @@
 
 import os
 import sys
-from config.daemon_service import DAEMON_SERVICE_MAP
+
 
 def main():
     pwd = os.getcwd()
@@ -16,12 +16,27 @@ def main():
     cmd = supervisorctl_cmd = 'supervisorctl -c %s' % (supervisor_configfile)
 
     if len(sys.argv) > 1:
-        argv_str = ' '.join(sys.argv[1:])
+
         action = sys.argv[1]
-        cmd = '%s %s' % (supervisorctl_cmd, argv_str)
+        last_action = sys.argv[-1].strip()
+
+        if last_action in ['log', 'restart', 'stop', 'start']:
+            action = 'log'
+            sys.argv.pop()
+
+        if action == 'log':
+            action = 'tail -f'
+        # 改变 supervisorctl reload 为发送 重载信号到进程,实现平滑重启
+        if action == 'reload':
+            action = 'signal HUP'
+
+        if action == 'reloadall':
+            action = 'reload'
+        argv_str = ' '.join(sys.argv[2:])
+        cmd = '%s %s %s' % (supervisorctl_cmd, action, argv_str)
 
     is_supervisord_running = os.system(supervisorctl_cmd + ' pid') == 0
-    if not is_supervisord_running :
+    if not is_supervisord_running:
         print('supervisord not running,start now!\n%s' % supervisord_cmd)
         os.system(supervisord_cmd)
     print(cmd)

@@ -18,7 +18,7 @@ from jinja2 import Environment
 
 
 class TemplateJinja2Backend(Jinja2):
-    app_dirname = 'templates'
+    app_dirname = 'jinja2_templates'
 
 
 _paragraph_re = re.compile(r'(?:\r\n|\r(?!\n)|\n){2,}')

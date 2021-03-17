@@ -60,7 +60,7 @@ Sphinx==2.0.1
 sqlparse==0.3.0
 
 supervisor==4.2.0
-supervisor-multiprocesslogging==1.1
+supervisor-multiprocesslogging
 toml==0.10.0
 tornado==5.1.1
 

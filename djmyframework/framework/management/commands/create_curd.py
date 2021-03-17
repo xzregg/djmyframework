@@ -36,7 +36,7 @@ class ModelTemplateCreater(object):
         return apps.app_configs.get(self.app_name).path
 
     def get_app_tempalte_path(self):
-        return os.path.join(self.get_app_path(),'templates')
+        return os.path.join(self.get_app_path(),'jinja2_templates')
 
     @property
     def template_dir(self):

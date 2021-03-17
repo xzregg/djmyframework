@@ -198,18 +198,8 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         manual_responses = self.overrides.get('responses', None) or self.get_view_annotations_serializer('return')
         if not isinstance(manual_responses, dict):
             manual_responses = {status.HTTP_200_OK: manual_responses}
-        manual_responses = OrderedDict(
+        responses = OrderedDict(
                 (str(sc), self.generate_rsp_serializer_schema(resp)) for sc, resp in manual_responses.items())
-
-        responses = manual_responses
-
-        if manual_responses:
-            return manual_responses
-        # responses = OrderedDict()
-        # if not any(status.is_success(int(sc)) for sc in manual_responses if sc != 'default'):
-        #     responses = self.get_default_responses()
-        #
-        # responses.update((str(sc), resp) for sc, resp in manual_responses.items())
 
         return responses
 
@@ -221,15 +211,14 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         """
 
         if rsp_data_serializer:
-            rep_code_errors = getattr(rsp_data_serializer, 'Errors', None)
+            rep_code_errors:RspErrorEnum = getattr(rsp_data_serializer, 'Errors', None)
             default_declared_fields = RspSerializer._declared_fields
             rep_code_serializer = default_declared_fields['code']
             choices = rep_code_serializer.choices
             # 增加错误代码
             if rep_code_errors and (
                     issubclass(rep_code_errors, RspErrorEnum) or isinstance(rep_code_errors, RspErrorEnum)):
-                rsp_err_code_member_list = tuple(
-                        (v.code, v.msg) for k, v in rep_code_errors.__dict__.items() if isinstance(v, RspError))
+                rsp_err_code_member_list = rep_code_errors.member_list()
                 choices = copy.copy(rep_code_serializer.choices)
                 choices.update(rsp_err_code_member_list)
             choices = list(choices.items())
@@ -242,7 +231,8 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
 
         default_schema = openapi.Schema(
                 type=openapi.TYPE_OBJECT,
-                properties=OrderedDict((
+                properties=OrderedDict(
+                    (
                         ('code', rsp_code_schema),
                         ('msg', self.serializer_to_schema(RspSerializer._declared_fields['msg'])),
                         ('data', self.serializer_to_schema(rsp_data_serializer))
@@ -253,7 +243,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
 
         return default_schema
 
-    def get_default_responses(self):
+    def _get_default_responses(self):
         """Get the default responses determined for this view from the request serializer and request method.
 
         :type: dict[str, openapi.Schema]

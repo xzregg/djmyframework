@@ -144,7 +144,7 @@ MIDDLEWARE = [
 
 # from django.template.context_processors import request
 # from django.template.backends.jinja2 import Jinja2
-TEMPLATE_DIR = os.path.join(settings.BASE_DIR, 'templates')
+TEMPLATE_DIR = os.path.join(settings.BASE_DIR, 'jinja2_templates')
 
 TEMPLATES = [
 

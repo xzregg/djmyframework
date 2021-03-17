@@ -25,6 +25,7 @@ class TestFrameWork(BaseTestCase):
     def test_response(self):
         self.assertEqual(0, RspData(data={}, msg='asd').code)
         rsp = RspData()
+
         rsp.code = 1001
         print(rsp.code)
         print(rsp['code'])
@@ -36,7 +37,7 @@ class TestFrameWork(BaseTestCase):
         print(rsp)
 
     def test_rsp_errenum(self):
-        from .response import RspErrorEnum, RspError
+        from ..response import RspErrorEnum, RspError
 
         class LoginErrors(RspErrorEnum):
             VERIFY_CODE_ERROR = RspError(_("验证码错误"), 111)
@@ -47,7 +48,7 @@ class TestFrameWork(BaseTestCase):
         print(LoginErrors.member_list())
 
     def test_RspData(self):
-        from .response import RspData
+        from ..response import RspData
         # @dataclass
 
         a = RspData(3, 54, 6)
@@ -87,7 +88,7 @@ class TestFrameWork(BaseTestCase):
         self.assertEqual(b.asd, 3)
 
     def test_setParamsSerializer(self):
-        from .serializer import ParamsSerializer, s
+        from ..serializer import ParamsSerializer, s
         from myadmin.models.user import User
 
         class AdminSerializer(BaseModelSerializer):
