@@ -43,7 +43,7 @@ setuptools.setup(
         include_package_data=True,
         install_requires=install_requires,  # 依赖的包
         python_requires='>=3.6',
-        #scripts=['djmyframework/gunicornd.sh', 'djmyframework/uwsgid.sh'],
+        scripts=['djmyframework/syncdb.sh'],
         entry_points={
                 'console_scripts': [
                         'djmyframework_init = djmyframework.scripts.init:init_djframework',
