@@ -7,6 +7,7 @@ import os
 import sys
 
 pwd = os.getcwd()
+sys.path.insert(0,pwd)
 supervisor_config_dir = os.path.join(pwd, 'configfile')
 
 
@@ -46,7 +47,7 @@ def main():
 
     if not os.path.isfile(supervisor_configfile):
         raise Exception('%s not exists' % supervisor_configfile)
-    from .config.daemon_service import DAEMON_SERVICE_MAP, INET_HTTP_SERVER_LISTEN, INET_HTTP_SERVER_PASSWORD, \
+    from config.daemon_service import DAEMON_SERVICE_MAP, INET_HTTP_SERVER_LISTEN, INET_HTTP_SERVER_PASSWORD, \
         INET_HTTP_SERVER_USERNAME
 
     supervisord_cmd = 'supervisord -c %s' % supervisor_configfile

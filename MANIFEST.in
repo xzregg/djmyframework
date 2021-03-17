@@ -7,4 +7,5 @@ global-exclude test*
 global-exclude __pycache__
 global-exclude *.py[co]
 global-exclude *.log
+global-exclude *.db
 global-exclude static/upload
