@@ -39,7 +39,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
-APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model']
+APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model','ws_gateway']
 
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
@@ -66,6 +66,7 @@ AUTH_USER_MODEL = 'myadmin.User'
 
 APPS = sort_set_list(APPS + settings.APPS)
 INSTALLED_APPS = ['framework',
+                  'channels',
                   'django.contrib.auth',
                   'django.contrib.contenttypes',
                   'django.contrib.sessions',
@@ -127,7 +128,7 @@ SWAGGER_SETTINGS = {
 }
 ########################################
 
-
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
@@ -136,7 +137,7 @@ MIDDLEWARE = [
         # 'django.middleware.csrf.CsrfViewMiddleware',
         # 'django.contrib.auth.middleware.AuthenticationMiddleware',
         # 'django.contrib.messages.middleware.MessageMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        #'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'django_user_agents.middleware.UserAgentMiddleware',
         'framework.middleware.BaseMiddleware',
         'myadmin.middleware.AuthMiddleware'
@@ -181,6 +182,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'wsgi.application'
+ASGI_APPLICATION = 'asgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators

@@ -30,6 +30,7 @@
 .header {
     line-height: 50px;
     background-color: white;
+    height: 50px;
 }
 
 .header h1:first-letter {
@@ -38,6 +39,9 @@
     line-height: 50px;
 }
 
+.header .nav-tabs{
+    margin-top: 10px;
+}
 .pane {
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
     border-radius: 1px;

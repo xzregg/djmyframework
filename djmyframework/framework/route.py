@@ -5,11 +5,10 @@ import logging
 import os
 import traceback
 
+from django.conf import settings
 from django.urls import re_path, reverse
 from rest_framework import routers as rest_route
 
-
-from django.conf import settings
 APPS_ROOT = settings.APPS_ROOT
 from .utils import trace_msg
 
@@ -87,6 +86,14 @@ class Route(object):
     @自动添加django URL
     """
 
+    def __new__(cls, *args, **kwargs):
+        ins = super().__new__(cls)
+        if len(args) > 0:
+            if not isinstance(args[0], str):
+                ins.__init__()
+                return ins(*args)
+        return ins
+
     def __init__(self, re_url='', name=None, *args, **kwargs):
         self.re_url = re_url
         self.args = args
@@ -135,9 +142,6 @@ class Route(object):
         if not self.re_url.endswith('$'):
             self.re_url = '%s$' % self.re_url
 
-        # elif not self.re_url.startswith('/'):
-        #    self.re_url = '%s/%s' % (app_name,self.re_url)
-        # self.re_url = '%s[/]?$' % self.re_url.rstrip('/')
 
         _url = re_path(self.re_url, view_func,
                        name=self.name or name,
@@ -167,7 +171,6 @@ def _import_module_from_file():
     for app_module_name in settings.APPS:
         app_name = app_module_name.rsplit('.')[-1]
 
-
         app_config = apps.app_configs.get(app_name)
         if not app_config:
             break
@@ -178,7 +181,7 @@ def _import_module_from_file():
         else:
             for filename, pyfile in _get_pyfile(views_dir_path):
                 view_model_name = filename.replace('__init__', '')[:-3]
-                _p_m='.'.join([app_name,VIEWS_DIR,view_model_name]).strip('.')
+                _p_m = '.'.join([app_name, VIEWS_DIR, view_model_name]).strip('.')
 
                 try:
 
@@ -198,5 +201,6 @@ def reverse_view(view_or_name, *args, **kwargs):
 def get_urls():
     _import_module_from_file()
     return list(Handlers) + rest_router.get_urls()
+
 
 get_urlpatterns = get_urls

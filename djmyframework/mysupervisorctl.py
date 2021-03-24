@@ -3,43 +3,64 @@
 # 启动后台服务器的守护进程
 
 
+import copy
 import os
 import sys
 
 pwd = os.getcwd()
-sys.path.insert(0,pwd)
+sys.path.insert(0, pwd)
 supervisor_config_dir = os.path.join(pwd, 'configfile')
+from supervisor.options import ProcessConfig
+
+supervisor_config_list = copy.copy(ProcessConfig.req_param_names)
+default_supervisor_config = dict(
+        command='{command}',
+        directory='%(here)s/../../',
+        priority='1',
+        autorestart='false',
+        redirect_stderr='true',
+        stdout_logfile='logs/%(program_name)s.log',
+        stdout_logfile_maxbytes='100MB',
+        stdout_logfile_backups='10',
+        stdout_capture_maxbytes='1MB',
+        stderr_logfile='logs/%(program_name)s.error.log',
+        stderr_logfile_maxbytes='100MB',
+        stderr_logfile_backups='10',
+        stderr_capture_maxbytes='1MB',
+        stdout_events_enabled='false',
+        loglevel='warn',
+        stopsignal='TERM',
+        killasgroup='true'
+)
 
 
-def genrate_supervisor_conf(daemon_service_map,is_force=False):
+def genrate_supervisor_conf(daemon_service_map, is_force=False):
     supervisor_config_ini_tpl = '''
-# http://supervisord.org/configuration.html
+# http://supervisord.org/configuration.html#program-x-section-values
 
 [program:{name}]
 process_name={name}
-command={cmd}
-directory=%(here)s/../../
-priority=1
-autorestart=true
-redirect_stderr=true
-stdout_logfile=logs/%(program_name)s.log
-stdout_logfile_maxbytes=100MB
-stdout_logfile_backups=10
-stdout_capture_maxbytes=1MB
-stderr_logfile=logs/%(program_name)s.error.log
-stderr_logfile_maxbytes=100MB
-stderr_logfile_backups=10
-stderr_capture_maxbytes=1MB
-stdout_events_enabled=false
-loglevel = warn
-killasgroup=true
+{program_config}
     '''
 
     supervisord_configs_dir = os.path.join(supervisor_config_dir, 'supervisord.conf.d')
-    for name, config in daemon_service_map.items():
+    for name,config in daemon_service_map.items():
+
         config_file_path = os.path.join(supervisord_configs_dir, '%s.ini' % name)
+        if config.pop('off', False):
+            if os.path.isfile(config_file_path):
+                print('the service %s is off remove configfile %s' % (name,config_file_path))
+                os.remove(config_file_path)
+            continue
+
         if not os.path.isfile(config_file_path) or is_force:
-            open(config_file_path, 'w').write(supervisor_config_ini_tpl.format(name=name, **config))
+            if config.get('command', None) is None:
+                raise Exception('[%s] Must be set command!' % name)
+            supervisor_program_config = copy.copy(default_supervisor_config)
+            supervisor_program_config.update(config)
+
+            open(config_file_path, 'w').write(supervisor_config_ini_tpl.format(name=name, program_config='\n'.join(
+                    ['%s=%s' % (k, v) for k, v in supervisor_program_config.items()])))
 
 
 def main():
@@ -81,7 +102,9 @@ def main():
     if not is_supervisord_running and action != 'shutdown':
         print('supervisord not running,start now!\n%s' % supervisord_cmd)
         os.system(supervisord_cmd)
-    genrate_supervisor_conf(DAEMON_SERVICE_MAP,is_force=action=='update')
+
+    genrate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action == 'update')
+
     print(cmd)
     os.system(cmd)
 

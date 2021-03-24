@@ -117,20 +117,31 @@ LOGGING = {
                         'level'   : 'DEBUG',
                         'handlers': ['console', 'statistic_handler'],
                         'propagate': False,
+                },
+                'uvicorn.access':{  # 统计日志
+                        'qualname': 'statistic',
+                        'level'   : 'INFO',
+                        'handlers': ['console'],
+                        'propagate': False,
+                },
+                'uvicorn.error': {  # 统计日志
+                        'qualname' : 'statistic',
+                        'level'    : 'ERROR',
+                        'handlers' : ['console'],
+                        'propagate': False,
                 }
-
 
         },
 
         # =========== formatters start =================
         'formatters'              : {
                 'format01': {
-                        'format' : '%(asctime)s %(levelname)s %(name)s pid:%(process)d %(filename)s:%(lineno)d %(message)s',
-                        'datefmt': '[%Y-%m-%d %H:%M:%S]'
+                        'format' : '%(asctime)s [%(levelname)s] [%(name)s] [pid:%(process)d] [%(filename)s:%(lineno)d] %(message)s',
+                        'datefmt': '[%Y-%m-%dT%H:%M:%S%z]'  # ISO 8601
                 },
                 'format02': {
-                        'format' : '%(asctime)s %(levelname)s %(name)s pid:%(process)d %(pathname)s:%(lineno)d %(message)s',
-                        'datefmt': '[%Y-%m-%d %H:%M:%S]'
+                        'format' : '%(asctime)s [%(levelname)s] [%(name)s] [pid:%(process)d] [%(filename)s:%(lineno)d] %(message)s',
+                        'datefmt': '[%Y-%m-%dT%H:%M:%S%z]'
                 }
 
         }

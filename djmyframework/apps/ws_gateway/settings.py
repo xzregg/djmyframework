@@ -4,7 +4,7 @@ import settings
 
 
 
-
+WEBSOCKET_SERVERS = []
 
 
 

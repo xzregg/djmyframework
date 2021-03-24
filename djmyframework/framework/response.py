@@ -115,8 +115,8 @@ class Response(RestResponse):
             if self.request:
                 if self.request.is_json():
                     return HttpResponse(json_dumps(self.context))
-                elif self.template_name:
-                    return render(self.request, self.template_name, self.context)
+            if self.template_name:
+                return render(self.request, self.template_name, self.context)
             return HttpResponse(self.context)
 
 

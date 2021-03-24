@@ -55,6 +55,7 @@ PROJECT_ROOT = BASE_DIR
         print('add config %s' % project_conf_dir)
 
         shutil.copyfile(os.path.join(djframework_dir, 'wsgi.py'), os.path.join(project_dir, 'wsgi.py'))
+        shutil.copyfile(os.path.join(djframework_dir, 'asgi.py'), os.path.join(project_dir, 'asgi.py'))
         shutil.copyfile(os.path.join(djframework_dir, 'manage.py'), os.path.join(project_dir, 'manage.py'))
         if not os.path.isfile(settings_file):
             open(os.path.join(project_dir, 'settings.py'), 'w').write(settings_text)

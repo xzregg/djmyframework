@@ -9,25 +9,30 @@
 
 # http://docs.gunicorn.org/en/latest/settings.html#worker-connections
 import multiprocessing
-import os
 
 LOGS_DIR = 'logs'
 loglevel = 'INFO'
-bind = "0.0.0.0:9103"
-#pidfile = "tmp/gunicorn.pid"
 
+bind = "0.0.0.0:9104"
+# pidfile = "tmp/gunicorn.pid"
 
 # 将stdout / stderr重定向到errorlog中的指定文件
 capture_output = True
-#errorlog = "%s/gunicornd.log" % LOGS_DIR
-#accesslog = errorlog
-#通过启动脚本控制daemon模式,配合在supervisord监控
+# errorlog = "%s/gunicornd.log" % LOGS_DIR
+# accesslog = errorlog
+# 通过启动脚本控制daemon模式,配合在supervisord监控
 daemon = False
 workers = multiprocessing.cpu_count() + 1
 
 worker_class = 'sync'
-threads = '10'
-#worker_class = 'egg:meinheld#gunicorn_worker'
+threads = workers * 4
+
+# worker_class = 'egg:meinheld#gunicorn_worker'
+
+# use gunicorn asgi
+# worker_class ='uvicorn.workers.UvicornWorker'
+# worker_class ='uvicorn.workers.UvicornH11Worker'
+
 max_requests = 10000
 max_requests_jitter = 100
 
