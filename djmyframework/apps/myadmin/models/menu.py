@@ -12,7 +12,7 @@ import urllib
 from django.apps import apps
 from django.core.validators import RegexValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_extensions.management.commands.show_urls import Command, simplify_regex
 
 from django.conf import settings

@@ -41,7 +41,7 @@ class AuthMiddleware(BaseMiddleware):
         pass
 
     def is_pass(self, view_func):
-        return view_func.__module__ == 'django.views.static' or view_func.__module__ == 'framework.static'
+        return view_func.__module__ == 'django.views.static' or view_func.__module__ == 'framework.static' or view_func.__module__.find('debug_toolbar')>=0
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         """静态文件及有"notauth" 属性view_func 免认证
@@ -58,7 +58,7 @@ class AuthMiddleware(BaseMiddleware):
                 check_view_func = getattr(check_view_func, view_kwargs['path'], None) or check_view_func
 
         # 不需要登陆
-        if is_notauth(check_view_func) or self.is_pass(view_func):  # 不需处理的函数不管
+        if is_notauth(check_view_func) or self.is_pass(view_func) :  # 不需处理的函数不管
             is_allow = True
 
             if ((request.path_info.find('/login') == 0 or request.path_info.find(
@@ -77,7 +77,7 @@ class AuthMiddleware(BaseMiddleware):
                 login_url = settings.LOGIN_URL
                 return HttpResponseRedirect('%s?from_url=%s' % (login_url, request.get_full_path()))
 
-            user_menus = request.user.resource.menu.using('read')  #
+            user_menus = request.user.resource.menu.using('read')
 
             class UserAllowMenu(dict):
                 def __init__(self, user):

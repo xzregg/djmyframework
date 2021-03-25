@@ -6,10 +6,10 @@
 # @Contact : xzregg@gmail.com
 # @Desc :
 
-import settings as s
+from .settings import settings
 
 
-def settings(request):
+def context_settings(request):
     return {
-            'settings': s
+            'settings': settings
     }

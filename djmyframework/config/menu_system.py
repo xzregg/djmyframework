@@ -1,11 +1,11 @@
 #格式: 索引 菜单名 url(只是全选也需要占位) 类型(0 不显示菜单,记录日志,1 不显示菜单,不记录日志 ,2 显示菜单,记录日志)
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from framework.route import reverse_view
 from myadmin.models.menu import MenuConfig as _m
 
 MenuList = [
 
-_m('17',_('系统管理')),
+_m('17',_('系统管理'),'system'),
 	_m('17.2',_('用户设置'),'/myadmin/user/list'),
 		_m('17.2.1',_('用户_添加'),'/myadmin/user/edit',0, 0),
 		_m('17.2.2',_('用户_编辑'),'/myadmin/user/delete',0, 0),
@@ -55,7 +55,7 @@ _m('18', _('SVN 管理'), reverse_view('svn_admin.svn_path.list'),is_show=1,is_l
 	_m('18.3', _('SVN 路径_删除'), reverse_view('svn_admin.svn_path.delete'), 0, 0),
 	_m('18.3', _('SVN db 文件预览'), reverse_view('svn_admin.svn_path.preview_db_files'), 0, 0),
 
-_m('29',_('用户权限'),'',0,0),
+_m('29',_('用户权限'),'user_permission',0,0),
 	_m('29.1',_('主页'), '/index', 1, 0),
 	_m('29.2',_('首页'),'/home', 1,0),
 	_m('29.3',_('修改自己密码'),'/myadmin/user/change_password',0, 0),

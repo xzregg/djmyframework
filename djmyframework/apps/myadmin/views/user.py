@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time: 2020-06-02 10:09:54.559700
 from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 
 from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilter
@@ -77,7 +77,7 @@ class UserSet(CurdViewSet):
     @swagger_auto_schema('post', request_body=ChangeStatusSerializer)
     @action(['post'])
     def change_status(self, request: Request, **kwargs):
-        params = self.ChangeStatusSerializer(request.data)
+        params = self.ChangeStatusSerializer(request.data).o
         if params.id:
             User.objects.filter(id__in=params.id).update(status=params.status)
         return Response()
@@ -94,9 +94,9 @@ class UserSet(CurdViewSet):
         """
         修改密码
         """
-        serializer = self.ChangePasswordSerializer(request.data)
+        serializer = self.ChangePasswordSerializer(request.data).o
         if self.is_post():
-            the_user = request.user
+            the_user:User = request.user
             old_password = serializer.old_password
             new_password1 = serializer.password
             new_password2 = serializer.password2
@@ -105,8 +105,8 @@ class UserSet(CurdViewSet):
             elif new_password1 != new_password2:
                 raise RspError(_('新密码两次不一样!'))
             else:
-                if the_user.password == old_password:
-                    the_user.password = new_password1
+                if the_user.check_password(old_password):
+                    the_user.set_password(new_password1)
                     the_user.clean_fields()
                     the_user.save(using='write')
                     from myadmin.views import logout

@@ -2,7 +2,7 @@
 # @Time: 2020-06-02 10:10:03.714421
 
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 
 from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilter

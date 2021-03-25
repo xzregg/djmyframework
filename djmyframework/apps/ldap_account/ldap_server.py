@@ -36,10 +36,11 @@ class LDAPServerFactory(ServerFactory):
         return proto
 
 
-from framework.apps import get_app_path
+from .settings import DBPATH
 
-DBPATH = os.path.join(get_app_path('ldap_account'), 'ldiftree')
-TMPDBPATH = os.path.join(settings.PROJECT_ROOT, 'ldiftree.tmp')
+TPL_DBPATH = os.path.join(get_app_path('ldap_account'), 'ldiftree')
+TMPDBPATH = DBPATH
+
 if not os.path.exists(TMPDBPATH):
     shutil.rmtree(TMPDBPATH, ignore_errors=True)
     shutil.copytree(DBPATH, TMPDBPATH)

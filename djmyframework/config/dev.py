@@ -18,7 +18,7 @@ from . import logging_config
 DEBUG = True
 
 from django.conf import settings
-
+from settings import *
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
@@ -33,7 +33,7 @@ from django.conf import settings
 
 STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
 STATIC_ROOT = None
-_DATABASES = {
+DATABASES = {
         'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME'  : os.path.join(settings.BASE_DIR, 'db.sqlite3'),
@@ -45,7 +45,7 @@ _DATABASES = {
 
 }
 
-DATABASES = {
+_DATABASES = {
         'default': {
 
                 'ENGINE'  : 'django.db.backends.mysql',
@@ -58,7 +58,7 @@ DATABASES = {
 
                 'PORT'    : '3306',
 
-                'OPTIONS' : {'isolation_level': None},
+                'OPTIONS' : {'isolation_level': None,'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
 
         }
 
@@ -74,23 +74,24 @@ if 'test' in sys.argv:
                     'NAME'  : ':memory'
             }
     }
-
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
 
 DATABASES['read'] = DATABASES['default'].copy()
 DATABASES['write'] = DATABASES['default'].copy()
 
-PASSWORD_HASHERS = [
-        'django.contrib.auth.hashers.MD5PasswordHasher',
-]
-# vINSTALLED_APPS += ['django_extensions']
 
-# INSTALLED_APPS += ['debug_toolbar']
+
+#INSTALLED_APPS += ['debug_toolbar']
 INTERNAL_IPS = [
         '*',
         '127.0.0.1'
 ]
 
-# MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+#MIDDLEWARE.insert(len(MIDDLEWARE)-1,'debug_toolbar.middleware.DebugToolbarMiddleware')
 DEBUG_TOOLBAR_CONFIG = {
         'JQUERY_URL': '',
 }

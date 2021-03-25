@@ -13,7 +13,7 @@ from django.conf import settings
 from django.forms.utils import pretty_name
 from django.http import Http404
 from django.shortcuts import render as _render
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.i18n import set_language
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets

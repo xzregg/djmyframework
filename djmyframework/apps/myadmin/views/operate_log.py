@@ -4,7 +4,7 @@
 
 from drf_yasg.utils import swagger_auto_schema
 from framework.filters import MyFilterBackend, OrderingFilter, MyFilterSerializer
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from framework.route import Route
 from framework.serializer import s,BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, ParamsSerializer, PaginationSerializer
 from framework.filters import MyFilterBackend

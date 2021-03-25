@@ -16,10 +16,11 @@ import traceback
 from collections import OrderedDict
 from importlib import import_module as _import_module
 
+from django.db import models
 from django.db.models.query import QuerySet
 from objectdict import ObjectDict as _ObjectDict
+from rest_framework import serializers
 from rest_framework.utils.encoders import JSONEncoder
-
 
 SortedDict = OrderedDict
 ObjectDict = _ObjectDict
@@ -77,6 +78,7 @@ def import_func(name):
 import_view = import_func
 import_module_attr = import_view
 
+
 class DateEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
@@ -86,17 +88,22 @@ class DateEncoder(json.JSONEncoder):
 
 class MyJsonEncoder(JSONEncoder):
     def default(self, obj):
-        from rest_framework import serializers
-        from framework.models import BaseModel
-        if isinstance(obj, QuerySet):
-            return [m.to_dict() for m in obj if isinstance(m,BaseModel)]
-        if isinstance(obj, serializers.Serializer):
+        if isinstance(obj, models.Model):
+            if hasattr(obj, 'to_dict'):
+                return obj.to_dict()
+        elif isinstance(obj, QuerySet):
+            return [m.to_dict() if hasattr(m, 'to_dict') else m for m in obj  ]
+        elif isinstance(obj, serializers.Serializer):
             return obj.data
         return super(MyJsonEncoder, self).default(obj)
 
 
 def json_dumps(obj, *args, **kwargs):
     return json.dumps(obj, ensure_ascii=False, cls=MyJsonEncoder, *args, **kwargs)
+
+
+def json_loadsobj(json_str, *args, **kwargs):
+    return json.loads(json_str, object_hook=ObjectDict, *args, **kwargs)
 
 
 def mkdirs(path, mode=0o755):

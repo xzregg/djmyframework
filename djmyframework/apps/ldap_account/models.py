@@ -2,13 +2,12 @@
 
 import os
 
-import passlib.hash
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from framework.apps import get_app_path
 from framework.utils import mkdirs
 from myadmin.models import Role, User, UserInfo
+from .settings import DBPATH
 
 # mail 字段是 mindoc 需要
 cn_tpl = '''dn: cn={cn},ou=people,dc=example,dc=com
@@ -47,7 +46,7 @@ dc: example'''
 # passlib.hash.ldap_salted_sha1.encrypt('123456')
 # '{SSHA}TgL7DCvwD6UkA4mgcOkEUJf2RdSZ0xqj'
 
-DBPATH = os.path.join(get_app_path('ldap_account'), 'ldiftree.tmp')
+
 OU_PEOPLE_DIR = os.path.join(DBPATH, 'dc=com.dir', 'dc=example.dir', 'ou=people.dir')
 OU_ROLE_DIR = os.path.join(DBPATH, 'dc=com.dir', 'dc=example.dir', 'ou=role.dir')
 mkdirs(OU_PEOPLE_DIR)
@@ -64,7 +63,7 @@ def user_save_ldap(sender, instance, **kwargs):
         employee_id = user_info.employee_id
         email = user_info.email
     save_path = os.path.join(OU_PEOPLE_DIR, file_name)
-    secret = passlib.hash.ldap_salted_sha1.encrypt(user.password)
+    secret = '{SSHA}%s' % user.password.split('$', 1)[1]
 
     if user.status == User.Status.NORMAL:
         with open(save_path, 'w') as f:

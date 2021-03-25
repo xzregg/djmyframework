@@ -7,21 +7,38 @@
 # @Desc    : 
 
 import json
+from channels.layers import get_channel_layer
+from channels.generic.websocket import WebsocketConsumer,JsonWebsocketConsumer
+import logging
 
-from channels.generic.websocket import WebsocketConsumer
-
-
-class WSkGateWayConsumer(WebsocketConsumer):
+logger = logging.getLogger('uvicorn.access')
+from asgiref.sync import async_to_sync
+class WSkGateWayConsumer(JsonWebsocketConsumer):
     def connect(self):
+        logger.info('connect')
+        async_to_sync(self.channel_layer.group_add)("test", self.channel_name)
         self.accept()
 
     def disconnect(self, close_code):
-        pass
+        async_to_sync(self.channel_layer.group_discard)("test", self.channel_name)
 
-    def receive(self, text_data):
-        text_data_json = json.loads(text_data)
+    def receive_json(self, text_data_json):
+        logger.info(text_data_json)
         message = text_data_json['message']
+        async_to_sync(self.channel_layer.group_send)(
+                "test",
+                {
+                        "type": "system_message",
+                        "text": message,
+                },
+        )
 
-        self.send(text_data=json.dumps({
+
+    def system_message(self, event):
+        print(event)
+        message = event['message']
+
+        # Send message to WebSocket单发消息
+        self.send_json({
                 'message': message
-        }))
+        })

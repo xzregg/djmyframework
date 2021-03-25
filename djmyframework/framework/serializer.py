@@ -7,10 +7,11 @@
 # @Desc    :
 
 import copy
+import datetime
 from collections.abc import Mapping
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from drf_dynamic_fields import DynamicFieldsMixin
 from rest_framework import serializers as s
 from rest_framework.fields import empty, SkipField
@@ -179,7 +180,7 @@ class RecursiveField(s.Serializer):
 
 class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerializer):
     create_datetime = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=False,
-                                      allow_null=True)
+                                      allow_null=True,default=datetime.datetime.now)
     update_datetime = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
                                       allow_null=True)
     _version = s.IntegerField(label=_('内置版本号'), read_only=True, required=False)

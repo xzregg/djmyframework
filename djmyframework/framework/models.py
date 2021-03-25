@@ -12,7 +12,7 @@ from django.core.validators import RegexValidator
 from django.db import close_old_connections, connection, models
 from django.urls import reverse
 from django.utils.encoding import force_bytes
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.fields import DictField
 
@@ -270,8 +270,8 @@ class BaseModel(models.Model, SqlModelMixin):
     id = models.BigAutoField(primary_key=True)
     _version = models.IntegerField(_("版本"), default=0, null=False)
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True)
-    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True)
+    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True,blank=True)
+    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True,blank=True)
 
     class Meta:
         abstract = True

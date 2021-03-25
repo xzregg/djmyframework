@@ -9,7 +9,7 @@ import datetime
 import time
 
 from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import settings
 from framework.route import Route
@@ -114,7 +114,7 @@ def login(request: Request):
                 raise LoginError('%s 未激活' % the_user.alias)
             if the_user.status != User.Status.NORMAL:
                 raise LoginErrors.ACCOUNT_STATUS_ERROR(_('账户已 %s') % the_user.get_status_display())
-            if the_user.password == password:
+            if the_user.check_password(password):
                 User.login_user(request, the_user)
                 redirect_url = request.query_params.get('from_url', settings.INDEX_URL)
                 return HttpResponseRedirect(redirect_url)
@@ -168,7 +168,10 @@ def phone_login(request):
 def logout(request):
     """登出
     """
+    from django.contrib.auth import logout
     plan_id = request.session.get('plan_id', None)  # 渠道登录的
+
+    logout(request)
     request.session.clear()
     if plan_id:
         return HttpResponseRedirect("/channel/login")
@@ -215,7 +218,7 @@ def register(request: Request, **kwargs):
         user_model = User()
         user_model.username = params.username
         user_model.alias = params.alias
-        user_model.password = params.password1
+        user_model.set_password(params.password1)
         user_model.reg_ip = request.real_ip
         user_model.clean_fields()
         user_model.save()

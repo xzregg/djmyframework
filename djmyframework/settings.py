@@ -28,7 +28,7 @@ import sys
 import os
 import jinja2
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from objectdict import sort_set_list
 from django.conf import settings
 
@@ -39,8 +39,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
-APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model','ws_gateway']
-
+APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model', 'ws_gateway']
+APPS += ['ldap_account']
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
 # Quick-start development settings - unsuitable for production
@@ -65,7 +65,9 @@ ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = 'myadmin.User'
 
 APPS = sort_set_list(APPS + settings.APPS)
-INSTALLED_APPS = ['framework',
+
+INSTALLED_APPS = ['djorm_pool',
+                  'framework',
                   'channels',
                   'django.contrib.auth',
                   'django.contrib.contenttypes',
@@ -80,7 +82,9 @@ INSTALLED_APPS = ['framework',
                   'django_extensions'
                   ] + APPS
 
+# from rest_framework.views import APIView
 # from rest_framework.renderers import JSONRenderer
+
 ############ REST_FRAMEWORK设置 ########
 REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES'      : [
@@ -96,6 +100,26 @@ DRF_DYNAMIC_FIELDS = {'SUPPRESS_CONTEXT_WARNING': True}
 if DEBUG:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
 #######################################
+
+############# 数据库连接池 配置 #############
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": ["redis://:123456@10.19.200.185:6379/2"],
+        },
+    },
+}
+########################################
+
+############# 数据库连接池 配置 #############
+DJORM_POOL_OPTIONS = {
+    "pool_size": 10,
+    "max_overflow": 0,
+    "recycle": 3600, # the default value
+}
+########################################
+
 
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
@@ -136,8 +160,8 @@ MIDDLEWARE = [
         'django.middleware.common.CommonMiddleware',
         # 'django.middleware.csrf.CsrfViewMiddleware',
         # 'django.contrib.auth.middleware.AuthenticationMiddleware',
-        # 'django.contrib.messages.middleware.MessageMiddleware',
-        #'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'django_user_agents.middleware.UserAgentMiddleware',
         'framework.middleware.BaseMiddleware',
         'myadmin.middleware.AuthMiddleware'
@@ -158,9 +182,9 @@ TEMPLATES = [
                                 'django.template.context_processors.debug',
                                 'django.template.context_processors.i18n',
                                 'django.template.context_processors.request',
-                                # 'django.contrib.auth.context_processors.auth',
+                                'django.contrib.auth.context_processors.auth',
                                 'django.contrib.messages.context_processors.messages',
-                                'framework.context_processors.settings'
+                                'framework.context_processors.context_settings'
                         ],
                         'environment'       : 'framework.jinja2_env.environment',
                         'undefined'         : jinja2.Undefined
@@ -174,7 +198,7 @@ TEMPLATES = [
                                 'django.template.context_processors.debug',
                                 'django.template.context_processors.i18n',
                                 'django.template.context_processors.request',
-                                # 'django.contrib.auth.context_processors.auth',
+                                'django.contrib.auth.context_processors.auth',
                                 'django.contrib.messages.context_processors.messages',
                         ],
                 },
@@ -201,8 +225,10 @@ AUTH_PASSWORD_VALIDATORS = [
                 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
         },
 ]
+
+# 密码加密策略,使用ldap
 PASSWORD_HASHERS = [
-        'django.contrib.auth.hashers.MD5PasswordHasher',
+        'framework.authentication.LDAPSHA1PasswordHasher',
 ]
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -231,7 +257,6 @@ MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media/')
 BASE_DIR = settings.BASE_DIR
 SECRET_KEY = settings.SECRET_KEY
 APPS_ROOT = settings.APPS_ROOT
-
 
 ######### 环境判断 #########
 if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:

@@ -7,7 +7,7 @@
 # @Desc    : 角色 相关模型
 from django.core.validators import RegexValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from framework.models import BaseModel
 from framework.utils.cache import CacheAttribute

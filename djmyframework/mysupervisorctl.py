@@ -30,7 +30,8 @@ default_supervisor_config = dict(
         stdout_events_enabled='false',
         loglevel='warn',
         stopsignal='TERM',
-        killasgroup='true'
+#        killasgroup='true',
+#        stopasgroup='true'
 )
 
 
@@ -44,12 +45,12 @@ process_name={name}
     '''
 
     supervisord_configs_dir = os.path.join(supervisor_config_dir, 'supervisord.conf.d')
-    for name,config in daemon_service_map.items():
+    for name, config in daemon_service_map.items():
 
         config_file_path = os.path.join(supervisord_configs_dir, '%s.ini' % name)
         if config.pop('off', False):
             if os.path.isfile(config_file_path):
-                print('the service %s is off remove configfile %s' % (name,config_file_path))
+                print('the service %s is off remove configfile %s' % (name, config_file_path))
                 os.remove(config_file_path)
             continue
 
