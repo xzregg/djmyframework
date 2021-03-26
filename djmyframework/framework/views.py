@@ -141,7 +141,6 @@ def model_search(request, model_objects, search=None, order=None, page_size=20, 
     }
     return params
 
-
 def api_view(http_method_names=None, detail=False):
     """
     Decorator that converts a function-based view into an APIView subclass.

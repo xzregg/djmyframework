@@ -202,9 +202,9 @@ class UserManagerMixin(object):
         user.status = cls.Status.NORMAL
         user.set_password( '123456')
         user.save()
-        return user
         print(user.role.all())
         print('创建相关角色后,请务必删除root账户!')
+        return user
 
 
 class User(BaseModel,AbstractBaseUser, UserManagerMixin):
@@ -229,7 +229,7 @@ class User(BaseModel,AbstractBaseUser, UserManagerMixin):
     alias = models.CharField(_('别名'), max_length=50, db_index=True)
 
     username = models.CharField(_('用户名'), max_length=50, db_index=True, unique=True, validators=[LetterValidator])
-    password = models.CharField('密码', max_length=32, db_index=True, blank=True, validators=[])
+    password = models.CharField('密码', max_length=64, db_index=True, blank=True, validators=[])
     last_ip = models.CharField(_('最后登录ip'), max_length=20, default='', blank=True)
     reg_ip = models.CharField('注册IP', max_length=20, default='', blank=True)
     last_time = models.DateTimeField(_('最后登录时间'), auto_now_add=True)
@@ -240,13 +240,13 @@ class User(BaseModel,AbstractBaseUser, UserManagerMixin):
     class Meta:
         ordering = ['id']
 
-    @property
-    def is_anonymous(self):
-        return True
-
-    @property
-    def is_authenticated(self):
-        return False
+    # # @property
+    # # def is_anonymous(self):
+    # #     return True
+    #
+    # @property
+    # def is_authenticated(self):
+    #     return False
 
     def get_username(self):
         return self.username
@@ -300,13 +300,12 @@ class User(BaseModel,AbstractBaseUser, UserManagerMixin):
         return self.resource.menu.using('read').filter(name__in=name_list).exists()
 
     def save(self, *args, **kwargs):
-
         super(User, self).save(*args, **kwargs)  # 新建时没有对象,先保存一下
         if not self.id:
             UserInfo.objects.get_or_create(user=self)
         if self.role_ids:  # 如果角色的列表存在,就保存
-            self.role.clear()
-            self.role.add(*Role.objects.filter(id__in=self.role_ids))
+           self.role.clear()
+           self.role.add(*Role.objects.filter(id__in=self.role_ids))
 
     @classmethod
     def login_user(cls, request, the_user):

@@ -1,12 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from framework.route import Route
-from framework.views import render_to_response,api_get
 from django.contrib import messages
 
+from framework.route import Route
+from framework.views import api_get, notauth, render_to_response
+from myadmin.models import User
+from ..serializer import ModelEventDataSer,ModelEventActions
+
+
 @Route()
+@notauth
 @api_get()
-def index(request):
-    a=3
-    messages.info(request,'asdkasl;kd')
-    return render_to_response('ws_gateway/index.html', locals())
+def test(request):
+    messages.info(request, 'test messages')
+    users = list(User.objects.all())
+    print(users)
+    return render_to_response('ws_gateway/test.html', locals())
+
+
+@Route()
+@notauth
+@api_get()
+def js(request):
+    return render_to_response('ws_gateway/ws.js', locals(), content_type='application/javascript')

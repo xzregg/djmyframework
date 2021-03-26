@@ -59,3 +59,15 @@ DATABASES = {
 DATABASES['read'] = DATABASES['default']
 DATABASES['write'] = DATABASES['default']
 DATABASES['db'] = DATABASES['default']
+
+
+#SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://:123456@10.19.200.185:6379/2",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }

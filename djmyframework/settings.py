@@ -32,7 +32,7 @@ from django.utils.translation import gettext_lazy as _
 from objectdict import sort_set_list
 from django.conf import settings
 
-DEBUG = True
+DEBUG = False
 SECRET_KEY = 'sub6!jx!fuo+%lugsjabk0=il21grymbqwx0-+v5psvb=itq#$'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -101,7 +101,8 @@ if DEBUG:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
 #######################################
 
-############# 数据库连接池 配置 #############
+
+############# channels 配置 #############
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -114,22 +115,22 @@ CHANNEL_LAYERS = {
 
 ############# 数据库连接池 配置 #############
 DJORM_POOL_OPTIONS = {
-    "pool_size": 10,
+    "pool_size": 5,
     "max_overflow": 0,
     "recycle": 3600, # the default value
 }
 ########################################
 
-
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
 # SESSION_SAVE_EVERY_REQUEST = True
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
 
 ############# CELERY 配置 #############
 # https://docs.celeryproject.org/en/v5.0.5/userguide/configuration.html
 CELERY_TIMEZONE = 'Asia/Shanghai'  # 并没有北京时区，与DJANGO TIME_ZONE应该一致
-CELERY_BROKER_URL = 'redis://:123456@10.19.200.185:6379/1'  # 任何可用的redis都可以，不一定要在django server运行的主机上
+CELERY_BROKER_URL = 'redis://:123456@10.19.200.185:6379/1'
 CELERY_RESULT_BACKEND = 'django-db'
 # CELERY_CACHE_BACKEND = 'django-cache'
 ## 异步任务发送最大重试次数,redis 任务发送错误,重试次数

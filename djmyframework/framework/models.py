@@ -354,43 +354,42 @@ class BaseModel(models.Model, SqlModelMixin):
             assert value != None and value != '', '%s 不能为空!' % self.get_verbose_name(name)
         setattr(self, name, value)
 
-    def to_dict(self, ignore_list=()):
-        fields = []
-        for field in self._meta.fields:
-            fields.append(field.name)
-
+    def to_dict(self, ignore_list=(),has_m2mfields=False,is_msgpack=False):
         d = {}
+        for field in self._meta.fields:
+            attr = field.name
+            attr_value = getattr(self, attr)
 
-        for attr in fields:
-            if isinstance(getattr(self, attr), datetime.datetime):
-                d[attr] = getattr(self, attr).strftime('%Y-%m-%d %H:%M:%S')
-            elif isinstance(getattr(self, attr), datetime.date):
-                d[attr] = getattr(self, attr).strftime('%Y-%m-%d')
-            # 特殊处理datetime的数据
-            elif isinstance(getattr(self, attr), BaseModel):
-                d[attr] = getattr(self, attr).get_dict()
+                # 特殊处理datetime的数据
+            if isinstance(attr_value, datetime.datetime) and is_msgpack:
+                d[attr] = attr_value.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(attr_value, datetime.date):
+                d[attr] = attr_value.strftime('%Y-%m-%d') and is_msgpack
             # 递归生成BaseModel类的dict
-            elif self.is_attr_instance(attr, int) or self.is_attr_instance(attr, float) \
-                    or self.is_attr_instance(attr, str):
+            elif isinstance(attr_value, BaseModel):
+                d[attr] = attr_value.get_dict(has_m2mfields=has_m2mfields,is_msgpack=is_msgpack)
+            elif isinstance(attr_value, (int,str,float)):
                 d[attr] = getattr(self, attr)
-            # else:
-            #     d[attr] = getattr(self, attr)
-        m2mfields = self.__class__._meta.many_to_many
-        if m2mfields:
-            for m in m2mfields:
-                attr_name = m.attname
-                if hasattr(self, attr_name):
-                    attlist = getattr(self, attr_name).all()
-                    l = []
-                    for attr in attlist:
-                        if isinstance(attr, BaseModel):
-                            l.append(attr.to_dict())
-                        else:
-                            dic = attr.__dict__
-                            if '_state' in dic:
-                                dic.pop('_state')
-                            l.append(dic)
-                    d[attr_name] = l
+            elif not is_msgpack:
+                 d[attr] = getattr(self, attr)
+
+        if has_m2mfields:
+            m2mfields = self.__class__._meta.many_to_many
+            if m2mfields:
+                for m in m2mfields:
+                    attr_name = m.attname
+                    if hasattr(self, attr_name):
+                        attlist = getattr(self, attr_name).all()
+                        l = []
+                        for attr in attlist:
+                            if isinstance(attr, BaseModel):
+                                l.append(attr.to_dict(is_msgpack=is_msgpack))
+                            else:
+                                dic = attr.__dict__
+                                if '_state' in dic:
+                                    dic.pop('_state')
+                                l.append(dic)
+                        d[attr_name] = l
         # 由于ManyToMany类不能存在于_meat.fields，因而子类需要在getMtMFiled中返回这些字段
         if 'basemodel_ptr' in d:
             d.pop('basemodel_ptr')

@@ -24,16 +24,11 @@ from settings import *
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
 # SESSION_SAVE_EVERY_REQUEST = True
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
-# CACHES = {
-#         'default': {
-#                 'BACKEND' : 'django.core.cache.backends.filebased.FileBasedCache',
-#                 'LOCATION': os.path.join(BASE_DIR, 'django_cache'),
-#         }
-# }
+
 
 STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
 STATIC_ROOT = None
-DATABASES = {
+_DATABASES = {
         'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME'  : os.path.join(settings.BASE_DIR, 'db.sqlite3'),
@@ -45,7 +40,7 @@ DATABASES = {
 
 }
 
-_DATABASES = {
+DATABASES = {
         'default': {
 
                 'ENGINE'  : 'django.db.backends.mysql',
@@ -99,7 +94,7 @@ logging.warning('This env is dev,DEBUG = True')
 logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
 # 日志打印 sql
-logging_config.LOGGING['loggers']['1django.db.backends'] = {
+logging_config.LOGGING['loggers']['adjango.db.backends'] = {
         'handlers' : ['console'],
         'propagate': False,
         'level'    : 'DEBUG',
