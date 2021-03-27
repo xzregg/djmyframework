@@ -32,7 +32,7 @@ from django.utils.translation import gettext_lazy as _
 from objectdict import sort_set_list
 from django.conf import settings
 
-DEBUG = False
+DEBUG = True
 SECRET_KEY = 'sub6!jx!fuo+%lugsjabk0=il21grymbqwx0-+v5psvb=itq#$'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -104,20 +104,20 @@ if DEBUG:
 
 ############# channels 配置 #############
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": ["redis://:123456@10.19.200.185:6379/2"],
+        "default": {
+                "BACKEND": "channels_redis.core.RedisChannelLayer",
+                "CONFIG" : {
+                        "hosts": ["redis://:123456@10.19.200.185:6379/2"],
+                },
         },
-    },
 }
 ########################################
 
 ############# 数据库连接池 配置 #############
 DJORM_POOL_OPTIONS = {
-    "pool_size": 5,
-    "max_overflow": 0,
-    "recycle": 3600, # the default value
+        "pool_size"   : 5,
+        "max_overflow": 0,
+        "recycle"     : 3600,  # the default value
 }
 ########################################
 

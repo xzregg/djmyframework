@@ -15,14 +15,18 @@ logger = logging.getLogger('uvicorn.access')
 from .serializer import ModelEventDataSer, ModelEventActions
 from django.apps import apps
 
+
 class ModelSignalConsumer(AsyncJsonWebsocketConsumer):
     join_groups = set()
     req_id = 0
-    allow_groups_map = dict([(m.get_table_name(),m) for m in apps.get_models() if  hasattr(m,'get_table_name')] )
+    allow_groups_map = dict([(m.get_table_name(), m) for m in apps.get_models() if hasattr(m, 'get_table_name')])
 
+    @property
+    def clinet_name(self):
+        return '%s %s' % (str(self.scope['client']), self.channel_name)
 
     async def join_to_group(self, group_name):
-        logger.info('%s %s join %s' % (str(self.scope['client']),self.channel_name, group_name))
+        logger.info('%s join %s' % (self.clinet_name, group_name))
         self.join_groups.add(group_name)
         await self.channel_layer.group_add(group_name, self.channel_name)
 
@@ -31,12 +35,13 @@ class ModelSignalConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_discard(group_name, self.channel_name)
 
     async def connect(self):
-        logger.info('%s connect' % self.channel_name)
         user = self.scope['user']
         if user.is_authenticated:
+            logger.info('%s connect' % self.clinet_name)
             await self.join_to_group('default')
             await self.accept()
         else:
+            logger.info('%s not authenticated' % self.clinet_name)
             await self.close()
 
     async def disconnect(self, close_code):
@@ -47,7 +52,7 @@ class ModelSignalConsumer(AsyncJsonWebsocketConsumer):
         event_data = ModelEventDataSer(event)
         event_data.o.req_id = event_data.o.req_id or self.req_id
         if event_data.o.action == ModelEventActions.SUBSCRIBE:
-            if self.allow_groups_map.get(event_data.o.model,None):
+            if self.allow_groups_map.get(event_data.o.model, None):
                 await self.join_to_group(event_data.o.model)
         await self.send_json(event_data.data)
 

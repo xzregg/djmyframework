@@ -5,7 +5,6 @@ from django.contrib import messages
 from framework.route import Route
 from framework.views import api_get, notauth, render_to_response
 from myadmin.models import User
-from ..serializer import ModelEventDataSer,ModelEventActions
 
 
 @Route()

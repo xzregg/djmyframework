@@ -13,13 +13,13 @@ import multiprocessing
 LOGS_DIR = 'logs'
 loglevel = 'INFO'
 
-bind = "0.0.0.0:9104"
+bind = "0.0.0.0:8000"
 # pidfile = "tmp/gunicorn.pid"
 
 # 将stdout / stderr重定向到errorlog中的指定文件
 capture_output = True
-# errorlog = "%s/gunicornd.log" % LOGS_DIR
-# accesslog = errorlog
+errorlog = '-'  # '"%s/gunicornd.log" % LOGS_DIR
+accesslog = errorlog
 # 通过启动脚本控制daemon模式,配合在supervisord监控
 daemon = False
 workers = multiprocessing.cpu_count() + 1
