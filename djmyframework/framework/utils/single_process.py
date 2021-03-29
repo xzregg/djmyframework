@@ -45,8 +45,7 @@ class PidFile(object):
                 raise
         os.remove(self.path)
 
-
-def SignleProcessDeco(path=''):
+def SingleProcessDeco(path=''):
     '''保证只有单个进程在执行
     '''
     def repl(f):
@@ -64,7 +63,7 @@ def SignleProcessDeco(path=''):
 
 
 if __name__ == "__main__":
-    @SignleProcessDeco('my.pid')
+    @SingleProcessDeco('my.pid')
     def main():
         import time
         print ('running')
