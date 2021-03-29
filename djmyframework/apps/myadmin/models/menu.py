@@ -20,7 +20,7 @@ from framework.enums import BoolEnum
 from framework.models import BaseModel
 from framework.views import is_notcheck
 from framework.utils import ObjectDict
-from framework.utils.signle_process import SignleProcessDeco
+from framework.utils.single_process import SingleProcessDeco
 
 _logger = logging.getLogger(__file__)
 
@@ -221,7 +221,7 @@ class MenuConfig(object):
     Menu_model_map = {}
 
     @classmethod
-    @SignleProcessDeco()
+    @SingleProcessDeco()
     def create_menu_from_config(cls, menu_config_list=None, force=False):
 
         menu_config_list = menu_config_list
