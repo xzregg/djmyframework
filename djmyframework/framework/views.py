@@ -367,7 +367,7 @@ class BaseViewSet(viewsets.GenericViewSet):
         return self.request.is_json()
 
     @notcheck
-    def options(self, request, *args, **kwargs):
+    def metadata(self, request, *args, **kwargs):
         """
         获取模型定义
         """
@@ -383,7 +383,7 @@ class BaseViewSet(viewsets.GenericViewSet):
             # metadata['serializer'] = simple_meta.get_serializer_info(serializer)
             metadata['serializer'] = view.get_serializer().to_schema()
         data = metadata
-        return Response(data, template_name='framework/options.html')
+        return Response(data, template_name='framework/metadata.html')
 
 
 class CurdViewSet(BaseViewSet):
@@ -419,12 +419,9 @@ class CurdViewSet(BaseViewSet):
         查询
         """
         if not self.is_ajax() and not self.is_json():
-            return Response()
-
+            return Response(self.get_serializer_class()())
         queryset = self.filter_queryset(self.get_queryset())
-
         page = self.paginate_queryset(queryset)
-
         serializer = self.get_serializer(page, many=True, fields=self.queryset_fields)
         return self.get_paginated_response(serializer.data)
 
@@ -460,7 +457,7 @@ class CurdViewSet(BaseViewSet):
             model_instance._prefetched_objects_cache = {}
         return serializer, msg
 
-    def save(self, request: Request):
+    def save(self, request: Request,*args, **kwargs):
         """
         保存
         """

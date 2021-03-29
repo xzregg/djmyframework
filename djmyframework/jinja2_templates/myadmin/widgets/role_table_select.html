@@ -1,8 +1,8 @@
-{#{% load i18n %}#}
-{#{% load mytags %} #}
+
 <!-- 角色选择控件 -->
 
-<table style="height: 400px;"
+
+<table style=""
        id="role-table"
        data-toggle="table"
        data-url="/myadmin/role/list?fields=id,type_alias,alias,parent&page_size=10000">
@@ -14,17 +14,19 @@
 </table>
 
 <script>
-    var select_role_list = {{ select_list |json_dumps|safe }} || [];
+    var select_role_list =
+    {{ select_list |json_dumps|safe }} ||
+    [];
 
-    $(function(){
+    $(function () {
         disabledEditBtn();
     }); // 沙箱前必须加;
 
-    (function () {
+    ;(function () {
         var $table = $('#role-table')
         $table.bootstrapTable({
             height: 400,
-            striped:true,
+            striped: true,
             selectItemName: 'role',//checkbox name
             // multipleSelectRow: true,
             uniqueId: 'id',
@@ -74,8 +76,8 @@
                 checkbox: true,
                 align: 'center',
                 valign: 'middle',
-                width:40,
-            },  {
+                width: 40,
+            }, {
                 field: 'alias',
                 title: "{{ _('角色') }}",
                 align: 'middle',

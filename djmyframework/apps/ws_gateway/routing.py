@@ -6,11 +6,11 @@
 # @Contact : xzregg@gmail.com
 # @Desc    : 
 
+
 from django.urls import re_path
 
-from . import consumers
-from . import model_signal_consumers
+from . import ws_gateway_consumers
 
 websocket_urlpatterns = [
-    re_path(r'^ws[/]?$', model_signal_consumers.ModelSignalConsumer.as_asgi()),
+    re_path(r'^ws[/]?$', ws_gateway_consumers.WebsocketGateWayConsumer.as_asgi()),
 ]

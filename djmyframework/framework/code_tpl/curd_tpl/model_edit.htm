@@ -18,8 +18,7 @@
         <hr>
         <br>
 
-        <form class="form-horizontal"
-              role="form">
+        <form class="form-horizontal"role="form">
             <div class="row edit-form-container">
                 <div class="col-sm-12">
                 % for f in fields:
@@ -47,8 +46,8 @@
                 </div>
             </div>
 
-
         </form>
+
     </div>
     <script>
         var modelData = Object({{ data|json_dumps|safe }}) || Object(${ model(id=1).to_json() })

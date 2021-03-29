@@ -5,6 +5,7 @@ from ..serializer import BaseModelSerializer
 from ..translation import _
 from ..utils import json_dumps
 from . import BaseTestCase
+import json
 
 class TestFrameWork(BaseTestCase):
 
@@ -107,6 +108,8 @@ class TestFrameWork(BaseTestCase):
 
         ss = ChangePasswordSerializer()
         ss.o.old_password = 'asd'
+        ss.new_password2 = 'asd'
+#        ss.validation()
         self.assertEqual(ss.data.old_password, 'asd')
 
         from framework.utils import json_dumps

@@ -17,20 +17,20 @@
     Vue.use(window['vue-dash-event'])
 </script>
 
+<!-- WdatePicker 日期控件-->
+<script type="text/javascript" src="/static/assets/My97DatePicker/WdatePicker.js"></script>
+
 <!-- bootstrap -->
 <script type="text/javascript" src="/static/assets/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
 <link rel="stylesheet" href="/static/assets/bootstrap-3.3.7-dist/css/bootstrap.min.css"/>
-
 <link id="bootswatch-css" rel="stylesheet" href="/static/assets/bootstrap-3.3.7-dist/css/bootstrap.min.css"/>
-
-{#<script type="text/javascript" src="/static/assets/bootstrap-3.3.7-dist/js/bootstrap-hover-dropdown.min.js"></script>#}
 
 <!-- bootstrap-submenu -->
 <link rel="stylesheet" href="/static/assets/bootstrap-submenu-2.x/dist/css/bootstrap-submenu.css"/>
 <script type="text/javascript" src="/static/assets/bootstrap-submenu-2.x/dist/js/bootstrap-submenu.js"></script>
 
+
 <!-- dialog -->
-<!-- <script type="text/javascript" src="/static/js/artDialog.js"></script>  -->
 <script type="text/javascript" src="/static/assets/artDialog/artDialog.source.js"></script>
 <script type="text/javascript" src="/static/assets/artDialog/iframeTools.source.js"></script>
 <link rel="stylesheet" href="/static/assets/artDialog/artDialog.css"/>
@@ -40,42 +40,38 @@
 <script type="text/javascript" src="/static/assets/jquery/jquery.form.min.js"></script>
 <script type="text/javascript" src="/static/assets/serializeToJSON/dist/jquery.serializeToJSON.js"></script>
 
+
 <!-- 选择框 https://select2.org/programmatic-control/methods -->
 <script type="text/javascript" src="/static/assets/select2-4.0.5/dist/js/select2.min.js"></script>
-
 <link rel="stylesheet" href="/static/assets/select2-4.0.5/dist/css/select2.min.css"/>
 <link rel="stylesheet" href="/static/assets/select2-4.0.5/dist/css/select2-bootstrap.css"/>
 
+
 <!--  bootstrap-table https://examples.bootstrap-table.com/index.html?bootstrap3#view-source -->
-<link href="/static/assets/bootstrap-table/bootstrap-table-group-by.css" rel="stylesheet">
-<link href="/static/assets/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+
+<link href="/static/assets/bootstrap-table/1.18.3/bootstrap-table.min.css" rel="stylesheet">
 <script src="/static/assets/bootstrap-table/tableExport.min.js"></script>
-<script src="/static/assets/bootstrap-table/bootstrap-table.min.js"></script>
-<script src="/static/assets/bootstrap-table/bootstrap-table-locale-all.min.js"></script>
-<script src="/static/assets/bootstrap-table/bootstrap-table-export.min.js"></script>
+<script src="/static/assets/bootstrap-table/1.18.3/bootstrap-table.min.js"></script>
+<script src="/static/assets/bootstrap-table/1.18.3/bootstrap-table-locale-all.min.js"></script>
+<script src="/static/assets/bootstrap-table/1.18.3/extensions/export/bootstrap-table-export.min.js"></script>
 
-<link href="/static/assets/bootstrap-table/bootstrap-table-fixed-columns.min.css" rel="stylesheet">
-<script src="/static/assets/bootstrap-table/bootstrap-table-fixed-columns.min.js"></script>
+<link href="/static/assets/bootstrap-table/1.18.3/extensions/fixed-columns/bootstrap-table-fixed-columns.min.css" rel="stylesheet">
+<script src="/static/assets/bootstrap-table/1.18.3/extensions/fixed-columns/bootstrap-table-fixed-columns.min.js"></script>
 
-<link href="/static/assets/bootstrap-table/bootstrap-table-page-jump-to.min.css" rel="stylesheet">
-<script src="/static/assets/bootstrap-table/bootstrap-table-page-jump-to.min.js"></script>
-<script src="/static/assets/bootstrap-table/bootstrap-table-group-by.min.js"></script>
-<script src="/static/assets/bootstrap-table/bootstrap-table-filter-control.min.js"></script>
-
-{##}
-{#<!-- multiple-select http://multiple-select.wenzhixin.net.cn/examples#multiple-items.html-->#}
-{#<script type="text/javascript" src="/static/assets/multiple-select-1.5.2/dist/multiple-select.min.js"></script>#}
-{#<script type="text/javascript" src="/static/assets/multiple-select-1.5.2/dist/multiple-select-locale-all.min.js"></script>#}
-{#<link rel="stylesheet" href="/static/assets/multiple-select-1.5.2/dist/multiple-select.min.css"/>#}
-{#<link rel="stylesheet" href="/static/assets/multiple-select-1.5.2/dist/themes/bootstrap.min.css"/>#}
+<link href="/static/assets/bootstrap-table/1.18.3/extensions/page-jump-to/bootstrap-table-page-jump-to.min.css" rel="stylesheet">
+<script src="/static/assets/bootstrap-table/1.18.3/extensions/page-jump-to/bootstrap-table-page-jump-to.min.js"></script>
+<link href="/static/assets/bootstrap-table/1.18.3/extensions/group-by-v2/bootstrap-table-group-by.min.css" rel="stylesheet">
+<script src="/static/assets/bootstrap-table/1.18.3/extensions/group-by-v2/bootstrap-table-group-by.min.js"></script>
+<script src="/static/assets/bootstrap-table/1.18.3/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
 
 <!-- jquery-treegrid http://maxazan.github.io/jquery-treegrid/ -->
 <link rel="stylesheet" href="/static/assets/jquery-treegrid/css/jquery.treegrid.min.css"/>
 <script src="/static/assets/jquery-treegrid/js/jquery.treegrid.min.js"></script>
-<script src="/static/assets/jquery-treegrid/js/bootstrap-table-treegrid.min.js"></script>
+<script src="/static/assets/bootstrap-table/1.18.3/extensions/treegrid/bootstrap-table-treegrid.min.js"></script>
 
-<!-- WdatePicker 日期控件-->
-<script type="text/javascript" src="/static/assets/My97DatePicker/WdatePicker.js"></script>
+<script src="/static/assets/bootstrap-table/1.18.3/bootstrap-table-vue.min.js"></script>
+<!-- bootstrap-table end-->
+
 
 <!--  daterangepicker  https://www.daterangepicker.cn/#config -->
 <link href="/static/assets/daterangepicker/daterangepicker.css" rel="stylesheet">
@@ -86,6 +82,7 @@
 <!--  Bootstrap Tags Input  http://bootstrap-tagsinput.github.io/bootstrap-tagsinput/examples/ -->
 <link href="/static/assets/bootstrap-tagsinput-latest/dist/bootstrap-tagsinput.css" rel="stylesheet">
 <script src="/static/assets/bootstrap-tagsinput-latest/dist/bootstrap-tagsinput.min.js"></script>
+
 
 <!-- contextmenu -->
 <script type="text/javascript" src="/static/js/jquery.contextmenu.r2.js"></script>

@@ -63,7 +63,7 @@ class RoleSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListRoleRspSerializer)
     def list(self, request, *args, **kwargs):
-        return render_to_response("myadmin/role/list.html", super(RoleSet, self).list(request, *args, **kwargs))
+        return render_to_response("myadmin/role/list.html", super().list(request, *args, **kwargs))
 
     class RoleEditParmas(EditParams):
         type = s.IntegerField(label=_('类型'), required=False)

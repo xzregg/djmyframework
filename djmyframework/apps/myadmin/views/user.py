@@ -9,7 +9,7 @@ from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, \
     PaginationSerializer, ParamsSerializer, s
 from framework.utils import DATETIMEFORMAT
-from framework.views import action, CurdViewSet, notcheck, Request, Response, RspError
+from framework.views import action, CurdViewSet, notcheck, render_to_response, Request, Response, RspError
 from myadmin.models import User
 
 
@@ -50,13 +50,12 @@ class UserSet(CurdViewSet):
         return User.objects.all().prefetch_related(*['role']).select_related(*[])
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListUserRspSerializer)
-    def list(self, request, *args, **kwargs):
-
-        return super(UserSet, self).list(request, *args, **kwargs)
+    def list(self, request):
+        return render_to_response("myadmin/user/list.html", super().list(request))
 
     @swagger_auto_schema(query_serializer=EditParams, responses=UserSerializer)
-    def edit(self, request, *args, **kwargs):
-        return super(UserSet, self).edit(request, *args, **kwargs)
+    def edit(self, request):
+        return render_to_response("myadmin/user/edit.html", super().edit(request))
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=UserSerializer, responses=UserSerializer)
     def save(self, request, *args, **kwargs):
@@ -96,7 +95,7 @@ class UserSet(CurdViewSet):
         """
         serializer = self.ChangePasswordSerializer(request.data).o
         if self.is_post():
-            the_user:User = request.user
+            the_user: User = request.user
             old_password = serializer.old_password
             new_password1 = serializer.password
             new_password2 = serializer.password2
@@ -136,4 +135,3 @@ class UserSet(CurdViewSet):
                 return HttpResponseRedirect('/myadmin/index')
         user_list = User.objects.all()
         return Response(locals())
-

@@ -6,15 +6,12 @@
 # @Contact : xzregg@gmail.com
 # @Desc    :
 import logging
-import os
 import re
 from functools import lru_cache
 
-from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers as s, status
 from rest_framework.exceptions import APIException
 from rest_framework.request import Request
@@ -22,6 +19,7 @@ from rest_framework.response import Response as RestResponse
 
 from .renderers import JSONRenderer
 from .serializer import DataSerializer
+from .translation import _
 from .utils import json_dumps, ObjectDict, trace_msg
 
 SUCCESS_CODE = 0
@@ -46,7 +44,7 @@ class RspData(RspStruct):
 
 
 class RspSerializer(DataSerializer):
-    code = s.ChoiceField(label=_("业务错误代码"), choices=[(RspStruct.code, RspStruct.msg)])
+    code = s.ChoiceField(label=_("业务错误代码"), choices=[(RspStruct.code, RspStruct.msg)], default=RspStruct.code)
     msg = s.CharField(label=_("业务消息"), default=RspStruct.msg)
     data = s.DictField(label=_("业务数据"), required=False)
 

@@ -18,7 +18,7 @@ def model_post_save_signal(sender, instance, created, **kwargs):
     if isinstance(instance, BaseModel):
         group_name = sender.get_table_name()
         event = ModelEventDataSer()
-        event.o.type = 'broadcast_model_signal'
+        event.o.group = group_name
         event.o.model = group_name
         event.o.action = ModelEventActions.SAVE
         event.o.data = instance.to_dict(is_msgpack=True)
@@ -29,10 +29,10 @@ def model_post_delete_signal(sender, instance, **kwargs):
     if isinstance(instance, BaseModel):
         group_name = sender.get_table_name()
         event = ModelEventDataSer()
-        event.o.type = 'broadcast_model_signal'
+        event.o.group = group_name
         event.o.model = group_name
         event.o.action = ModelEventActions.DELETE
-        event.o.data = instance.to_dict(has_m2mfields=False,is_msgpack=True)
+        event.o.data = instance.to_dict(has_m2mfields=False, is_msgpack=True)
         group_send(group_name, event.data)
 
 

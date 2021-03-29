@@ -121,6 +121,10 @@ class ParamsSerializer(s.Serializer):
         ret_data = super().data
         return WritableSerializerReturnDict(ret_data, serializer=self)
 
+    def validation(self):
+        self.initial_data = self.data
+        self.is_valid(True)
+        return self.o
 
     @CachedClassAttribute
     def declared_fields(cls):
@@ -180,7 +184,7 @@ class RecursiveField(s.Serializer):
 
 class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerializer):
     create_datetime = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=False,
-                                      allow_null=True,default=datetime.datetime.now)
+                                      allow_null=True, default=datetime.datetime.now)
     update_datetime = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
                                       allow_null=True)
     _version = s.IntegerField(label=_('内置版本号'), read_only=True, required=False)

@@ -248,7 +248,7 @@ $.dialog = myDialog
 function alertError(msg) {
     msg = msg.replace(/\n/, '<br>')
     return art.dialog({
-        id: msg
+        id: msg, width: "50%"
     }).title('Alert').content('<div class="pre-scrollable alert alert-danger">' + msg + '</div>')
 }
 
@@ -537,7 +537,7 @@ $(document).on('focus', '.datetime', function () {
         "autoUpdateInput": true,
         "ranges": dateRanges,
         "locale": Object.assign(LOCALE_JSON.daterangepicker.locale, {format: 'YYYY-MM-DD'})
-    }).on("hide.daterangepicker", function (ev,picker) {
+    }).on("hide.daterangepicker", function (ev, picker) {
         if (!picker.startDate._isValid) {
             $(this).val('')
         }
@@ -558,7 +558,7 @@ $(document).on('focus', '.datetime', function () {
         "autoUpdateInput": true,
         "ranges": dateRanges,
         "locale": Object.assign(LOCALE_JSON.daterangepicker.locale, {format: 'YYYY-MM-DD HH:mm:ss'})
-    }).on("hide.daterangepicker", function (ev,picker) {
+    }).on("hide.daterangepicker", function (ev, picker) {
         if (!picker.startDate._isValid) {
             $(this).val('')
         }
@@ -573,7 +573,7 @@ $(document).on('focus', '.datetime', function () {
         // "maxDate": moment(),
         "locale": Object.assign(LOCALE_JSON.daterangepicker.locale, {format: 'YYYY-MM-DD HH:mm:ss'}),
         "ranges": dateRanges,
-    }).on("hide.daterangepicker", function (ev,picker) {
+    }).on("hide.daterangepicker", function (ev, picker) {
         if (!picker.startDate._isValid) {
             $(this).val('')
         }
@@ -683,14 +683,14 @@ function addHelpText(data, $form) {
         var $helpTextEle = $('#help_text_' + k)
 
 
-        if ($helpTextEle.length == 0 && $input.length>0) {
+        if ($helpTextEle.length == 0 && $input.length > 0) {
             $helpTextEle = $('<div id="help_text_' + k + '" class="middle text-danger help_text"></div>')
             $input.after($helpTextEle)
             //$input.focus()
         }
         if ($helpTextEle.length == 0) {
 
-            alertError('error input :' + k +' : '+ data[k])
+            alertError('error input :' + k + ' : ' + data[k])
         } else {
             $helpTextEle.html(data[k].join(','))
         }
@@ -981,8 +981,8 @@ var IgnoreCodemirrorKeyEvents = ['Backspace', 'Enter', 'ArrowDown', 'ArrowLeft',
 function codemirrorShowHint(editor, event) {
     console.dir(event)
     var ascii_code = event.key.toLowerCase().charCodeAt()
-    if (event.key.length == 1 && (ascii_code>=97 && ascii_code<=122) && _hintTimer == null){
-    //if (IgnoreCodemirrorKeyEvents.indexOf(event.code) < 0 && _hintTimer == null) {
+    if (event.key.length == 1 && (ascii_code >= 97 && ascii_code <= 122) && _hintTimer == null) {
+        //if (IgnoreCodemirrorKeyEvents.indexOf(event.code) < 0 && _hintTimer == null) {
         _hintTimer = setTimeout(function () {
             editor.showHint({
                 completeSingle: false

@@ -137,7 +137,7 @@
                     </button>
 
                     <div class="btn-group" data-toggle="buttons">
-                        {% for o in request.parser_context.view.model.fields_map.type.choices %}
+                        {% for o in data.serializer.Meta.model.fields_map.type.choices %}
                             <label class="btn btn-sm btn-default {% if loop.first %}active{% endif %}">
                                 <input type="radio"
                                        {% if loop.first %}checked{% endif %}

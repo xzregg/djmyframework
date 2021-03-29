@@ -12,8 +12,8 @@ from myadmin.models import User
 @api_get()
 def test(request):
     messages.info(request, 'test messages')
-    users = list(User.objects.all())
-    print(users)
+    #users = list(User.objects.all())
+    #print(users)
     return render_to_response('ws_gateway/test.html', locals())
 
 

@@ -49,10 +49,6 @@ class CustomChoicesFieldInspector(FieldInspector):
         if choices_attr:
             enum_item_list = list(serializer.choices.items())
 
-            # # 添加返回结果错误代码描述
-            # rsp_code_errors: RspErrorEnum = getattr(serializer.root, 'Errors', None)
-            # if rsp_code_errors:
-            #     enum_item_list += rsp_code_errors.member_list()
 
             if not hasattr(result, 'has_add_enum_desc'):
                 choices_text = compose_enum_description(enum_item_list)
