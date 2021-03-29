@@ -205,7 +205,8 @@
                                 <div class="">
 
 
-                                    <bootstrap-table :columns="columns" ref="table"></bootstrap-table>
+                                    <bootstrap-table :columns="columns" ref="table" :options="options"
+                                                     @onPostBody="onPostBody"></bootstrap-table>
 
                                 </div>
 
@@ -279,7 +280,7 @@
                         }],
                     options: {
                         url: "/myadmin/role/list?fields=id,type_alias,alias,parent&page_size=10000",
-                        height: 400,
+                      //  height: 400,
                         striped: true,
                         selectItemName: 'role',//checkbox name
                         // multipleSelectRow: true,
@@ -304,6 +305,7 @@
                         treeShowField: 'alias',//在哪一列展开树形
                         parentIdField: 'parent',
                         //rootParentId:'null',
+                        showExport:false,
 
                     },
                     onPostBody: function (data) {

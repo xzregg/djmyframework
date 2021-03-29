@@ -6,7 +6,7 @@
 # @Contact : xzregg@gmail.com
 # @Desc    :
 
-from framework.response import RspSerializer, SUCCESS_CODE
+from framework.response import DataSerializer, SUCCESS_CODE
 from framework.serializer import s
 from framework.translation import _
 from framework.utils.myenum import Enum
@@ -18,8 +18,9 @@ class EventActions(Enum):
     SUBSCRIBE = 'subscribe', _('订阅事件')
 
 
-class EventDataSer(RspSerializer):
+class EventDataSer(DataSerializer):
     code = s.IntegerField(label=_('返回Code'), default=SUCCESS_CODE, required=False)
+    msg = s.CharField(label=_("业务消息"), default='ok')
     type = s.CharField(label=_('事件类型'), max_length=32, required=False)
     action = s.ChoiceField(label=_('事件操作'), choices=EventActions.member_list(), required=False)
     group = s.CharField(label=_('事件组名'), max_length=32, required=False, default=DEFAULT_ALL_GROUP_NAME)

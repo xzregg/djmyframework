@@ -70,11 +70,11 @@ class WritableSerializerReturnDict(ReturnDict):
 class ParamsSerializer(s.Serializer):
     _init_complete = False
 
-    def __init__(self, data=empty, instance=None, *argv, **kwargs):
+    def __init__(self, data=empty, instance=None, valid_exception=True, *argv, **kwargs):
         if isinstance(data, models.Model):
             instance = data
             data = empty
-
+        self.valid_exception = valid_exception
         super().__init__(instance=instance, data=data, *argv, **kwargs)
         self._init_complete = True
 
@@ -117,7 +117,7 @@ class ParamsSerializer(s.Serializer):
     @CacheAttribute
     def data(self):
         if hasattr(self, 'initial_data'):
-            self.is_valid(True)
+            self.is_valid(self.valid_exception)
         ret_data = super().data
         return WritableSerializerReturnDict(ret_data, serializer=self)
 
