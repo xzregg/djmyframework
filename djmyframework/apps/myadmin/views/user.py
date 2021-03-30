@@ -59,12 +59,16 @@ class UserSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=UserSerializer, responses=UserSerializer)
     def save(self, request, *args, **kwargs):
-        if not request.data.get('password', ''):
-            request.data.pop('password',None)
+        user_model: User = self.get_model_instance()
+        password = request.data.pop('password', '')
+        if password:
+            request.data['password'] = user_model.make_password(password)
+
         if not request.data.get('role', ''):
             request.data['role'] = []
             # raise RspError(_('至少选择一个角色'))
-        return super(UserSet, self).save(request, *args, **kwargs)
+        serializer, msg = self.save_instance(request, user_model)
+        return Response(serializer, msg)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
     def delete(self, request, *args, **kwargs):

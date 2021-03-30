@@ -21,6 +21,7 @@ from .renderers import JSONRenderer
 from .serializer import DataSerializer
 from .translation import _
 from .utils import json_dumps, ObjectDict, trace_msg
+import time
 
 SUCCESS_CODE = 0
 FAIL_CODE = 1001
@@ -41,7 +42,7 @@ class RspData(RspStruct):
         self.code = code
         self.msg = msg
         self.data = data
-
+        self._t = int(time.time())
 
 class RspSerializer(DataSerializer):
     code = s.ChoiceField(label=_("业务错误代码"), choices=[(RspStruct.code, RspStruct.msg)], default=RspStruct.code)

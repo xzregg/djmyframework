@@ -11,19 +11,18 @@ import time
 from functools import reduce
 
 import passlib.hash
+from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import AbstractBaseUser
+
 from framework.models import BaseModel
-from framework.validators import LetterValidator
 from framework.utils.cache import CacheAttribute
 from framework.utils.myenum import Enum
+from framework.validators import LetterValidator
 from .resource import Resource, ResourceProxy
 from .role import Role
-from django.contrib.auth import SESSION_KEY
-from django.contrib.auth.hashers import make_password, check_password
 
 
 class UserManagerMixin(object):
@@ -200,14 +199,14 @@ class UserManagerMixin(object):
         user, _c = cls.objects.get_or_create(alias="系统管理员", username='root')
         user.role_ids = [super_role.id]
         user.status = cls.Status.NORMAL
-        user.set_password( '123456')
+        user.set_password('123456')
         user.save()
         print(user.role.all())
         print('创建相关角色后,请务必删除root账户!')
         return user
 
 
-class User(BaseModel,AbstractBaseUser, UserManagerMixin):
+class User(BaseModel, AbstractBaseUser, UserManagerMixin):
     """用户模型
     """
     USERNAME_FIELD = 'username'
@@ -233,7 +232,7 @@ class User(BaseModel,AbstractBaseUser, UserManagerMixin):
     last_ip = models.CharField(_('最后登录ip'), max_length=20, default='', blank=True)
     reg_ip = models.CharField('注册IP', max_length=20, default='', blank=True)
     last_time = models.DateTimeField(_('最后登录时间'), auto_now_add=True)
-    login_count = models.IntegerField(_('登录次数'), default=0,blank=True)
+    login_count = models.IntegerField(_('登录次数'), default=0, blank=True)
     status = models.IntegerField(_('状态'), default=Status.NotActive, choices=Status.member_list(), help_text='登录状态')
     session_key = models.CharField(_('会话key'), max_length=40, db_index=True, default='', blank=True, null=False)
 
@@ -260,7 +259,7 @@ class User(BaseModel,AbstractBaseUser, UserManagerMixin):
     def role_alias(self):
         return [r.alias for r in self.get_roles()]
 
-    def get_ldap_ssha_encrypt_password(self,password_str):
+    def get_ldap_ssha_encrypt_password(self, password_str):
         return passlib.hash.ldap_salted_sha1.encrypt(password_str)
 
     def check_ldap_ssha(self, source_str):
@@ -304,8 +303,12 @@ class User(BaseModel,AbstractBaseUser, UserManagerMixin):
         if not self.id:
             UserInfo.objects.get_or_create(user=self)
         if self.role_ids:  # 如果角色的列表存在,就保存
-           self.role.clear()
-           self.role.add(*Role.objects.filter(id__in=self.role_ids))
+            self.role.clear()
+            self.role.add(*Role.objects.filter(id__in=self.role_ids))
+
+    def make_password(self, raw_password):
+        self.set_password(raw_password)
+        return self.password
 
     @classmethod
     def login_user(cls, request, the_user):
@@ -315,7 +318,7 @@ class User(BaseModel,AbstractBaseUser, UserManagerMixin):
         """
         from django.contrib.auth import login
         request.session.clear()
-        login(request,the_user)
+        login(request, the_user)
         the_user.login_count += 1
         the_user.last_time = datetime.datetime.now()
         the_user.last_ip = request.real_ip

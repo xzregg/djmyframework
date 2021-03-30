@@ -72,7 +72,7 @@ LOGGING = {
         # =========== loggers start =================
         'loggers'                 : {
                 'django.request': {
-                        'handlers' : ['root_handler'],
+                        'handlers' : ['root_handler','console'],
                         'level'    : 'ERROR',
                         'propagate': False,
                 },

@@ -77,14 +77,14 @@ class StrResourceBackend(AbsResourceBackend):
 
     @classmethod
     def decode_members(cls, member_str):
-        return member_str.split(',')
+        return set(member_str.split(','))
 
     @classmethod
     def encode_members(cls, member_list):
-        return cls.sep.join((str(x) for x in member_list))
+        return set(cls.sep.join((str(x) for x in member_list)))
 
 
-def get_resource_backend(_str):
+def get_resource_backend(_str)->AbsResourceBackend:
     if not _str or _str[0] == '0':
         return BitMapResourceBackend
     else:

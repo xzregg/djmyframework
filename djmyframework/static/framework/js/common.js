@@ -355,9 +355,10 @@ function ListTree(srcList, idKeyName, parentKeyName) {
     var nodeInfo = srcList.reduce((data, node) => (data[node[idKeyName]] = node, data), {})
 
     // parent 列表转 tree
-    this.toTree = function () {
+    this.toTree = function (handler) {
         let result = [];
         srcList.forEach(node => {
+            handler ? handler(node) : null
             if (!node[parentKeyName]) {
                 result.push(node)
                 return

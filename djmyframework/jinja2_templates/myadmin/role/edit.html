@@ -171,7 +171,7 @@
                         {% if request.user.is_manager %}
                             <li class="">
                                 <a data-toggle="tab" href="#tab-2">
-                                    <i class="blue "></i>{{ _('管理角色') }}
+                                    <i class="blue "></i> {{  _('可管理(下级)的角色') }}
                                 </a>
                             </li>
                         {% endif %}
@@ -213,10 +213,7 @@
 
                         {% if request.user.is_manager %}
                             <div id="tab-2" class="tab-pane ">
-                                <div class="alert alert-info">
-                                    <i class="icon-remove close" data-dismiss="alert">&times;</i>
-                                    {{ _('可管理(下级)的角色.') }}
-                                </div>
+
                                 <div>
                                     {% set select_list=data.resource_map_ids.role or [] %}
                                     {% include 'myadmin/widgets/role_table_select.html'  %}

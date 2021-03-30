@@ -67,13 +67,17 @@ class RoleSet(CurdViewSet):
 
     class RoleEditParmas(EditParams):
         type = s.IntegerField(label=_('类型'), required=False)
+        parent = s.IntegerField(label=_('父节点'), required=False)
 
     @swagger_auto_schema(query_serializer=EditParams, responses=RoleSerializer)
     def edit(self, request, *args, **kwargs):
-        model_instance = self.get_model_instance(EditParams)
+        model_instance: Role = self.get_model_instance(EditParams)
         params = self.RoleEditParmas(request.query_params).params_data
-        if not model_instance.id and params.type:
-            model_instance.type = params.type
+        if not model_instance.id:
+            if params.type:
+                model_instance.type = params.type
+            if params.parent:
+                model_instance.parent = Role.objects.get(id=params.parent)
         serializer = self.get_serializer(instance=model_instance)
         return render_to_response("myadmin/role/edit.html", self.response(serializer.data))
 
@@ -91,9 +95,9 @@ class RoleSet(CurdViewSet):
             raise self.RoleSaveError(_('只有管理员才能添加角色!'))
         if not role.id:
             role.creater = request.user
-        serializer, msg = self.save_instance(request,role)
+        serializer, msg = self.save_instance(request, role)
         role = serializer.instance
-        params:RoleSerializer = serializer.params_data
+        params: RoleSerializer = serializer.params_data
         manager_role_ids = params.role  # 只有管理员才能管理其他角色
 
         for rsource_name, model_resource in Resource.get_resource_map().items():

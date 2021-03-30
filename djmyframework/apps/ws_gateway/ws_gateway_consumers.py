@@ -58,8 +58,9 @@ class WebsocketGateWayConsumer(AsyncJsonWebsocketConsumer):
             req_event_data = EventDataSer(event)
             if req_event_data.o.action == ModelEventActions.SUBSCRIBE:
                 req_event_data = ModelEventDataSer(event)
-                if self.allow_groups_map.get(req_event_data.o.model, None):
-                    await self.join_to_group(req_event_data.o.model)
+                for model_name in req_event_data.o.model.split(','):
+                    if model_name and self.allow_groups_map.get(model_name, None):
+                        await self.join_to_group(req_event_data.o.model)
             rsp_event_data.o.update(req_event_data.initial_data)
         except ValidationError as e:
             rsp_event_data.o.code = 1
