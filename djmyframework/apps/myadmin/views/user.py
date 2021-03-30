@@ -55,7 +55,8 @@ class UserSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=EditParams, responses=UserSerializer)
     def edit(self, request):
-        return render_to_response("myadmin/user/edit.html", super().edit(request))
+
+        return render_to_response("myadmin/user/edit.html",super().edit(request))
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=UserSerializer, responses=UserSerializer)
     def save(self, request, *args, **kwargs):

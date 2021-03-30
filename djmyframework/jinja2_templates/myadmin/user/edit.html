@@ -148,7 +148,7 @@
                     <div class="col-sm-8">
                         <select class="form-control col-lg-5 select2" id="id_status" v-model="model.status"
                                 data-placeholder="{{ _('状态') }}" name="status" svalue="{{ data.status }}">
-                            {% for o in data.serializer.instance.fields_map.status.choices %}
+                            {% for o in data.serializer.Meta.model.fields_map.status.choices %}
                                 <option value="{{ o.0 }}">{{ o.1 }}</option>
                             {% endfor %}
 
@@ -240,7 +240,7 @@
             methods: {
                 roleTablezOnPostBody: function (data) {
 
-                    this.$refs.role_table.checkBy({field: 'id', values: {{ data.role|json_dumps }}})
+                    this.$refs.role_table.checkBy({field: 'id', values: {{ data.role|json_dumps|safe}}})
                 },
 
                 ajaxPostData: function (post_data, callback) {

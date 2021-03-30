@@ -22,27 +22,11 @@
     </div>
     <div class="row mT10">
 
-        <div class="col-sm-2" id="role-tree-container" v-cloak>
+        <div class="col-sm-2">
 
-            <div style="height: 500px;">
-                <a-input-search style="margin-bottom: 8px"
-                                placeholder="Search"
-                                @change="roleTreeChange"></a-input-search>
-
-                <a-tree :block-node="true" default-expand-parent default-expand-all
-                        :tree-data="roleTreeData" @select="roleTreeSelect"
-                        :replace-fields="replaceFields">
-                    <template slot="custom" slot-scope="item">
-                        <div class="hover">(( item.alias )) &nbsp;
-                            <span class="hover-container pull-right">
-                                <a @click="openRoleEdit(item,false)" class="opendialog"><a-icon type="edit"/></a>
-                                <a @click="openRoleEdit(item,true)" class="opendialog"><a-icon type="usergroup-add"/></a>
-                            </span>
-                        </div>
-                    </template>
-                </a-tree>
-            </div>
+            {% include 'myadmin/widgets/role_tree_select.html' %}
         </div>
+
 
         <div class="col-sm-10">
 
@@ -85,14 +69,7 @@
                                         data_url: '',
                                         choices: []
                                     },
-                                password:
-                                    {
-                                        label: '{{ _('密码') }}',
-                                        name: 'password',
-                                        type: 'char',
-                                        data_url: '',
-                                        choices: []
-                                    },
+
                                 last_ip:
                                     {
                                         label: '{{ _('最后登录ip') }}',
@@ -127,14 +104,6 @@
                                             {% for o in request.parser_context.view.model.fields_map.status.choices %}
                                                 ["{{ o.0 }}", '{{ o.1 }}'],{% endfor %}
                                         ]
-                                    },
-                                session_key:
-                                    {
-                                        label: '{{ _('会话key') }}',
-                                        name: 'session_key',
-                                        type: 'char',
-                                        data_url: '',
-                                        choices: []
                                     },
                                 create_datetime:
                                     {
@@ -182,7 +151,7 @@
                     <div class="table-container">
                         <div id="toolbar" class=toolbar_app"" v-cloak>
                             <a id="add-btn" class="btn btn-sm btn-primary openDialog"
-                               href="{{ url('myadmin.user.edit') }}">
+                               :href="'{{ url('myadmin.user.edit') }}?role='+selectRoleId">
                                 <span class="glyphicon glyphicon-plus-sign"></span> {{ _('添加') }}
                             </a>
 
@@ -265,6 +234,9 @@
                 paramsArray.push({name: 'keywords', value: params.searchText})
                 var orderPrefix = params.sortOrder == 'asc' ? '' : '-'
                 paramsArray.push({name: 'ordering', value: orderPrefix + (params.sortName || '')})
+                if (role_tree_app.selectRoleId > 0) {
+                    paramsArray.push({name: 'role__in', value: role_tree_app.selectRoleId})
+                }
                 return paramsArray;
 
             },//传递参数（*）
@@ -438,15 +410,16 @@
             ]
         }
 
-        var $delete = $('#delete-btn')
-
         // 刷新表格
         function refreshTable() {
             $table.bootstrapTable('refresh', {})
+            role_tree_app.loadTreeData()
         }
 
         window.addEventListener("refreshTable", (e) => {
+
             refreshTable()
+
         })
         window.addEventListener("filterCondition", (e) => {
             refreshTable()
@@ -458,13 +431,18 @@
             delimiters: ['((', '))'],
             data() {
                 return {
+
                     table: $table,
                     selectIds: [],
                     filter_field_schemas: filter_field_schemas,
                     status: filter_field_schemas.status.choices[0][0]
                 };
             },
-            computed: {},
+            computed: {
+                selectRoleId() {
+                    return role_tree_app.selectRoleId
+                }
+            },
             methods: {
                 change_status: function () {
                     var ids = $.map($table.bootstrapTable('getSelections'), function (row) {
@@ -525,92 +503,7 @@
             }
 
         })
-        const getParentKey = (key, tree) => {
-            let parentKey;
-            for (let i = 0; i < tree.length; i++) {
-                const node = tree[i];
-                if (node.children) {
-                    if (node.children.some(item => item.id === key)) {
-                        parentKey = node.id;
-                    } else if (getParentKey(key, node.children)) {
-                        parentKey = getParentKey(key, node.children);
-                    }
-                }
-            }
-            return parentKey;
-        }
 
-        var role_tree_app = new Vue({
-            el: '#role-tree-container',
-            delimiters: ['((', '))'],
-            data() {
-                return {
-                    expandedKeys: [],
-                    roleTreeData: [],
-                    replaceFields: {children: 'children', title: 'alias', key: 'id'},
-                    autoExpandParent: true
-                };
-            },
-            computed: {},
-            methods: {
-                roleTreeSelect(selectedKeys, e){
-
-                    refreshTable()
-                },
-                openRoleEdit(roleItem, isAdd) {
-                    var param = {type: roleItem.type}
-
-                    let title = roleItem.alias
-                    if (isAdd) {
-                        param.parent = roleItem.id
-                        title += '{{ _(' 增加下级') }}'
-                    } else {
-                        param.id = roleItem.id
-                    }
-                    let url = '{{ url('myadmin.role.edit') }}?' + $.param(param)
-
-                    art.dialog.open(url, {title: title, width: 'auto', height: '90%', id: url})
-                },
-                roleTreeExpand(e) {
-                    this.expandedKeys = expandedKeys;
-                    this.autoExpandParent = false;
-                },
-                roleTreeChange(e) {
-                    const value = e.target.value;
-                    const expandedKeys = this.roleTreeData
-                        .map(item => {
-                            if (item.alias.indexOf(value) > -1) {
-                                return getParentKey(item.id, this.roleTreeData);
-                            }
-                            return null;
-                        })
-                        .filter((item, i, self) => item && self.indexOf(item) === i);
-                    Object.assign(this, {
-                        expandedKeys,
-                        searchValue: value,
-                        autoExpandParent: true,
-                    });
-                },
-            },
-            mounted: function () {
-                $.getJSON("{{ url('myadmin.role.list') }}", {}, (rsp) => {
-                    if (rsp.code == 0) {
-                        console.dir(rsp)
-
-                        this.roleTreeData = new ListTree(rsp.data.results, 'id', 'parent').toTree((item) => {
-                            item.scopedSlots = {title: 'custom'}
-                        })
-                        console.dir(this.roleTreeData)
-
-                    } else {
-                        this.$message.error('{{ _("获取 角色数据错误") }} ');
-                    }
-                })
-
-
-            }
-
-        })
 
     </script>
 {% endblock %}

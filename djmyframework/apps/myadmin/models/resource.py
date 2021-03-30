@@ -129,7 +129,7 @@ class ModelResource(object):
 
     def members_handle(self, members):
         """members 都转为 int """
-        return (int(i) for i in members)
+        return (int(i) for i in members if i.isdigit())
 
 
 class Resource(BaseModel):

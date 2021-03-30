@@ -18,7 +18,7 @@ function initSelectTree() {
             $(ele).html('')
             $(ele).append('<option value="">*</option>')
             var data = rsp.data.results
-            data = new ListTree(data, 'id', parentKeyName).setLevel()
+            data = new ListTreeChildren(data, 'id', parentKeyName).setLevel()
 
             var results = $.map(data, function (row) {
                 var text = row[keyName]

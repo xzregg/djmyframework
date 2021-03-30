@@ -70,8 +70,8 @@ class Role(RoleManagerMixin, BaseModel):
     """
 
     class RoleType(Enum):
-        USER = 1, _('普通')
-        GROUP = 2, _('组')
+        USER = 1, _('角色')
+        GROUP = 2, _('组织')
         PERMISSION = 3, _('权限集合')
 
     alias = models.CharField('角色名称', max_length=50)

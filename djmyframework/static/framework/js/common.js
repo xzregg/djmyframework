@@ -348,7 +348,7 @@ var tableToExcel = (function () {
 })()
 
 
-function ListTree(srcList, idKeyName, parentKeyName) {
+function ListTreeChildren(srcList, idKeyName, parentKeyName) {
 
     var idKeyName = idKeyName ? idKeyName : 'id'
     var parentKeyName = parentKeyName ? parentKeyName : 'parentId'
@@ -357,13 +357,14 @@ function ListTree(srcList, idKeyName, parentKeyName) {
     // parent 列表转 tree
     this.toTree = function (handler) {
         let result = [];
-        srcList.forEach(node => {
-            handler ? handler(node) : null
-            if (!node[parentKeyName]) {
+        srcList.forEach(_node => {
+            let node = handler ? handler(_node) : _node
+            let parentKey = node[parentKeyName]
+            if (!parentKey) {
                 result.push(node)
                 return
             }
-            let parent = nodeInfo[node[parentKeyName]]
+            let parent = nodeInfo[parentKey]
             parent.children = parent.children || []
             parent.children.push(node)
         })
@@ -376,6 +377,7 @@ function ListTree(srcList, idKeyName, parentKeyName) {
             var level = 0;
             if (nodeInfo[node[parentKeyName]]) {
                 level += 1
+
                 return level + getLevel(nodeInfo[node[parentKeyName]])
             }
             return level

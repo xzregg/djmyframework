@@ -9,7 +9,7 @@ from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilte
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, ListIntField, \
     ListStrField, PaginationSerializer, s
-from framework.views import action, CurdViewSet, JsonResponse, render_to_response, RspError
+from framework.views import action, action_post, CurdViewSet, JsonResponse, render_to_response, RspError
 from myadmin.models import Role
 from ..models.resource import Resource
 
@@ -87,9 +87,6 @@ class RoleSet(CurdViewSet):
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=RoleSerializer, responses=RoleSerializer)
     def save(self, request, *args, **kwargs):
         role = self.get_model_instance(IdSerializer)
-        # if role.id and role.is_manager:
-        #     if not request.user.is_root :
-        #         raise RoleSaveError('只有超级管理员才能修改此角色权限!')
 
         if not request.user.is_manager:
             raise self.RoleSaveError(_('只有管理员才能添加角色!'))
@@ -133,3 +130,11 @@ class RoleSet(CurdViewSet):
             if role_model:
                 data = role_model.user_set.values_list('id', flat=True)
         return JsonResponse(data)
+
+    @swagger_auto_schema(query_serializer=EditParams, responses=RoleSerializer)
+    @action_post()
+    def update(self, request):
+        model: Role = self.get_model_instance()
+
+        serializer, msg = self.save_instance(request, model)
+        return self.response(serializer, msg=msg)

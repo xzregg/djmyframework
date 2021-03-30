@@ -202,9 +202,7 @@
                 return res.data
             },
             onLoadError: function (status, jqXHR) {
-
                 ajaxError(jqXHR, status)
-
             },
             sidePagination: "client", //分页方式：client 客户端分页，server 服务端分页（*）
             queryParamsType: "",      //https://examples.bootstrap-table.com/index.html?bootstrap3#options/query-params-type.html
@@ -241,8 +239,8 @@
             },
             // 表格树设置
             idField: 'id',
-            treeEnable: true,
-            treeShowField: 'parent',//在哪一列展开树形
+            treeEnable: false,
+            treeShowField: 'parent1',//在哪一列展开树形
             parentIdField: 'parent',
             //rootParentId:'null',
             onPostBody: function (data) {

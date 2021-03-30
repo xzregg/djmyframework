@@ -436,6 +436,8 @@ class CurdViewSet(BaseViewSet):
         """
         model_instance = self.get_model_instance(EditParams)
         serializer = self.get_serializer(instance=model_instance)
+        if not model_instance.id:
+            serializer.data.update(request.query_params)
         return self.response(serializer.data)
 
     def save_instance(self, request, model_instance=None, **kwargs):
