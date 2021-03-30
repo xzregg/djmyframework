@@ -63,7 +63,8 @@ def user_save_ldap(sender, instance, **kwargs):
         employee_id = user_info.employee_id
         email = user_info.email
     save_path = os.path.join(OU_PEOPLE_DIR, file_name)
-    secret = '{SSHA}%s' % user.password.split('$', 1)[1] if user.password else ''
+    password_tuple = user.password.split('$', 1)
+    secret = '{SSHA}%s' % (password_tuple[1] if len(password_tuple) > 1 else '')
 
     if user.status == User.Status.NORMAL:
         with open(save_path, 'w') as f:

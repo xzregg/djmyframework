@@ -2,7 +2,7 @@
 {#{% load mytags %} #}
 <!-- 菜单 树勾选 -->
 
-<div id="toolbar" class="">
+<div id="menu-tree-toolbar" class="">
     <button id="expandAll-btn" class="btn btn-xs btn-default ">
         {{ _('展开') }}
     </button>
@@ -66,7 +66,7 @@
             height:450,
             showRefresh: true, //是否显示刷新按钮
             selectItemName: 'menu',//checkbox name
-            toolbar: '#toolbar',
+            toolbar: '#menu-tree-toolbar',
             uniqueId: 'id',
             filterControl: false,
             search: true,
@@ -78,6 +78,7 @@
             ignoreClickToSelectOn: function ignoreClickToSelectOn(e) {
                 return ['SPAN', 'BUTTON', 'LABEL', 'INPUT', 'A'].indexOf(e.tagName) > -1
             },
+            showExport:false,
             totalField: 'count',
             dataField: 'results',
             responseHandler: function (res) {

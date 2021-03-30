@@ -905,7 +905,7 @@ function search_dbl_list(dbl_class_name, input_box_class_name) {
 
 $.extend(true, $.fn.bootstrapTable.defaults, {
     locale: BootstrapTableLocale,
-    toolbar: '#toolbar',
+    //toolbar: '#toolbar',
     method: "GET", //请求方式（*）
     dataType: "json",
     cache: true,  //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）

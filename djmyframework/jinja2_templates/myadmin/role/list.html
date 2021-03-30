@@ -10,7 +10,7 @@
         <div class="col-sm-5 ">
             <ul id="nav-list" class="nav nav-tabs ">
                 <li>
-                    <a href="/myadmin/user/list">{{ _('管理员 列表') }}</a>
+                    <a href="/myadmin/user/list">{{ _('用户 列表') }}</a>
                 </li>
                 <li class="active">
                     <a href="/myadmin/role/list"><b>{{ _('角色 列表') }} </b></a>
@@ -219,16 +219,16 @@
             showColumns: true, //是否显示所有的列
             showRefresh: true, //是否显示刷新按钮
             minimumCountColumns: 2, //最少允许的列数
-            clickToSelect: true, //是否启用点击选中行
+            clickToSelect: false, //是否启用点击选中行
             multipleSelectRow: true,
             showToggle: false, //是否显示详细视图和列表视图的切换按钮
             cardView: false,   //是否显示详细视图
             detailView: false,//显示详情
             fixedColumns: true,
-            fixedNumber: 1,
+            fixedNumber: 0,
             fixedRightNumber: 1,
             uniqueId: 'id',
-            groupBy: true,//分组
+            groupBy: false,//分组
             groupByShowToggleIcon: true,
             groupByField: 'type_alias',
             groupByFormatter: function (value, idx, data) {
@@ -315,7 +315,7 @@
                     title: "{{ _('角色类型') }}",
                     align: 'center',
                     valign: 'middle',
-                    visible: true,
+                    visible: false,
                     sortable: true,
                     formatter: function (value, row, index) {
                         return row.type_alias

@@ -60,7 +60,7 @@ class UserSet(CurdViewSet):
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=UserSerializer, responses=UserSerializer)
     def save(self, request, *args, **kwargs):
         if not request.data.get('password', ''):
-            request.data.pop('password')
+            request.data.pop('password',None)
         if not request.data.get('role', ''):
             request.data['role'] = []
             # raise RspError(_('至少选择一个角色'))

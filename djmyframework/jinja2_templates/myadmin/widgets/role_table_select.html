@@ -25,7 +25,7 @@
     ;(function () {
         var $table = $('#role-table')
         $table.bootstrapTable({
-            height: 400,
+           // height: 400,
             striped: true,
             selectItemName: 'role',//checkbox name
             // multipleSelectRow: true,
@@ -42,6 +42,7 @@
             responseHandler: function (res) {
                 return res.data
             },
+            showExport:false,
             groupBy: true,//分组
             groupByField: 'type_alias',
             ignoreClickToSelectOn: function ignoreClickToSelectOn(e) {
