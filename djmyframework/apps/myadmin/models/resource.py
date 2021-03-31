@@ -75,6 +75,7 @@ class BitMapResourceBackend(AbsResourceBackend):
 class StrResourceBackend(AbsResourceBackend):
     sep = ','
 
+
     @classmethod
     def decode_members(cls, member_str):
         return set(member_str.split(','))
@@ -102,8 +103,8 @@ class ModelResource(object):
     alias_lookup = 'alias'
     model_class = None
     template_context = {}
-    template = ''
     default_template = 'myadmin/widgets/resource_checkbox.html'
+    template = default_template
     help_text = ''
     is_inner = False
 
@@ -142,6 +143,8 @@ class Resource(BaseModel):
     role_id = models.IntegerField(_('角色id'), null=True)
     _members = models.TextField(_('资源对象成员列表'))
     __members_cache = None
+
+    has_all_resosurce_mark = '__all__'
 
     class Meta:
         unique_together = (

@@ -5,9 +5,21 @@ import os
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
+from framework.models import BaseNameModel, models
+from framework.translation import _
 from framework.utils import mkdirs
 from myadmin.models import Role, User, UserInfo
 from .ldap_server import get_db_path
+
+
+class AccessDomain(BaseNameModel):
+    """访问域"""
+    bindpw = models.CharField(verbose_name=_('访问密钥'), max_length=30, default='', null=False)
+    access_address = models.CharField(verbose_name=_('访问地址'), max_length=256, default='', null=False)
+
+    class Meta:
+        pass
+
 
 # mail 字段是 mindoc 需要
 cn_tpl = '''dn: cn={cn},ou=people,dc=example,dc=com
@@ -56,7 +68,7 @@ mkdirs(OU_ROLE_DIR)
 
 
 @receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
-def user_save_ldap(sender, instance, update_fields=None,**kwargs):
+def user_save_ldap(sender, instance, update_fields=None, **kwargs):
     user: User = instance
 
     if user.status == User.Status.NORMAL and update_fields is None:
@@ -96,7 +108,7 @@ def role_save_ldap(sender, instance, **kwargs):
         # todo 改为域限制
         if role.parent:
             parent = role.parent.name
-            ou_role_dir=os.path.join(DBPATH, 'dc=com.dir', 'dc=%s.dir' % role.name, 'ou=role.dir')
+            ou_role_dir = os.path.join(DBPATH, 'dc=com.dir', 'dc=%s.dir' % role.name, 'ou=role.dir')
 
         else:
             ou_role_dir = os.path.join(DBPATH, 'dc=com.dir', 'dc=%s.dir' % role.name, 'ou=role.dir')

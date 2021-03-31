@@ -13,11 +13,9 @@ from functools import reduce
 import passlib.hash
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
-from framework.models import BaseModel
+from framework.models import BaseModel, JSONField
 from framework.utils.cache import CacheAttribute
 from framework.utils.myenum import Enum
 from framework.validators import LetterValidator
@@ -170,8 +168,6 @@ class UserManagerMixin(object):
             return Resource.objects.all()
         else:
             return Resource.objects.filter(role__in=self.get_roles())
-
-
 
     def get_roles(self):
         """获取角色
@@ -353,26 +349,14 @@ class UserInfo(BaseModel):
 class UserOauth(BaseModel):
     """第三方登录关联表
     """
-    user_id = models.IntegerField('管理员ID', default=0, db_index=True)
-    oauth_type = models.CharField('Oauth类型', max_length=20)
-    oauth_id = models.CharField('Oauth 账号ID', max_length=128, db_index=True)
-    access_token = models.CharField('access_token', max_length=512)
-    expires_timestamp = models.IntegerField('过期时间戳', default=time.time)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('所属管理员'), null=True)
+    oauth_type = models.CharField(verbose_name=_('Oauth类型'), max_length=20)
+    oauth_id = models.CharField(verbose_name=_('Oauth 账号ID'), max_length=128, db_index=True)
+    access_token = models.CharField(verbose_name=_('access_token'), max_length=512)
+    expires_timestamp = models.IntegerField(verbose_name=_('过期时间戳'), default=time.time)
 
-    other_info = models.TextField('其他信息', default='{}')
+    other_info = JSONField(verbose_name=_('其他信息'), default='{}')
 
     class Meta:
         pass
         # db_table = u'user_oauth'
-
-
-@receiver(post_delete, sender=User)
-def user_delete_handler(sender, **kwargs):
-    """
-    管理员删除信号
-    :param sender:
-    :param kwargs:
-    :return:
-    """
-    user_id = kwargs['instance'].id
-    UserOauth.objects.filter(user_id=user_id).delete()
