@@ -186,7 +186,7 @@
 
 
                         {% for name,model_resource in request.user.resource.get_model_resource_map().items() %}
-                            {% if model_resource.template %}
+                            {% if not model_resource.is_inner and model_resource.template %}
                                 <li class="">
                                     <a data-toggle="tab" href="#tab-{{ model_resource.name }}">
                                         <i class="icon-rocket"></i>{{ model_resource.label or model_resource.name }}
@@ -231,7 +231,7 @@
                         {% endif %}
 
                         {% for name,model_resource in request.user.resource.get_model_resource_map().items() %}
-                            {% if model_resource.template %}
+                            {% if not model_resource.is_inner and model_resource.template %}
 
                                 <div id="tab-{{ model_resource.name }}" class="tab-pane">
                                     {% if model_resource.help_text %}
