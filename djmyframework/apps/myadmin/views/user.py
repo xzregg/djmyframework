@@ -64,9 +64,10 @@ class UserSet(CurdViewSet):
         password = request.data.pop('password', '')
         if password:
             request.data['password'] = user_model.make_password(password)
-
-        if not request.data.get('role', ''):
+        role_ids = request.data.get('role', [])
+        if not role_ids:
             request.data['role'] = []
+
             # raise RspError(_('至少选择一个角色'))
         serializer, msg = self.save_instance(request, user_model)
         return Response(serializer, msg)

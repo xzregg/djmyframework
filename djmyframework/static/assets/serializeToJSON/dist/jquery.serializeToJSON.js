@@ -92,8 +92,13 @@
                             }
 
                         } else if ($input.is(":checkbox")) {
+
+                            var isArray = currentName.substr(currentName.length-2,2) == '[]'
+                            if(isArray){
+                                currentName = currentName.substr(0,currentName.length-2)
+                            }
                             if (!navObj.hasOwnProperty(currentName)) {
-                                if ($('[name="' + $input.attr('name') + '"]').length > 1) {
+                                if ($('[name="' + $input.attr('name') + '"]').length > 1 || isArray) {
                                     navObj[currentName] = [value]
                                 } else {
                                     navObj[currentName] = value;

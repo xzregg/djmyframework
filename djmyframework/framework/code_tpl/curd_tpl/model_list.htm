@@ -34,12 +34,12 @@ from framework.utils import json_dumps
         <div class="col-sm-12 ">
             <div id="vue-container" v-cloak >
                 <div id="toolbar" class="" >
-                    <a id="add-btn" class="btn btn-sm btn-primary openDialog"
+                    <button type="button"  id="add-btn" class="btn btn-sm btn-primary openDialog"
                        href="{{ url('${app_name}.${model_lower_name}.edit') }}">
                         <span class="glyphicon glyphicon-plus-sign"></span> {{ _('添加') }}
-                    </a>
+                    </button>
 
-                    <button @click.prevent="onDelete"  :disabled="selectIds.length==0" class="btn btn-sm btn-danger " >
+                    <button type="button"  @click.prevent="onDelete"  :disabled="selectIds.length==0" class="btn btn-sm btn-danger " >
                         <span class="glyphicon glyphicon-remove"></span> {{ _('删除') }} <span v-show="selectIds.length>0" class="badge">((selectIds.length))</span>
                     </button>
                     <!--button id="expandAll-btn" class="btn btn-sm btn-default ">

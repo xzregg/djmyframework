@@ -129,10 +129,10 @@
 
                 <div id="toolbar" class="">
 
-                    <a id="add-btn" class="btn btn-sm btn-primary openDialog" href="/myadmin/role/edit">
+                    <button type="button"  id="add-btn" class="btn btn-sm btn-primary openDialog" href="/myadmin/role/edit">
                         <span class="glyphicon glyphicon-plus-sign"></span> {{ _('添加') }}
-                    </a>
-                    <button id="delete-btn" class="btn btn-sm btn-danger " disabled>
+                    </button>
+                    <button id="delete-btn" type="button"  class="btn btn-sm btn-danger " disabled>
                         <span class="glyphicon glyphicon-remove"></span> {{ _('删除') }}
                     </button>
 
@@ -162,8 +162,8 @@
 
             </div>
         </div>
-
     </form>
+
 
     <script>
 
@@ -391,7 +391,8 @@
                 $delete.prop('disabled', !$table.bootstrapTable('getSelections').length)
             })
 
-            $delete.click(function () {
+            $delete.click(function (e) {
+                stopEevent(e)
                 if (!confirmRandom('确认删除吗?')) {
                     return false
                 }
