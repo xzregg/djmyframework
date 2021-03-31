@@ -76,7 +76,7 @@ class RoleSet(CurdViewSet):
         if not model_instance.id:
             if params.type:
                 model_instance.type = params.type
-            if params.parent:
+            if params.parent and int(params.parent) != model_instance.id:
                 model_instance.parent = Role.objects.get(id=params.parent)
         serializer = self.get_serializer(instance=model_instance)
         return render_to_response("myadmin/role/edit.html", self.response(serializer.data))

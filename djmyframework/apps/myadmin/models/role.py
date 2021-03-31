@@ -60,7 +60,9 @@ class RoleManagerMixin(object):
             _role.type = _type
             if parent_name:
                 parent_role = cls.create_role_from_name(parent_name)
-                _role.parent = parent_role
+            else:
+                parent_role = None
+            _role.parent = parent_role
             _role.save()
             print(alias)
 
