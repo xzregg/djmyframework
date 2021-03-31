@@ -93,8 +93,15 @@ def role_save_ldap(sender, instance, **kwargs):
     role = instance
     file_name = 'cn=%s.ldif' % role.name
     if role.type == Role.RoleType.GROUP:
-        parent = role.parent.name if role.parent else ''
-        save_path = os.path.join(OU_ROLE_DIR, file_name)
+        if role.parent:
+            parent = role.parent.name
+            ou_role_dir=os.path.join(DBPATH, 'dc=com.dir', 'dc=%s.dir' % role.name, 'ou=role.dir')
+
+        else:
+            ou_role_dir = os.path.join(DBPATH, 'dc=com.dir', 'dc=%s.dir' % role.name, 'ou=role.dir')
+            parent = ''
+        save_path = os.path.join(ou_role_dir, file_name)
+        mkdirs(ou_role_dir)
         memberuid_list = '\n'.join(['memberUid: %s' % v for v in role.user_set.all().values_list('username')])
 
         with open(save_path, 'w') as f:

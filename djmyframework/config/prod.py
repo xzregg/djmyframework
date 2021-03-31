@@ -71,3 +71,16 @@ DATABASES['db'] = DATABASES['default']
 #         }
 #     }
 # }
+
+CELERY_BROKER_URL = 'redis://:123456@h29:6379/1'
+
+CHANNEL_LAYERS = {
+        "default": {
+                "BACKEND": "channels_redis.core.RedisChannelLayer",
+                "CONFIG" : {
+                        "hosts": ["redis://:123456@h29:6379/2"],
+                },
+        },
+}
+
+AUTH_LDAP_SERVER_URI = "ldap://ldap.example.com"
