@@ -26,7 +26,7 @@ long_description = open('./djmyframework/README.md').read()
 install_requires = [l.strip() for l in open('./requirements.txt').readlines() if l.strip()]
 setuptools.setup(
         name="djmyframework",  # 包的分发名称，使用字母、数字、_、-
-        version="0.1.6",  # 版本号, 版本号规范：https://www.python.org/dev/peps/pep-0440/
+        version="0.1.7",  # 版本号, 版本号规范：https://www.python.org/dev/peps/pep-0440/
         author="xzregg",  # 作者名字
         author_email="xzregg@gmail.com",  # 作者邮箱
         description="django myframework",  # 包的简介描述
