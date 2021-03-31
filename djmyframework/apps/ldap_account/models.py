@@ -56,10 +56,10 @@ mkdirs(OU_ROLE_DIR)
 
 
 @receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
-def user_save_ldap(sender, instance, **kwargs):
+def user_save_ldap(sender, instance, update_fields=None,**kwargs):
     user: User = instance
 
-    if user.status == User.Status.NORMAL:
+    if user.status == User.Status.NORMAL and update_fields is None:
 
         file_name = 'cn=%s.ldif' % user.username
         user_info = user.userinfo_set.first()
@@ -93,6 +93,7 @@ def role_save_ldap(sender, instance, **kwargs):
     role = instance
     file_name = 'cn=%s.ldif' % role.name
     if role.type == Role.RoleType.GROUP:
+        # todo 改为域限制
         if role.parent:
             parent = role.parent.name
             ou_role_dir=os.path.join(DBPATH, 'dc=com.dir', 'dc=%s.dir' % role.name, 'ou=role.dir')
