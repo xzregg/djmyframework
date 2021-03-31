@@ -10,7 +10,7 @@
 import logging
 import typing
 from dataclasses import dataclass
-
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -81,7 +81,7 @@ class StrResourceBackend(AbsResourceBackend):
 
     @classmethod
     def encode_members(cls, member_list):
-        return set(cls.sep.join((str(x) for x in member_list)))
+        return cls.sep.join((str(x) for x in member_list))
 
 
 def get_resource_backend(_str)->AbsResourceBackend:
@@ -129,7 +129,7 @@ class ModelResource(object):
 
     def members_handle(self, members):
         """members 都转为 int """
-        return (int(i) for i in members if i.isdigit())
+        return set(int(i) for i in members if i.isdigit())
 
 
 class Resource(BaseModel):
