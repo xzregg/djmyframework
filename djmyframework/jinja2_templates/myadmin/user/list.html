@@ -214,8 +214,9 @@
 
     <script>
         var $table = $('#table')
+
         var bootstrapTableOption = {
-            height: Math.max(400, getWindowHeightWidth()[1] - Math.min($('html').height(), $('#table').offset().top) + 10),
+            height: Math.max(400, getWindowHeightWidth()[1] - Math.min($('html').height(), $('#table').offset().top))-70,
             url: window.location.pathname,  //请求后台的URL（*）
             locale: BootstrapTableLocale,
             toolbar: '#toolbar',

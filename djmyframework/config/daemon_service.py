@@ -9,7 +9,7 @@ INET_HTTP_SERVER_PASSWORD = 'P@ssword'
 
 DAEMON_SERVICE_MAP = {
         # "statistic"  : {"command": "python -u manage.py StatisticCron -c", "remark": "统计后台服务"},
-        "ldap"       : dict(command="python3 -u manage.py ldap_server ",
+        "ldap"       : dict(command="python3 -u manage.py ldap_server -p 13891",
                             remark="ldap 服务器", off=True),
 
         "asgi"       : dict(

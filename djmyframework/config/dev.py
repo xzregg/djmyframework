@@ -12,7 +12,7 @@
 import logging
 import os
 import sys
-
+from django.contrib.auth import  authenticate
 from . import logging_config
 
 DEBUG = True

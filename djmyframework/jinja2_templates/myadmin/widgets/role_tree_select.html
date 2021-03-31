@@ -1,16 +1,26 @@
 <div id="role-tree-container" v-cloak>
 
-    <div style="height: 500px;">
+    <div>
+        <a-input-search style="margin-bottom: 8px"
+                        placeholder="{{ _('Search') }}"
+                        @change="roleTreeChange"></a-input-search>
         <!-- 异步加载数据先判断又没,才会默认展开 -->
-        <a-tree v-if="roleTreeData.length>0" :block-node="true" default-expand-all
-                @select="roleTreeSelect" :replace-fields="replaceFields"
-                :tree-data="roleTreeData" @dragenter="onRoleTreeDragEnter"
+        <a-tree v-if="roleTreeData.length>0" :block-node="true"
+                @select="roleTreeSelect" :replace-fields="replaceFields" :expanded-keys="expandedKeys"
+                :tree-data="roleTreeData" @dragenter="onRoleTreeDragEnter" @expand="roleTreeExpand"
+                :auto-expand-parent="autoExpandParent"
                 @drop="onRoleTreeDrop" draggable
         >
 
             <template slot="custom" slot-scope="item">
 
-                <div class="hover">(( item.alias ))
+                <div class="hover">
+      <span v-if="item.alias.indexOf(searchValue) > -1">
+          (( item.alias.substr(0, item.alias.indexOf(searchValue) ) ))
+          <b style="color: red">(( searchValue ))</b>
+          (( item.alias.substr(item.alias.indexOf(searchValue) + searchValue.length) ))
+        </span>
+                    <span v-else>(( item.alias ))</span>
                     <span class="hover-container pull-right">
                                 <a @click.stop.prevent="openRoleEdit(item,false)" class="opendialog"><a-icon
                                         type="edit"/></a>
@@ -48,7 +58,10 @@
                 roleTreeData: [],
                 replaceFields: {children: 'children', title: 'alias', key: 'id'},
                 selectRoleId: 0,
-                roleTreeMap: {}
+                roleTreeMap: {},
+                searchValue: '',
+                expandedKeys: [],
+                autoExpandParent: true
             };
         },
         computed: {},
@@ -156,13 +169,13 @@
 
                 art.dialog.open(url, {title: title, width: 'auto', height: '90%', id: url})
             },
-            roleTreeExpand(e) {
+            roleTreeExpand(expandedKeys) {
                 this.expandedKeys = expandedKeys;
                 this.autoExpandParent = false;
             },
             roleTreeChange(e) {
                 const value = e.target.value;
-                const expandedKeys = this.roleTreeData
+                const expandedKeys = Object.values(this.roleTreeMap)
                     .map(item => {
                         if (item.alias.indexOf(value) > -1) {
                             return getParentKey(item.id, this.roleTreeData);
@@ -170,6 +183,7 @@
                         return null;
                     })
                     .filter((item, i, self) => item && self.indexOf(item) === i);
+
                 Object.assign(this, {
                     expandedKeys,
                     searchValue: value,
@@ -184,6 +198,7 @@
                         this.roleTreeData = new ListTreeChildren(rsp.data.results, 'id', 'parent').toTree((item) => {
                             item.scopedSlots = {title: 'custom'}
                             this.roleTreeMap[item.id] = item
+                            this.expandedKeys.push(item.id)
                             return item
                         })
                         console.dir(this.roleTreeData)

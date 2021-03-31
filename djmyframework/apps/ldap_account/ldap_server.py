@@ -19,8 +19,9 @@ import shutil
 from ldaptor import ldiftree
 from .settings import LDAP_ACCOUNT_SERVER_PORT
 from twisted.internet import reactor
-from framework.utils import signle_process
-from framework.settings import settings
+from framework.utils import single_process
+from framework.apps import get_app_path
+from .settings import DBPATH
 
 
 class LDAPServerFactory(ServerFactory):
@@ -36,22 +37,22 @@ class LDAPServerFactory(ServerFactory):
         return proto
 
 
-from .settings import DBPATH
+def get_db_path():
+    TPL_DBPATH = os.path.join(get_app_path('ldap_account'), 'ldiftree')
+    tmp_db_path = DBPATH
 
-TPL_DBPATH = os.path.join(get_app_path('ldap_account'), 'ldiftree')
-TMPDBPATH = DBPATH
-
-if not os.path.exists(TMPDBPATH):
-    shutil.rmtree(TMPDBPATH, ignore_errors=True)
-    shutil.copytree(DBPATH, TMPDBPATH)
+    if not os.path.exists(tmp_db_path):
+        shutil.rmtree(tmp_db_path, ignore_errors=True)
+        shutil.copytree(TPL_DBPATH, tmp_db_path)
+    return tmp_db_path
 
 
 def get_db():
-    db = ldiftree.LDIFTreeEntry(TMPDBPATH)
+    db = ldiftree.LDIFTreeEntry(get_db_path())
     return db
 
 
-@signle_process.SignleProcessDeco()
+@single_process.SingleProcessDeco()
 def run_ldap_server(port=LDAP_ACCOUNT_SERVER_PORT):
     log.startLogging(sys.stderr)
     # We initialize our tree

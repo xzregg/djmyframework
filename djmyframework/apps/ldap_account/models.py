@@ -7,7 +7,7 @@ from django.dispatch import receiver
 
 from framework.utils import mkdirs
 from myadmin.models import Role, User, UserInfo
-from .settings import DBPATH
+from .ldap_server import get_db_path
 
 # mail 字段是 mindoc 需要
 cn_tpl = '''dn: cn={cn},ou=people,dc=example,dc=com
@@ -47,6 +47,8 @@ dc: example'''
 # '{SSHA}TgL7DCvwD6UkA4mgcOkEUJf2RdSZ0xqj'
 
 
+DBPATH = get_db_path()
+
 OU_PEOPLE_DIR = os.path.join(DBPATH, 'dc=com.dir', 'dc=example.dir', 'ou=people.dir')
 OU_ROLE_DIR = os.path.join(DBPATH, 'dc=com.dir', 'dc=example.dir', 'ou=role.dir')
 mkdirs(OU_PEOPLE_DIR)
@@ -56,17 +58,19 @@ mkdirs(OU_ROLE_DIR)
 @receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
 def user_save_ldap(sender, instance, **kwargs):
     user: User = instance
-    file_name = 'cn=%s.ldif' % user.username
-    user_info = user.userinfo_set.first()
-    employee_id = email = ''
-    if user_info:
-        employee_id = user_info.employee_id
-        email = user_info.email
-    save_path = os.path.join(OU_PEOPLE_DIR, file_name)
-    password_tuple = user.password.split('$', 1)
-    secret = '{SSHA}%s' % (password_tuple[1] if len(password_tuple) > 1 else '')
 
     if user.status == User.Status.NORMAL:
+
+        file_name = 'cn=%s.ldif' % user.username
+        user_info = user.userinfo_set.first()
+        employee_id = email = ''
+        if user_info:
+            employee_id = user_info.employee_id
+            email = user_info.email
+        save_path = os.path.join(OU_PEOPLE_DIR, file_name)
+        password_tuple = user.password.split('$', 1)
+        secret = '{SSHA}%s' % (password_tuple[1] if len(password_tuple) > 1 else '')
+
         with open(save_path, 'w') as f:
             ldap_cn_str = cn_tpl.format(cn=user.username, sn=user.alias[0], uid=user.username, alias=user.alias,
                                         uidNumber=user.id,

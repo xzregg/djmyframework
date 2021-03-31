@@ -169,7 +169,7 @@
 
         var $table = $('#table')
         var bootstrapTableOption = {
-            height: Math.max(600, getWindowHeightWidth()[1] - Math.min($('html').height(), $('#table').offset().top)),
+            height: Math.max(400, getWindowHeightWidth()[1] - Math.min($('html').height(), $('#table').offset().top)),
             url: window.location.pathname,  //请求后台的URL（*）
             locale: BootstrapTableLocale,
             toolbar: '#toolbar',
@@ -273,7 +273,7 @@
                 },
                 {
                     field: 'alias',
-                    title: "{{ _('角色名') }}",
+                    title: "{{ _('名称') }}",
                     align: 'left',
                     valign: 'middle',
                     sortable: true,
