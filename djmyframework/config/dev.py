@@ -94,7 +94,7 @@ logging.warning('This env is dev,DEBUG = True')
 logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
 # 日志打印 sql
-logging_config.LOGGING['loggers']['adjango.db.backends'] = {
+logging_config.LOGGING['loggers']['django.db.backends'] = {
         'handlers' : ['console'],
         'propagate': False,
         'level'    : 'DEBUG',

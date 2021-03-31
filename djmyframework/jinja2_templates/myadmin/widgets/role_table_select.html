@@ -25,7 +25,7 @@
     ;(function () {
         var $table = $('#role-table')
         $table.bootstrapTable({
-           // height: 400,
+            height: Math.max(600, getWindowHeightWidth()[1] - Math.min($('html').height(), $('#role-table').offset().top)),
             striped: true,
             selectItemName: 'role[]',//checkbox name
             // multipleSelectRow: true,

@@ -160,10 +160,10 @@ DJANGO_CELERY_BEAT_TZ_AWARE = False
 
 ############# LDAP 验证设置 ##############
 #https://django-auth-ldap.readthedocs.io/en/latest/example.html
-AUTHENTICATION_BACKENDS = (
-    "django_auth_ldap.backend.LDAPBackend",
-    "django.contrib.auth.backends.ModelBackend",
-)
+# T_AUTHENTICATION_BACKENDS = (
+#     "django_auth_ldap.backend.LDAPBackend",
+#     "django.contrib.auth.backends.ModelBackend",
+# )
 
 AUTH_LDAP_SERVER_URI = "ldap://ldap.example.com"
 AUTH_LDAP_BIND_DN = "cn=django-agent,dc=example,dc=com"

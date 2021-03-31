@@ -171,9 +171,7 @@ class UserManagerMixin(object):
         else:
             return Resource.objects.filter(role__in=self.get_roles())
 
-    def get_resource_bitmap(self, name):
-        # todo 使用位操作检查权限
-        self.get_resource_obj().filter(name=name)
+
 
     def get_roles(self):
         """获取角色
