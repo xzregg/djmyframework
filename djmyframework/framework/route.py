@@ -167,13 +167,13 @@ def _get_pyfile(dirlist):
 def _import_module_from_file():
     from django.conf import settings
     from django.apps import apps
-
-    for app_module_name in settings.APPS:
+    app_names = settings.APPS
+    for app_module_name in app_names:
         app_name = app_module_name.rsplit('.')[-1]
 
         app_config = apps.app_configs.get(app_name)
         if not app_config:
-            break
+            continue
         views_dir_path = os.path.join(app_config.path, VIEWS_DIR)
 
         if os.path.isfile('%s.py' % views_dir_path):

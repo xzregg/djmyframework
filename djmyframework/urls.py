@@ -24,7 +24,7 @@ from rest_framework.documentation import include_docs_urls
 from framework.route import get_urlpatterns
 from framework.utils import import_view
 from settings import settings
-from drf_yasg import openapi
+
 from config.api import API_INFO
 
 schema_view = get_schema_view(
