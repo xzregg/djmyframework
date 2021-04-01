@@ -99,16 +99,13 @@ class RoleSet(CurdViewSet):
 
         for rsource_name, model_resource in Resource.get_resource_map().items():
             if not model_resource.is_inner:
-                role.create_resource(rsource_name, request.data.get(model_resource.id_field_lookup))
+                role.create_resource(rsource_name, request.data.get(model_resource.id_field_lookup,[]))
 
-        role.create_resource('menu', params.menu)
-        role.create_resource('role', manager_role_ids)
-
+        role.create_resource('menu', params.menu or [])
+        role.create_resource('role', manager_role_ids or [])
         if request.user.is_root:
-            #role.user_set.clear()
-            #if params.members:
             role.user_set.set(params.members or [])
-        role.save()
+
         return self.response(serializer.data, msg=msg)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)

@@ -13,21 +13,22 @@
                 <small>{{ _('编辑') }}</small>
             </h1>
         </div>
-        <div class="col-sm-4">
-            <h1>
-                <small>{{ _('资源管理') }}</small>
-            </h1>
+        <div class="col-sm-6">
+
         </div>
     </div>
 
-    <hr><br>
+    <hr>
 
     <form action="/myadmin/role/save?{% if data.id %}id={{ data.id }}{% endif %}{% if request.query_params.is_copy %}&is_copy=1{% endif %}"
           method="POST"
           class="form-horizontal"
           role="form">
         <div class="row edit-container">
-            <div class="col-sm-5">
+
+            <div class="col-sm-5 ">
+
+                <br>
                 {{ csrf_input }}
                 <div class="form-group" style="display:none">
                     <label class="col-sm-3 control-label no-padding-right" for="id_id">
@@ -161,24 +162,24 @@
 
             <div class="col-sm-7" style="height: 650px">
                 <div class="tabbable ">
-                    <ul class="nav nav-tabs padding-12 tab-color-blue background-blue">
+                    <ul class="nav nav-tabs">
                         <li class="active">
-                            <a data-toggle="tab" href="#tab-1">
+                            <a data-toggle="tab" href="#tab-1" role="button">
                                 <i class="icon-dashboard bigger-110"></i>{{ _('模块权限') }}
                             </a>
 
                         </li>
                         {% if request.user.is_manager %}
                             <li class="">
-                                <a data-toggle="tab" href="#tab-2">
-                                    <i class="blue "></i> {{  _('可管理(下级)的角色') }}
+                                <a data-toggle="tab" href="#tab-2" role="button">
+                                    <i class="blue "></i> {{ _('可管理(下级)的角色') }}
                                 </a>
                             </li>
                         {% endif %}
 
                         {% if request.user.is_root %}
                             <li class="">
-                                <a data-toggle="tab" href="#tab-3">
+                                <a data-toggle="tab" href="#tab-3" role="button">
                                     <i class="icon-user"></i>{{ _('成员') }}
                                 </a>
                             </li>
@@ -196,10 +197,7 @@
                         {% endfor %}
 
                     </ul>
-                    <br>
-
-
-                    <div class="tab-content">
+                    <div class="tab-content ">
                         <div id="tab-1" class="tab-pane active">
                             <div class="alert alert-info">
                                 <i class="icon-remove close" data-dismiss="alert">&times;</i>

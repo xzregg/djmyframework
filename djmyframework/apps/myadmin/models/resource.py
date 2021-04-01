@@ -10,14 +10,15 @@
 import logging
 import typing
 from dataclasses import dataclass
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from functools import reduce
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from framework.models import BaseModel
-from framework.views import Request
 from framework.utils import trace_msg
 from framework.utils.bitmap import BitMap
+from framework.views import Request
 
 
 class AbsResourceBackend(object):
@@ -75,7 +76,6 @@ class BitMapResourceBackend(AbsResourceBackend):
 class StrResourceBackend(AbsResourceBackend):
     sep = ','
 
-
     @classmethod
     def decode_members(cls, member_str):
         return set(member_str.split(','))
@@ -85,7 +85,7 @@ class StrResourceBackend(AbsResourceBackend):
         return cls.sep.join((str(x) for x in member_list))
 
 
-def get_resource_backend(_str)->AbsResourceBackend:
+def get_resource_backend(_str) -> AbsResourceBackend:
     if not _str or _str[0] == '0':
         return BitMapResourceBackend
     else:
@@ -118,7 +118,27 @@ class ModelResource(object):
         :param user_model:
         :return:
         """
-        return user_model.get_resource_queryset_from_name(self.name)
+        ResourceClass = self.model_class
+        if user_model.is_root:
+            return ResourceClass.objects.all()
+        resource_objs = user_model.get_resource_obj().filter(name=self.name)
+        try:
+            if len(resource_objs) == 1:
+                resource_ids = resource_objs[0].members
+            else:
+                resource_ids = reduce(lambda x, y: y | x, resource_objs)
+        except TypeError as e:
+            resource_ids = []
+
+        query = {'%s__in' % self.unique_filed_name: resource_ids}
+
+        return ResourceClass.objects.filter(**query).distinct()
+
+    def create_resource(self, role_model, members_list):
+        resource: Resource = role_model.get_resource_model(self.name)
+        resource.members = members_list
+        resource.save()
+        role_model.resource.add(resource)
 
     def get_template_context(self, request: Request):
         """
@@ -129,8 +149,8 @@ class ModelResource(object):
         return {}
 
     def members_handle(self, members):
-        """members 都转为 int """
-        return set(int(i) for i in members if i.isdigit())
+        """ """
+        return {int(i) for i in members}
 
 
 class Resource(BaseModel):
@@ -169,7 +189,7 @@ class Resource(BaseModel):
         """
         if self.__members_cache is None:
             _members = get_resource_backend(self._members).decode_members(self._members)
-            self.__members_cache = self._resource_map.get(self.name,ModelResource()).members_handle(_members)
+            self.__members_cache = self._resource_map.get(self.name, ModelResource()).members_handle(_members)
         return self.__members_cache
 
     @members.setter

@@ -81,7 +81,7 @@
                         //if (isSelectMultiple && value !== null){
                         if (isSelectMultiple) {
                             value = value == null ? new Array() : value
-                            navObj[currentName] = !navObj[currentName] ?new Array() :navObj[currentName];
+                            navObj[currentName] = !navObj[currentName] ? new Array() : navObj[currentName];
 
                             if (Array.isArray(value)) {
                                 $(value).each(function () {
@@ -93,9 +93,13 @@
 
                         } else if ($input.is(":checkbox")) {
 
-                            var isArray = currentName.substr(currentName.length-2,2) == '[]'
-                            if(isArray){
-                                currentName = currentName.substr(0,currentName.length-2)
+                            var isArray = currentName.substr(currentName.length - 2, 2) == '[]'
+                            if (isArray) {
+                                currentName = currentName.substr(0, currentName.length - 2)
+                            }
+                            if (value == null) {
+                                navObj[currentName] = []
+                                break
                             }
                             if (!navObj.hasOwnProperty(currentName)) {
                                 if ($('[name="' + $input.attr('name') + '"]').length > 1 || isArray) {
@@ -177,6 +181,17 @@
                         });
                     }
                 });
+                $(":checkbox", selector).each(function () {
+                    if (this.name.substr(this.name.length - 2, 2) == '[]' && this.value === null) {
+                        formAsArray.push({
+                            name: this.name,
+                            value: null,
+                            elem: this
+                        });
+
+                    }
+                });
+
             },
 
             //clone of the jquery method, but returns the element

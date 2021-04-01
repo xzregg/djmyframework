@@ -4,16 +4,15 @@
 
     <div class="col-sm-12">
 
-            <div id="role-members--toolbar"><h3>{{ _('角色成员') }} <span class="badge">((selected_num))</span></h3>
-            </div>
+        <div id="role-members-toolbar"><h3>{{ _('已选择') }} <span class="badge">((selected_num))</span></h3>
+        </div>
 
-                <table id="role-members-table">
-                    <thead>
-                    <th data-checkbox="true"></th>
-                    <th data-field="alias" data-click-to-select="true" data-align="left">{{ _('成员') }}</th>
-                    </thead>
-                </table>
-
+        <table id="role-members-table">
+            <thead>
+            <th data-checkbox="true"></th>
+            <th data-field="alias" data-click-to-select="true" data-align="left">{{ _('成员') }}</th>
+            </thead>
+        </table>
 
 
     </div>
@@ -23,32 +22,26 @@
     disabledEditBtn()
 
     ;(function () {
+
         var role_user_set_app = new Vue({
             el: '#role-members-content',
             delimiters: ['((', '))'],
             data: {
+                $roleMembersTable: null,
                 member_list: [],
                 selected_list: [],
-                selected_num: 0,
+
                 role_id: '{{ role_id or 0 }}'
             },
-            computed: {},
+            computed: {
+                selected_num() {
+                    return this.selected_list.length
+                }
+            },
             mounted: function () {
-
+                this.$roleMembersTable = $('#role-members-table')
                 var _this = this
                 $.when(
-                    $.get('{{ url('myadmin.user.list') }}?fields=id,alias,status_alias&page_size=10000', '', function (rsp) {
-                        if (rsp.code != 0) {
-                            alertError(rsp.msg)
-                            return
-                        }
-
-                        _this.member_list = $.map(rsp.data.results, function (item) {
-                            return {id: item.id, alias: item.alias, type_alias: '{{ _('用户') }}', parent: null}
-                        })
-
-
-                    }, 'json'),
                     $.get('{{ url('myadmin.role.members') }}', {id: _this.role_id}, function (rsp) {
                         if (rsp.code != 0) {
                             alertError(rsp.msg)
@@ -58,11 +51,12 @@
                     }, 'json')
                 ).done(function () {
 
-                    $('#role-members-table').bootstrapTable({
+                    _this.$roleMembersTable.bootstrapTable({
+                        url: '{{ url('myadmin.user.list') }}?fields=id,alias,status_alias&page_size=10000',
                         uniqueId: 'id',
                         idField: 'id',
-                        toolbar:'#role-members--toolbar',
-                        selectItemName: 'members[]',
+                        toolbar: '#role-members-toolbar',
+                        selectItemName: 'members',
                         data: _this.member_list,
                         groupBy: false,//分组
                         groupByField: 'status_alias',
@@ -73,20 +67,21 @@
                             return '<span class="label label-info">' + value + '</span>'
                         },
                         onCheck: function (row, $element) {
-                            _this.selected_num += 1
+                            _this.getSelectIds()
 
                         },
                         onUncheck: function (row, $element) {
-                            _this.selected_num -= 1
+                            _this.getSelectIds()
                         }
                         ,
                         onPostBody: function (data) {
                             setTimeout(function () {
                                 enabledEditBtn()
-                                $('#role-members-table').bootstrapTable('checkBy', {
+                                _this.$roleMembersTable.bootstrapTable('checkBy', {
                                     field: 'id',
                                     values: _this.selected_list
                                 })
+
                             }, 50)
 
                         },
@@ -96,7 +91,14 @@
 
                 });
             },
-            methods: {}
+            methods: {
+                getSelectIds: function () {
+                    this.selected_list = $.map(this.$roleMembersTable.bootstrapTable('getSelections'), function (row) {
+                        return row.id
+                    })
+                    return this.selected_list
+                },
+            }
 
         })
     })();

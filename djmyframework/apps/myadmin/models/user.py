@@ -111,7 +111,6 @@ class UserManagerMixin(object):
             new_attrs = list((input_list & resource_attrs))
         else:
             new_attrs = list((input_list & resource_attrs) or resource_attrs)
-
         return new_attrs
 
     def get_resource_ids(self, name, input_list=None):
@@ -123,6 +122,8 @@ class UserManagerMixin(object):
         self.__resource_map[name] = query_set
 
     def get_resource(self, name):
+        """按资源名获取所属角色相应的资源
+        """
         _r = self.__resource_map.get(name, None)
         if _r == None:
             _r = self._get_resource(name)
@@ -130,35 +131,10 @@ class UserManagerMixin(object):
         return self.__resource_map[name]
 
     def _get_resource(self, name):
+        return Resource.get_model_resource(name).get_resource_queryset(self)
 
-        model_resource = Resource.get_model_resource(name)
-        if hasattr(model_resource, 'get_resource_queryset'):
-            get_resource_queryset_method = getattr(model_resource, 'get_resource_queryset')
-            return get_resource_queryset_method(self)
-        return self.get_resource_queryset_from_name(name)
 
-    def get_resource_queryset_from_name(self, name):
-        """按资源名获取所属角色相应的资源
-        """
-        model_resource = Resource.get_model_resource(name)
-
-        ResourceClass = model_resource.model_class
-        if self.is_root:
-            return ResourceClass.objects.all()
-        resource_objs = self.get_resource_obj().filter(name=name)
-        try:
-            if len(resource_objs) == 1:
-                resource_ids = resource_objs[0].members
-            else:
-                resource_ids = reduce(lambda x, y: y | x, resource_objs)
-        except TypeError as e:
-            resource_ids = []
-
-        query = {'%s__in' % model_resource.unique_filed_name: resource_ids}
-
-        return ResourceClass.objects.filter(**query).distinct()
-
-    _get_resource_from_model = get_resource_queryset_from_name
+    _get_resource_from_model = _get_resource
 
     def get_resource_obj(self):
         """获取资源对象,超级管理拥有所有资源对象

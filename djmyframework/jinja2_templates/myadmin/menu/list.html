@@ -143,9 +143,12 @@
                             <span class="glyphicon glyphicon-remove"></span> {{ _('删除') }}
                         </button>
                     {% endif %}
-                        <a id="update-menu-btn" class="btn btn-sm btn-default openDialog" data-height="400px" href="{{ url('myadmin.menu.update_menu') }}">
-                            <span class="glyphicon glyphicon-update"></span> {{ _('更新菜单') }}
-                        </a>
+                    <a id="update-menu-btn"
+                       class="btn btn-sm btn-default openDialog"
+                       data-height="400px"
+                       href="{{ url('myadmin.menu.update_menu') }}">
+                        <span class="glyphicon glyphicon-update"></span> {{ _('更新菜单') }}
+                    </a>
 
                     <button id="expandAll-btn" class="btn btn-sm btn-default ">
                         {{ _('展开') }}
@@ -256,6 +259,7 @@
                     align: 'left',
                     valign: 'middle',
                     sortable: true,
+                    width: '200px',
                     formatter: function (value, row, index) {
                         var style = row.is_show == 1 ? row.css : 'color:gray;'
                         return [
@@ -350,17 +354,19 @@
             parentIdField: 'parent_id',
             onPostBody: function (data) {
                 var columns = $table.bootstrapTable('getOptions').columns
-                console.dir(columns)
 
                 if (columns && columns[0][1].visible) {
-                    {#$table.treegrid({#}
-                    {#    initialState: 'collapsed',#}
-                    {#    treeColumn: 2,#}
-                    {#    onChange: function () {#}
-                    {#        $table.bootstrapTable('resetWidth')#}
-                    {#    }#}
-                    {#})#}
-                    {#$table.treegrid('getRootNodes').treegrid('expand');#}
+                    $table.treegrid({
+                        initialState: 'collapsed',// 所有节点都折叠
+                        //initialState: 'expanded',
+                        treeColumn: 2,
+                        onChange: function () {
+                            //$table.bootstrapTable('resetWidth')
+                            $table.bootstrapTable('resetView')
+                        }
+                    })
+                    //只展开树形的第一级节点
+                    $table.treegrid('getRootNodes').treegrid('expand');
                 }
                 // 右键菜单
                 $table.find('tr').contextMenu('contextMenu', {

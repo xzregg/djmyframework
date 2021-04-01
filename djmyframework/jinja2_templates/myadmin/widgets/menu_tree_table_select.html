@@ -20,7 +20,6 @@
     <thead>
     <tr>
         <th data-checkbox="false" data-formatter="checkboxFormatter" data-width="40" >
-
             <input type="checkbox" checkbox-area="memu-body">
         </th>
 
@@ -50,7 +49,7 @@
 
         var checked = select_menu_list.indexOf(row.name) > -1 ? 'checked' : ''
 
-        return '<label><input type="checkbox" value="' + row.name + '" name="menu" ' + checked + ' >    '  + '</label>'
+        return '<label><input type="checkbox" value="' + row.name + '" name="menu[]" ' + checked + ' >    '  + '</label>'
     }
 
     $(function(){
@@ -126,6 +125,7 @@
 
                 });
                 // $('[data-toggle="tooltip"]').tooltip()
+                // 使用 checkboxFormatter
                 //$table.bootstrapTable('checkBy', {field: 'name', values: select_menu_list})
 
             },

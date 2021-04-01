@@ -45,10 +45,8 @@ class RoleManagerMixin(object):
             return
         if not self.id:  # 新建时没有对象,先保存一下
             self.save()
-        resource = self.get_resource_model(name)
-        resource.members = id_list
-        resource.save()
-        self.resource.add(resource)
+        model_resource = Resource.get_model_resource(name)
+        model_resource.create_resource(self, id_list)
 
     @classmethod
     def create_role_from_name(cls, name):

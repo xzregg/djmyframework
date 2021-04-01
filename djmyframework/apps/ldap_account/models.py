@@ -3,7 +3,7 @@
 import os
 import typing
 
-from django.db.models.signals import m2m_changed, post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 from framework.models import BaseNameModel, models
@@ -71,6 +71,8 @@ class AccessDomain(BaseNameModel):
     bindpw = models.CharField(verbose_name=_('访问密钥'), max_length=30, default='', null=False)
     access_address = models.CharField(verbose_name=_('访问地址'), max_length=256, default='', null=False)
     status = models.IntegerField(verbose_name=_('状态'), choices=Status.member_list(), default=Status.Enable)
+
+    role = models.ManyToManyField(Role, verbose_name=_('允许访问的角色'))
 
     @property
     def is_enable(self):
@@ -168,7 +170,7 @@ class AccessDomain(BaseNameModel):
         pass
 
 
-@receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
+#@receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
 def user_save_ldap(sender, instance: User, update_fields=None, **kwargs):
     user: User = instance
 
@@ -181,7 +183,7 @@ def user_save_ldap(sender, instance: User, update_fields=None, **kwargs):
             access_domain.delete_people(user)
 
 
-@receiver(pre_delete, sender=User, dispatch_uid="user_delete_ldap")
+#@receiver(pre_delete, sender=User, dispatch_uid="user_delete_ldap")
 def user_delete_ldap(sender, instance: User, **kwargs):
     for access_domain in instance.get_resource('access_domain'):
         access_domain.delete_people(instance)
@@ -190,7 +192,7 @@ def user_delete_ldap(sender, instance: User, **kwargs):
 # @receiver(post_save, sender=Role, dispatch_uid="role_save_ldap")
 def role_save_ldap(sender, instance: Role, **kwargs):
     role = instance
-    access_domain_list = role.get_resource('access_domain').values_list('id',flat=True)
+    access_domain_list = role.get_resource('access_domain').values_list('id', flat=True)
     all_access_domain_list: typing.List[AccessDomain] = AccessDomain.objects.all()
 
     for access_domain in all_access_domain_list:
@@ -200,7 +202,7 @@ def role_save_ldap(sender, instance: Role, **kwargs):
             access_domain.delete_role(role)
 
 
-@receiver(pre_delete, sender=Role, dispatch_uid="role_delete_ldap")
+#@receiver(pre_delete, sender=Role, dispatch_uid="role_delete_ldap")
 def role_delete_ldap(sender, instance: Role, **kwargs):
     role = instance
     access_domain_list: typing.List[AccessDomain] = AccessDomain.objects.all()
@@ -208,29 +210,30 @@ def role_delete_ldap(sender, instance: Role, **kwargs):
         access_domain.delete_role(role)
 
 
-@receiver(post_save, sender=UserInfo, dispatch_uid="user_info_save_ldap")
+#@receiver(post_save, sender=UserInfo, dispatch_uid="user_info_save_ldap")
 def user_info_save_ldap(sender, instance: UserInfo, **kwargs):
     user = instance.user
     user_save_ldap(sender, user)
 
 
-@receiver(pre_delete, sender=UserInfo, dispatch_uid="user_info_delete_ldap")
+#@receiver(pre_delete, sender=UserInfo, dispatch_uid="user_info_delete_ldap")
 def user_info_delete_ldap(sender, instance: UserInfo, **kwargs):
     user = instance.user
     user_delete_ldap(sender, user)
 
 
-@receiver(post_save, sender=Resource, dispatch_uid="role_access_domain_resource_save")
+#@receiver(post_save, sender=Resource, dispatch_uid="role_access_domain_resource_save")
 def role_access_domain_resource_save(sender, instance: Resource, **kwargs):
     if instance.name == 'access_domain':
         role = instance.role_set.first()
         if role:
             role_save_ldap(sender, role)
 
+
 # todo 按照模型同步 db 文件逻辑负载,尝试实现 ldap server 协议
-#@receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")
+# @receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")
 def user_add_role_ldap(sender, action, instance: Role, reverse, model: Role, pk_set, using, **kwargs):
-    if action in['post_add','post_clear','post_remove']:
+    if action in ['post_add', 'post_clear', 'post_remove']:
         user_save_ldap(sender, instance)
     # role_save_ldap(sender,model)
     # print('user_role_add_ldap')
