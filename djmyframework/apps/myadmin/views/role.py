@@ -105,10 +105,10 @@ class RoleSet(CurdViewSet):
         role.create_resource('role', manager_role_ids)
 
         if request.user.is_root:
-            role.user_set.clear()
-            if params.members:
-                role.user_set.add(*params.members)
-
+            #role.user_set.clear()
+            #if params.members:
+            role.user_set.set(params.members or [])
+        role.save()
         return self.response(serializer.data, msg=msg)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)

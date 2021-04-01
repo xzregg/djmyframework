@@ -50,7 +50,7 @@ class UserManagerMixin(object):
         """
         return cls.objects.filter(id=user_id).prefetch_related('role').first()
 
-    def _check_role(self, name):
+    def check_role(self, name):
         for r in self.get_roles():
             if r.name == name:
                 return True
@@ -60,16 +60,15 @@ class UserManagerMixin(object):
     def is_root(self):
         """是否超级管理员
         """
-
-        return self._check_role('root')
+        return self.check_role('root')
 
     @CacheAttribute
     def is_sdk_manager(self):
-        return self._check_role('sdk_manager')
+        return self.check_role('sdk_manager')
 
     @CacheAttribute
     def is_yunying(self):
-        return self._check_role('yunying')
+        return self.check_role('yunying')
 
     @property
     def is_agent(self):
@@ -85,7 +84,7 @@ class UserManagerMixin(object):
     def is_kefu(self):
         """是否客服
         """
-        return self._check_role('kefu')
+        return self.check_role('kefu')
 
     @property
     def is_not_active(self):
@@ -95,7 +94,7 @@ class UserManagerMixin(object):
     def is_manager(self):
         """是否管理员
         """
-        return self.is_root or self.get_manageable_user().exists()
+        return self.is_root or self.check_role('manager') or self.get_manageable_user().exists()
 
     def get_manageable_user(self):
         """获取自己的下属,除权限集合 如果是管理员这不能获取到
@@ -318,6 +317,24 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
         the_user.last_ip = request.real_ip
         the_user.session_key = request.session.session_key
         the_user.save()
+
+    @CacheAttribute
+    def user_info(self):
+        user_info = None
+        if self.id:
+            user_info, _ = self.userinfo_set.get_or_create()
+        return user_info
+
+    @property
+    def email(self):
+        if self.user_info:
+            return self.user_info.email
+
+    @email.setter
+    def email(self, emial):
+        if self.user_info:
+            self.user_info.email = emial
+            self.user_info.save()
 
 
 class UserInfo(BaseModel):

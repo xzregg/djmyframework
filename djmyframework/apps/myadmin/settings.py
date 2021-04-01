@@ -7,20 +7,9 @@
 # @Desc    :
 
 
-
 AUTH_USER_MODEL = 'myadmin.models.user.User'
 
 
-LDAP_SERVER = ''
-
-LDAP_HOST = 'ldap://localhost:3891'
-LDAP_BASE_DN = 'ou=people,dc=example,dc=com'
-
-LDAP_BIND_DN = 'cn=test,ou=people,dc=example,dc=com'
-LDAP_BIND_PW = 'test'
-
-LDAP_FILTER = '(&(objectClass=posixAccount)(cn=%s))'
-LDAP_FILTER_FIELD = ['cn', 'uid', 'mail', 'alias']
 
 class SMS_CONFIG:
     AppKey = '1400029142'

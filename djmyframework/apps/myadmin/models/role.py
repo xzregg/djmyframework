@@ -17,18 +17,22 @@ from .resource import Resource
 
 class RoleManagerMixin(object):
 
+    def get_resource_model(self, name):
+        resource_model, created = Resource.objects.get_or_create(name=name, role_id=self.id)
+        return resource_model
+
     def add_resource_member(self, name, id):
         '''增加资源对象
         @name  资源名
         @id    资源对象id
         '''
-        resource_obj = self.resource.all().filter(name=name).first()
+        resource_obj = self.get_resource_model(name)
         if resource_obj:
             resource_obj.add_member(id)
             resource_obj.save()
 
     def get_resource(self, name):
-        resource_ids = self.resource.get(name=name).members
+        resource_ids = self.get_resource_model(name).members
         return Resource.get_model_class(name).objects.filter(id__in=resource_ids).distinct()
 
     def create_resource(self, name, id_list):
@@ -41,7 +45,7 @@ class RoleManagerMixin(object):
             return
         if not self.id:  # 新建时没有对象,先保存一下
             self.save()
-        resource, created = Resource.objects.get_or_create(name=name, role_id=self.id)
+        resource = self.get_resource_model(name)
         resource.members = id_list
         resource.save()
         self.resource.add(resource)

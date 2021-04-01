@@ -14,6 +14,7 @@ from myadmin.models.role import Role
 RoleList = [
 
         ('root', _('超级管理员'), Role.RoleType.USER, ''),
+        ('manager', _('管理者'), Role.RoleType.USER, ''),
         ('analysis', _('分析用户'), Role.RoleType.USER, ''),
         ('yunying', _('项目运营'), Role.RoleType.USER, ''),
         ('channel_user', _('渠道用户'), Role.RoleType.USER, ''),

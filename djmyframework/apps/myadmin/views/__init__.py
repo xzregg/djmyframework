@@ -14,10 +14,12 @@ from django.utils.translation import gettext_lazy as _
 import settings
 from framework.route import Route
 from framework.serializer import ParamsSerializer, s
-from framework.validators import LetterValidator, PasswordValidator
-from framework.views import api_view, notauth, notcheck, Request, Response, RspError, RspErrorEnum, swagger_auto_schema,render_to_response
-from myadmin.models import User
+from framework.settings import settings
 from framework.utils import TIMEFORMAT
+from framework.validators import LetterValidator, PasswordValidator
+from framework.views import api_view, notauth, notcheck, render_to_response, Request, Response, RspError, RspErrorEnum, \
+    swagger_auto_schema
+from myadmin.models import User
 
 
 @notcheck
@@ -33,7 +35,7 @@ def index(request: Request):
     parent_id = int(request.query_params.get('parent_id', '0'))
 
     now_timestamp = int(time.time())
-    return Response(locals(),template_name='myadmin/index.html')
+    return Response(locals(), template_name='myadmin/index.html')
 
 
 class LoginError(RspError): pass
@@ -44,8 +46,8 @@ class LoginErrors(RspErrorEnum):
     LOGIN_TIMES_ERROR = RspError(_("登录次数过多"), 1022)
     USERNAME_OR_PASSWORD_FAIL = RspError(_("账号密码错误"), 1023)
     SAME_PASSWORD = RspError(_('请联系管理员修改密码!'))
-    ACCOUNT_NOT_EXIST = RspError(_('账户不存在!'),1024)
-    ACCOUNT_STATUS_ERROR = RspError(_('账户状态错误'),1025)
+    ACCOUNT_NOT_EXIST = RspError(_('账户不存在!'), 1024)
+    ACCOUNT_STATUS_ERROR = RspError(_('账户状态错误'), 1025)
 
 
 class LoginRspSer(s.Serializer):
@@ -101,20 +103,25 @@ def login(request: Request):
 
             if not username or not password:
                 raise LoginErrors.USERNAME_OR_PASSWORD_EMPTY
-            if username == password:
-                raise LoginErrors.SAME_PASSWORD
 
-            the_user:User = User.objects.filter(username=username).first()
+            if settings.USE_LDAP_AUTH:
+                from django_auth_ldap.backend import LDAPBackend
+                the_user = LDAPBackend().authenticate(username, password)
+                is_pass = the_user is not None
+            else:
+                the_user: User = User.objects.filter(username=username).first()
 
-            if not the_user:
-                raise LoginErrors.ACCOUNT_NOT_EXIST
-            if not the_user.password:
-                raise LoginError('密码错误 !' )
-            if the_user.status == User.Status.NotActive:
-                raise LoginError('%s 未激活' % the_user.alias)
-            if the_user.status != User.Status.NORMAL:
-                raise LoginErrors.ACCOUNT_STATUS_ERROR(_('账户已 %s') % the_user.get_status_display())
-            if the_user.check_password(password):
+                if not the_user:
+                    raise LoginErrors.ACCOUNT_NOT_EXIST
+                if not the_user.password:
+                    raise LoginError('密码错误 !')
+                if the_user.status == User.Status.NotActive:
+                    raise LoginError('%s 未激活' % the_user.alias)
+                if the_user.status != User.Status.NORMAL:
+                    raise LoginErrors.ACCOUNT_STATUS_ERROR(_('账户已 %s') % the_user.get_status_display())
+                is_pass = the_user.check_password(password)
+
+            if is_pass:
                 User.login_user(request, the_user)
                 redirect_url = request.query_params.get('from_url', settings.INDEX_URL)
                 return HttpResponseRedirect(redirect_url)
@@ -185,11 +192,11 @@ class RegisterAdminReqSerializer(ParamsSerializer):
     username = s.CharField(label=_('登录名称'), validators=[LetterValidator], required=True)
     employee_id = s.CharField(label=_('工号'), required=False, default='')
     email = s.EmailField(label=_('邮箱地址'), required=True)
-    qq = s.CharField(label=_('QQ'), required=False,default='')
+    qq = s.CharField(label=_('QQ'), required=False, default='')
     phone = s.CharField(label=_('手机号'), required=False, default='')
     alias = s.CharField(label=_('姓名'), required=True)
     password1 = s.CharField(label=_('密码'), required=True, validators=[PasswordValidator])
-    password2 = s.CharField(label=_('确认密码'), required=True,validators=[PasswordValidator])
+    password2 = s.CharField(label=_('确认密码'), required=True, validators=[PasswordValidator])
     verify = s.CharField(label=_('验证码'), required=True)
 
     class Meta:
@@ -230,4 +237,4 @@ def register(request: Request, **kwargs):
         user_info_model.save()
         User.login_user(request, user_model)
         return Response(msg=_('注册成功'))
-    return render_to_response('myadmin/register.html',locals())
+    return render_to_response('myadmin/register.html', locals())

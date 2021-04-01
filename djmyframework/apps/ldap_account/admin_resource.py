@@ -8,13 +8,13 @@
 
 from framework.translation import _
 from myadmin.models.resource import ModelResource, Resource
-from .models import AccessDomain
+from . import models
 
 
 class AccessDomainModelResource(ModelResource):
     label = _('访问域')
     name = 'access_domain'
-    model_class = AccessDomain
+    model_class = models.AccessDomain
     template = ModelResource.default_template
 
 

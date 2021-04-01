@@ -105,6 +105,24 @@
 
 
         <div class="form-group" style="">
+            <label class="col-sm-3 control-label no-padding-right" for="id_status">
+                
+                {{ _('状态') }} </label>
+
+            <div class="col-sm-8">
+                <select v-select2 v-model="model.status" class="form-control col-lg-5 select2" id="id_status" data-placeholder="{{ _('状态') }}" name="status" svalue="{{ data.status }}">
+                    {% for o in data.serializer.instance.get_fields_map().status.choices %}
+                        <option value="{{ o.0 }}">{{ o.1 }}</option>
+                    {% endfor %}
+                </select>
+
+                <div id="help_text_status" class="middle text-danger help_text"></div>
+            </div>
+        </div>
+                
+
+
+        <div class="form-group" style="">
             <label class="col-sm-3 control-label no-padding-right" for="id_create_datetime">
                 
                 {{ _('创建时间') }} </label>
@@ -157,7 +175,7 @@
 
     </div>
     <script>
-        var modelData = Object({{ data|json_dumps|safe }}) || Object({"id": 1, "_version": 0, "create_datetime": null, "update_datetime": null, "name": "", "alias": "", "bindpw": "", "access_address": ""})
+        var modelData = Object({{ data|json_dumps|safe }}) || Object({"id": 1, "_version": 0, "create_datetime": null, "update_datetime": null, "name": "", "alias": "", "bindpw": "", "access_address": "", "status": 0})
         
         var modelShema = Object({{ data.serializer.to_schema()|json_dumps|safe }})
 

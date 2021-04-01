@@ -61,6 +61,16 @@
                             type:'char',
                             data_url: '',
                          },
+                         status :
+                         {
+                            label: '{{ _('状态') }}',
+                            name:'status',
+                            type:'choice',
+                            data_url: '',
+                            choices:[{% for o in request.parser_context.view.model.fields_map.status.choices %}
+                             ["{{ o.0 }}", '{{ o.1 }}'],{% endfor %}
+                                    ]
+                         },
                          create_datetime :
                          {
                             label: '{{ _('创建时间') }}',
@@ -268,6 +278,17 @@
                 valign: 'middle',
                 sortable: true,
                 visible:true,
+             },
+             {
+                field: 'status',
+                title: "{{ _('状态') }}",
+                align: 'center',
+                valign: 'middle',
+                sortable: true,
+                visible:true,
+                formatter:function(value,row,index){
+                     return row.status_alias.toString()
+                }
              },
              {
                 field: 'create_datetime',

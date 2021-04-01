@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Time: 2021-04-01 00:39:31.859520
+# @Time: 2021-04-01 11:40:50.721287
 
 
 from drf_yasg.utils import swagger_auto_schema
@@ -15,10 +15,11 @@ from ldap_account.models import AccessDomain
 class AccessDomainSerializer(BaseModelSerializer):
     # https://www.django-rest-framework.org/api-guide/serializers/
     # https://www.django-rest-framework.org/api-guide/relations/
+    status_alias = s.CharField(source='get_status_display',required=False, read_only=True)
 
     class Meta:
         model = AccessDomain
-        fields =  ['id', 'name', 'alias', 'bindpw', 'access_address', 'create_datetime', 'update_datetime'] or '__all__'
+        fields =  ['id', 'name', 'alias', 'bindpw', 'access_address', 'status', 'create_datetime', 'update_datetime', 'status_alias'] or '__all__'
         #exclude = ['session_key']
         read_only_fields = ['create_datetime', 'update_datetime']
         #extra_kwargs = {'password': {'write_only': True}}
@@ -33,11 +34,11 @@ class AccessDomainSet(CurdViewSet):
 
     serializer_class = AccessDomainSerializer
     # 可条件过滤的字段
-    filter_fields =  ['id', 'name', 'alias', 'bindpw', 'access_address', 'create_datetime', 'update_datetime']
+    filter_fields =  ['id', 'name', 'alias', 'bindpw', 'access_address', 'status', 'create_datetime', 'update_datetime']
     # 可排序的字段
-    ordering_fields = ['id', 'name', 'alias', 'bindpw', 'access_address', 'create_datetime', 'update_datetime']
+    ordering_fields = ['id', 'name', 'alias', 'bindpw', 'access_address', 'status', 'create_datetime', 'update_datetime']
     # 可以查询字段
-    queryset_fields = ['id', 'name', 'alias', 'bindpw', 'access_address', 'create_datetime', 'update_datetime']
+    queryset_fields = ['id', 'name', 'alias', 'bindpw', 'access_address', 'status', 'create_datetime', 'update_datetime']
 
     model = AccessDomain
 

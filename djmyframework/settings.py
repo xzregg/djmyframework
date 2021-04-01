@@ -114,7 +114,6 @@ CHANNEL_LAYERS = {
 ########################################
 
 
-
 ############# channels 配置 #############
 CHANNEL_LAYERS = {
         "default": {
@@ -157,37 +156,38 @@ DJANGO_CELERY_BEAT_TZ_AWARE = False
 ########################################
 
 
-
 ############# LDAP 验证设置 ##############
-#https://django-auth-ldap.readthedocs.io/en/latest/example.html
-# T_AUTHENTICATION_BACKENDS = (
-#     "django_auth_ldap.backend.LDAPBackend",
-#     "django.contrib.auth.backends.ModelBackend",
-# )
+# https://django-auth-ldap.readthedocs.io/en/latest/example.html
 
-AUTH_LDAP_SERVER_URI = "ldap://ldap.example.com"
-AUTH_LDAP_BIND_DN = "cn=django-agent,dc=example,dc=com"
-AUTH_LDAP_BIND_PASSWORD = "phlebotinum"
+USE_LDAP_AUTH = True
+AUTH_LDAP_SERVER_URI = "ldaps://127.0.0.1:13891"
+AUTH_LDAP_BIND_DN = "cn=ldap,ou=people,dc=example,dc=com"
+AUTH_LDAP_BIND_PASSWORD = "ldap"
 
 import ldap
 from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
-
-
-AUTH_LDAP_USER_SEARCH = LDAPSearch(
-    "ou=users,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+AUTHENTICATION_BACKENDS = (
+    "django_auth_ldap.backend.LDAPBackend",
+    "django.contrib.auth.backends.ModelBackend",
 )
 
+AUTH_LDAP_USER_SEARCH = LDAPSearch(
+        "ou=people,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(cn=%(user)s)"
+)
+AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+    "ou=role,dc=example,dc=com",
+    ldap.SCOPE_SUBTREE,
+    "(objectClass=posixGroup)",
+)
+AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
+
 AUTH_LDAP_USER_ATTR_MAP = {
-    "first_name": "givenName",
-    "last_name": "sn",
-    "email": "mail",
+        "alias": "alias",
+        "name" : "cn",
+        "email": "email",
 }
 
 ########################################
-
-
-
-
 
 
 ############# api 文档设置 ##############
