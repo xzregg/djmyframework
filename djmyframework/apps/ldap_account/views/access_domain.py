@@ -19,7 +19,7 @@ class AccessDomainSerializer(BaseModelSerializer):
 
     class Meta:
         model = AccessDomain
-        fields =  ['id', 'name', 'alias', 'bindpw', 'access_address', 'status', 'create_datetime', 'update_datetime', 'status_alias'] or '__all__'
+        fields =  ['id', 'name', 'alias', 'bindpw','basedn', 'access_address', 'status', 'create_datetime', 'update_datetime', 'status_alias'] or '__all__'
         #exclude = ['session_key']
         read_only_fields = ['create_datetime', 'update_datetime']
         #extra_kwargs = {'password': {'write_only': True}}

@@ -353,14 +353,14 @@
                 console.dir(columns)
 
                 if (columns && columns[0][1].visible) {
-                    $table.treegrid({
-                        initialState: 'collapsed',
-                        treeColumn: 2,
-                        onChange: function () {
-                            $table.bootstrapTable('resetWidth')
-                        }
-                    })
-                    $table.treegrid('getRootNodes').treegrid('expand');
+                    {#$table.treegrid({#}
+                    {#    initialState: 'collapsed',#}
+                    {#    treeColumn: 2,#}
+                    {#    onChange: function () {#}
+                    {#        $table.bootstrapTable('resetWidth')#}
+                    {#    }#}
+                    {#})#}
+                    {#$table.treegrid('getRootNodes').treegrid('expand');#}
                 }
                 // 右键菜单
                 $table.find('tr').contextMenu('contextMenu', {

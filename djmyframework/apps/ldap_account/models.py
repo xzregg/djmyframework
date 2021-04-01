@@ -224,7 +224,8 @@ def user_info_delete_ldap(sender, instance: UserInfo, **kwargs):
 def role_access_domain_resource_save(sender, instance: Resource, **kwargs):
     if instance.name == 'access_domain':
         role = instance.role_set.first()
-        role_save_ldap(sender, role)
+        if role:
+            role_save_ldap(sender, role)
 
 # todo 按照模型同步 db 文件逻辑负载,尝试实现 ldap server 协议
 #@receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")

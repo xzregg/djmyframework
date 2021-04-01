@@ -26,6 +26,9 @@ from twisted.internet import ssl, reactor
 
 APP_PATH = get_app_path('ldap_account')
 
+class modelLDAPServer(LDAPServer):
+    pass
+
 
 class LDAPServerFactory(ServerFactory):
     protocol = LDAPServer
