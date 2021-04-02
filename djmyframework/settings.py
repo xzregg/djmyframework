@@ -161,13 +161,13 @@ USE_LDAP_AUTH = True
 AUTH_LDAP_SERVER_URI = "ldaps://127.0.0.1:13891"
 AUTH_LDAP_BIND_DN = "cn=ldap,ou=people,dc=example,dc=com"
 AUTH_LDAP_BIND_PASSWORD = "ldap"
-
+AUTH_LDAP_START_TLS = True
 import ldap
 from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
-AUTHENTICATION_BACKENDS = (
-    "django_auth_ldap.backend.LDAPBackend",
-    "django.contrib.auth.backends.ModelBackend",
-)
+# AUTHENTICATION_BACKENDS = (
+#     "django_auth_ldap.backend.LDAPBackend",
+#     "django.contrib.auth.backends.ModelBackend",
+# )
 
 AUTH_LDAP_USER_SEARCH = LDAPSearch(
         "ou=people,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(cn=%(user)s)"

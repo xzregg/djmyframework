@@ -58,6 +58,8 @@ class LoginRspSer(s.Serializer):
 def check_login_status(request):
     """登录状态检测
     """
+    if settings.DEBUG:
+        return
     now = datetime.datetime.now()
     err_count = request.session.setdefault('err_count', 0)
     max_count = 10
@@ -80,6 +82,12 @@ class LoginSerializer(ParamsSerializer):
     username = s.CharField(label=_('登录用户名'), help_text=_('登录用户名'))
     passowrd = s.CharField(label=_('用户密码'), help_text=_('用户密码'))
     verify = s.CharField(label=_('验证码'))
+
+
+def ldap_login(request,username, password):
+    from django_auth_ldap.backend import LDAPBackend
+    the_user = LDAPBackend().authenticate(request,username, password)
+    return the_user
 
 
 @Route()
@@ -105,8 +113,7 @@ def login(request: Request):
                 raise LoginErrors.USERNAME_OR_PASSWORD_EMPTY
 
             if settings.USE_LDAP_AUTH:
-                from django_auth_ldap.backend import LDAPBackend
-                the_user = LDAPBackend().authenticate(username, password)
+                the_user = ldap_login(request,username, password)
                 is_pass = the_user is not None
             else:
                 the_user: User = User.objects.filter(username=username).first()
