@@ -163,6 +163,8 @@ AUTH_LDAP_BIND_DN = "cn=ldap,ou=people,dc=example,dc=com"
 AUTH_LDAP_BIND_PASSWORD = "ldap"
 AUTH_LDAP_START_TLS = True
 import ldap
+# 使用 ssl 时 关闭 ca证验证
+ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
 from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
 # AUTHENTICATION_BACKENDS = (
 #     "django_auth_ldap.backend.LDAPBackend",
