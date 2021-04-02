@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from functools import reduce
 
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from framework.models import BaseModel
@@ -101,16 +102,23 @@ class ModelResource(object):
     name = ''
     unique_filed_name = 'id'
     alias_lookup = 'alias'
-    model_class = None
+    model_class: BaseModel = None
     template_context = {}
     default_template = 'myadmin/widgets/resource_checkbox.html'
     template = default_template
     help_text = ''
     is_inner = False
 
+    def __init__(self):
+        self.model_class = self.__class__.model_class
+
     @property
     def id_field_lookup(self):
         return '%s_%s' % (self.name, self.unique_filed_name)
+
+    def get_q_condition(self, members_list):
+        q = Q(**{'%s__in' % self.unique_filed_name: members_list})
+        return q
 
     def get_resource_queryset(self, user_model):
         """
@@ -118,10 +126,21 @@ class ModelResource(object):
         :param user_model:
         :return:
         """
-        ResourceClass = self.model_class
+        model_resource_class = self.model_class
+
         if user_model.is_root:
-            return ResourceClass.objects.all()
-        resource_objs = user_model.get_resource_obj().filter(name=self.name)
+            return model_resource_class.objects.all()
+        return self.get_role_resource(user_model.get_roles())
+
+    def get_role_resource(self, roles):
+        """
+        获取角色是所有的资源 ,资源成员 以 x,x,x 方式
+        :param user_model:
+        :return:
+        """
+        model_resource_class = self.model_class
+
+        resource_objs = Resource.objects.filter(role__in=roles, name=self.name)
         try:
             if len(resource_objs) == 1:
                 resource_ids = resource_objs[0].members
@@ -129,12 +148,11 @@ class ModelResource(object):
                 resource_ids = reduce(lambda x, y: y | x, resource_objs)
         except TypeError as e:
             resource_ids = []
-
-        query = {'%s__in' % self.unique_filed_name: resource_ids}
-
-        return ResourceClass.objects.filter(**query).distinct()
+        q = self.get_q_condition(resource_ids)
+        return model_resource_class.objects.filter(q).distinct()
 
     def create_resource(self, role_model, members_list):
+        """创建资源"""
         resource: Resource = role_model.get_resource_model(self.name)
         resource.members = members_list
         resource.save()
@@ -151,6 +169,55 @@ class ModelResource(object):
     def members_handle(self, members):
         """ """
         return {int(i) for i in members}
+
+
+class RelaRtionModelResource(ModelResource):
+    """关联模型资源,需要在 model 上定义 role = models.ManyToManyField(Role, verbose_name=_('允许访问的角色')) 字段
+    """
+    role_field_name = 'role'
+    related_field = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.check_has_role_many_to_many()
+
+    def check_has_role_many_to_many(self):
+        from myadmin.models import Role
+        for field in self.model_class._meta.many_to_many:
+            if field.related_model is Role:
+                self.role_field_name = field.attname
+                self.related_field = field
+                return
+        raise Exception(
+                '''需要在 %s model 上定义 role = models.ManyToManyField(Role, verbose_name=_('允许访问的角色')) 字段''' % cls.model_class)
+
+    def get_role_q(self, roles):
+        return Q(**{'%s__in' % self.role_field_name: roles})
+
+    def get_resource_queryset(self, user_model):
+        """
+        获取资源查询,使用 xxx_set 的方式
+        :param user_model:
+        :return:
+        """
+        roles = user_model.get_roles()
+
+        model_resource_class: BaseModel = self.model_class
+        if user_model.is_root:
+            return model_resource_class.objects.all()
+        return model_resource_class.objects.filter(self.get_role_q(roles)).distinct()
+
+    def get_role_resource(self, roles):
+        return self.model_class.objects.filter(self.get_role_q(roles)).distinct()
+
+    def create_resource(self, role_model, members_list):
+        """关联模型,反向添加角色
+        使用 role_model.xxx_set.set(members_list, clear=True)
+        """
+        if not role_model.id:
+            role_model.save()
+        m2m_field_name = '%s_set' % self.model_class._meta.model_name
+        getattr(role_model, m2m_field_name).set(members_list, clear=True)
 
 
 class Resource(BaseModel):

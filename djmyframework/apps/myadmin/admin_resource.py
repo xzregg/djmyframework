@@ -6,11 +6,13 @@
 # @Contact : xzregg@gmail.com
 # @Desc    : 
 
-from .models import User, Menu, ModelResource, Resource, Role
+from framework.translation import _
+from .models import Menu, ModelResource, Resource, Role, User
 
 
 class UserModelResource(ModelResource):
     name = 'user'
+    label = _('管理的用户')
     model_class = User
     is_inner = True
 
@@ -20,19 +22,22 @@ class UserModelResource(ModelResource):
 
 class RoleModelResource(ModelResource):
     name = 'role'
+    label = _('管理的角色')
     model_class = Role
     is_inner = True
 
 
 class MenuModelResource(ModelResource):
+    label = _('管理的菜单权限')
     unique_filed_name = 'name'
     name = 'menu'
     model_class = Menu
     is_inner = True
 
-    def members_handle(self,members):
-        """菜单是返回字符串列表"""
+    def members_handle(self, members):
+        """菜单是返回 menu1,menu2,,menu3 的字符串列表"""
         return members
+
 
 Resource.register(UserModelResource())
 Resource.register(RoleModelResource())

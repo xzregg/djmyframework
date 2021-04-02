@@ -84,13 +84,14 @@ INSTALLED_APPS = ['djorm_pool',
 
 # from rest_framework.views import APIView
 # from rest_framework.renderers import JSONRenderer
-
+from framework.renderers import JSONRenderer
 ############ REST_FRAMEWORK设置 ########
 REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES'      : [
+#'framework.renderers.DebugRenderer',
                 # 这里顺序不要更换
                 'rest_framework.renderers.TemplateHTMLRenderer',
-                'framework.renderers.JSONRenderer'
+                'framework.renderers.JSONRenderer',
         ],
         'DEFAULT_SCHEMA_CLASS'          : 'rest_framework.schemas.coreapi.AutoSchema',
         'EXCEPTION_HANDLER'             : 'framework.middleware.exception_handler',

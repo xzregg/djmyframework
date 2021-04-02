@@ -7,15 +7,15 @@
 # @Desc    : 
 
 from framework.translation import _
-from myadmin.models.resource import ModelResource, Resource
-from . import models
+from myadmin.models.resource import RelaRtionModelResource, Resource
+from .models import AccessDomain
 
 
-class AccessDomainModelResource(ModelResource):
+class AccessDomainModelResource(RelaRtionModelResource):
     label = _('访问域')
     name = 'access_domain'
-    model_class = models.AccessDomain
-    template = ModelResource.default_template
+    model_class = AccessDomain
+    template = RelaRtionModelResource.default_template
 
 
 Resource.register(AccessDomainModelResource())

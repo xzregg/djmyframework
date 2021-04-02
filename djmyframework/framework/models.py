@@ -465,6 +465,11 @@ class BaseModel(models.Model, SqlModelMixin):
         return [f for f in sorted(chain(opts.concrete_fields, sortable_private_fields, opts.many_to_many)) if
                 has_private or not f.name.startswith('_')]
 
+
+    @classmethod
+    def get_many_to_many_fileds(cls):
+        return cls._meta.many_to_many
+
     @CachedClassAttribute
     def fields_map(cls):
         return cls.get_fields_map()

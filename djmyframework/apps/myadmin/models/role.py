@@ -32,8 +32,7 @@ class RoleManagerMixin(object):
             resource_obj.save()
 
     def get_resource(self, name):
-        resource_ids = self.get_resource_model(name).members
-        return Resource.get_model_class(name).objects.filter(id__in=resource_ids).distinct()
+        return Resource.get_model_resource(name).get_role_resource([self])
 
     def create_resource(self, name, id_list):
         '''角色创建资源
@@ -102,8 +101,8 @@ class Role(RoleManagerMixin, BaseModel):
     def resource_ids(self):
         resource_map = {}
         if self.id:
-            for r in self.resource.all():
-                resource_map[r.name] = r.members
+            for resource_name,model_resource in Resource.get_resource_map().items():
+                resource_map[resource_name] = model_resource.get_role_resource([self]).values_list(model_resource.unique_filed_name,flat=True)
         return resource_map
 
     resource_map_ids = resource_ids

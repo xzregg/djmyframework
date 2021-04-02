@@ -13,3 +13,12 @@ from .utils import MyJsonEncoder
 
 class JSONRenderer(RestJSONRenderer):
     encoder_class = MyJsonEncoder
+
+
+class DebugRenderer(JSONRenderer):
+    format = 'debug'
+    #media_type = 'text/html'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        rsp = super().render(self, data, accepted_media_type=None, renderer_context=None)
+        return '<body>%s</body>' % rsp

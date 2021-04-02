@@ -14,7 +14,10 @@
 
 
         <tr>
-            <th data-checkbox="false"><input type="checkbox" checkbox-area="{{ resource_name }}-members-table-body"></th>
+            <th data-checkbox="false" data-width="40">
+
+            <input name="btSelectAll" type="checkbox">
+            </th>
             <th data-field="alias" data-click-to-select="true" data-align="left">{{ model_resource.label }}</th>
         </tr>
         </thead>
@@ -23,9 +26,8 @@
         {% for (id,alias) in  model_resource.get_resource_queryset(request.user).values_list(model_resource.unique_filed_name,model_resource.alias_lookup) %}
             <tr>
                 <td value="{{ id }}" name="id">
-                    <label><input type="checkbox" value="{{ id }}" name="{{ model_resource.id_field_lookup }}[]"{% if id in select_list_ids %} checked{% endif %}> </label>
-                    </td>
-
+                  <input type="checkbox" value="{{ id }}" name="{{ model_resource.id_field_lookup }}[]"{% if id in select_list_ids %} checked{% endif %}>
+                </td>
                 <td> {{ alias }}</td>
             </tr>
         {% endfor %}

@@ -234,7 +234,7 @@ class ListIntField(s.ListField):
 
 class ListStrField(s.ListField):
     def __init__(self, *args, **kwargs):
-        super(ListStrField, self).__init__(child=s.CharField(), *args, **kwargs)
+        super(ListStrField, self).__init__(child=s.CharField(allow_blank=True), *args, **kwargs)
 
 
 class IdsSerializer(ParamsSerializer):

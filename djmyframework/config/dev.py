@@ -9,16 +9,18 @@
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
+DEBUG = True
 import logging
 import os
 import sys
 from django.contrib.auth import  authenticate
-from . import logging_config
+
 
 DEBUG = True
 
 from django.conf import settings
 from settings import *
+
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
@@ -53,7 +55,7 @@ DATABASES = {
 
                 'PORT'    : '3306',
 
-                'OPTIONS' : {'isolation_level': None,'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
+                'OPTIONS' : {'isolation_level': None, 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
 
         }
 
@@ -70,15 +72,13 @@ if 'test' in sys.argv:
             }
     }
     CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer"
-        }
+            "default": {
+                    "BACKEND": "channels.layers.InMemoryChannelLayer"
+            }
     }
 
 DATABASES['read'] = DATABASES['default'].copy()
 DATABASES['write'] = DATABASES['default'].copy()
-
-
 
 #INSTALLED_APPS += ['debug_toolbar']
 INTERNAL_IPS = [
@@ -86,14 +86,19 @@ INTERNAL_IPS = [
         '127.0.0.1'
 ]
 
-#MIDDLEWARE.insert(len(MIDDLEWARE)-1,'debug_toolbar.middleware.DebugToolbarMiddleware')
+#MIDDLEWARE.insert(len(MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 DEBUG_TOOLBAR_CONFIG = {
         'JQUERY_URL': '',
 }
+
+#REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
+
 logging.warning('This env is dev,DEBUG = True')
 logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
+
 # 日志打印 sql
+from . import logging_config
 logging_config.LOGGING['loggers']['django.db.backends'] = {
         'handlers' : ['console'],
         'propagate': False,

@@ -8,7 +8,6 @@
 import base64
 import datetime
 import time
-from functools import reduce
 
 import passlib.hash
 from django.contrib.auth.models import AbstractBaseUser
@@ -28,10 +27,14 @@ class UserManagerMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.resource = ResourceProxy(self)
+        #self.resource = ResourceProxy(self)
         super(UserManagerMixin, self).__init__(*args, **kwargs)
         self.__resource_map = {}
         self.__cache_roles = None
+
+    @property
+    def resource(self)->Resource:
+        return ResourceProxy(self)
 
     def get_role_index(self):
         for r in self.get_roles():
@@ -136,6 +139,7 @@ class UserManagerMixin(object):
 
     _get_resource_from_model = _get_resource
 
+
     def get_resource_obj(self):
         """获取资源对象,超级管理拥有所有资源对象
         """
@@ -215,6 +219,7 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
     # @property
     # def is_authenticated(self):
     #     return False
+
 
     def get_username(self):
         return self.username
