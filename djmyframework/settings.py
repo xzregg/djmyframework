@@ -82,9 +82,7 @@ INSTALLED_APPS = ['djorm_pool',
                   'django_extensions'
                   ] + APPS
 
-# from rest_framework.views import APIView
-# from rest_framework.renderers import JSONRenderer
-from framework.renderers import JSONRenderer
+
 ############ REST_FRAMEWORK设置 ########
 REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES'      : [
@@ -98,8 +96,7 @@ REST_FRAMEWORK = {
         'DEFAULT_AUTHENTICATION_CLASSES': ('framework.authentication.MySessionAuthentication',)
 }
 DRF_DYNAMIC_FIELDS = {'SUPPRESS_CONTEXT_WARNING': True}
-if DEBUG:
-    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
+
 #######################################
 
 

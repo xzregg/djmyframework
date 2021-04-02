@@ -17,8 +17,9 @@ class JSONRenderer(RestJSONRenderer):
 
 class DebugRenderer(JSONRenderer):
     format = 'debug'
-    #media_type = 'text/html'
 
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        rsp = super().render(self, data, accepted_media_type=None, renderer_context=None)
-        return '<body>%s</body>' % rsp
+    media_type = 'text/html'
+
+    def render(self, *args, **kwargs):
+        rsp = super().render( *args, **kwargs)
+        return b'<body>%s</body>' % rsp

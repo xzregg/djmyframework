@@ -1,3 +1,6 @@
+
+[![PyPI version](https://badge.fury.io/py/djmyframework.svg)](https://badge.fury.io/py/djmyframework)
+
 ## 通用后台框架 3.7
 
 ### 特性

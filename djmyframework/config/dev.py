@@ -80,19 +80,19 @@ if 'test' in sys.argv:
 DATABASES['read'] = DATABASES['default'].copy()
 DATABASES['write'] = DATABASES['default'].copy()
 
-#INSTALLED_APPS += ['debug_toolbar']
+INSTALLED_APPS += ['debug_toolbar']
 INTERNAL_IPS = [
         '*',
         '127.0.0.1'
 ]
 
-#MIDDLEWARE.insert(len(MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+MIDDLEWARE.insert(len(MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 DEBUG_TOOLBAR_CONFIG = {
         'JQUERY_URL': '',
 }
 
-#REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
-
+REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
+REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
 logging.warning('This env is dev,DEBUG = True')
 logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
