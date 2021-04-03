@@ -27,13 +27,13 @@ class UserManagerMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        #self.resource = ResourceProxy(self)
+        # self.resource = ResourceProxy(self)
         super(UserManagerMixin, self).__init__(*args, **kwargs)
         self.__resource_map = {}
         self.__cache_roles = None
 
     @property
-    def resource(self)->Resource:
+    def resource(self) -> Resource:
         return ResourceProxy(self)
 
     def get_role_index(self):
@@ -136,17 +136,8 @@ class UserManagerMixin(object):
     def _get_resource(self, name):
         return Resource.get_model_resource(name).get_resource_queryset(self)
 
-
     _get_resource_from_model = _get_resource
 
-
-    def get_resource_obj(self):
-        """获取资源对象,超级管理拥有所有资源对象
-        """
-        if self.is_root:
-            return Resource.objects.all()
-        else:
-            return Resource.objects.filter(role__in=self.get_roles())
 
     def get_roles(self):
         """获取角色
@@ -219,7 +210,6 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
     # @property
     # def is_authenticated(self):
     #     return False
-
 
     def get_username(self):
         return self.username
@@ -303,7 +293,11 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
     def user_info(self):
         user_info = None
         if self.id:
-            user_info, _ = self.userinfo_set.get_or_create()
+            user_infos = self.userinfo_set.all()
+            if len(user_infos) >= 1:
+                user_info = user_infos[0]
+            else:
+                user_info, _ = self.userinfo_set.get_or_create()
         return user_info
 
     @property

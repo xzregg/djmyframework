@@ -11,14 +11,18 @@ import datetime
 from collections.abc import Mapping
 
 from django.db import models
+
 from django.utils.translation import gettext_lazy as _
 from drf_dynamic_fields import DynamicFieldsMixin
 from rest_framework import serializers as s
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty, SkipField
 from rest_framework.metadata import SimpleMetadata
-from rest_framework.relations import RelatedField
+from rest_framework.relations import ManyRelatedField, RelatedField,PrimaryKeyRelatedField
 from rest_framework.request import Request
+from rest_framework.settings import api_settings
 from rest_framework.utils.serializer_helpers import ReturnDict
+
 
 from .utils import DATETIMEFORMAT, ObjectDict
 from .utils.cache import CacheAttribute, CachedClassAttribute
@@ -218,6 +222,53 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
     def save(self, **kwargs):
         self.save_kwargs = kwargs
         super(BaseModelSerializer, self).save(**kwargs)
+
+    def to_internal_value(self, data):
+        """
+        Dict of native values <- Dict of primitive datatypes.
+        """
+        from rest_framework.fields import get_error_detail, set_value
+        from collections import OrderedDict
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        if not isinstance(data, Mapping):
+            message = self.error_messages['invalid'].format(
+                    datatype=type(data).__name__
+            )
+            raise ValidationError({
+                    api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='invalid')
+
+        ret = OrderedDict()
+        errors = OrderedDict()
+        fields = self._writable_fields
+
+        for field in fields:
+            validate_method = getattr(self, 'validate_' + field.field_name, None)
+            primitive_value = field.get_value(data)
+
+            try:
+
+                # ManyRelatedField 取消写入数据验证, 防止每次都去查询数据库
+                if isinstance(field, ManyRelatedField) and isinstance(field.child_relation, PrimaryKeyRelatedField):
+                    validated_value = [ int(i) for i in primitive_value ]
+                else:
+                    validated_value = field.run_validation(primitive_value)
+                if validate_method is not None:
+                    validated_value = validate_method(validated_value)
+            except ValidationError as exc:
+                errors[field.field_name] = exc.detail
+            except DjangoValidationError as exc:
+                errors[field.field_name] = get_error_detail(exc)
+            except SkipField:
+                pass
+            else:
+                set_value(ret, field.source_attrs, validated_value)
+
+        if errors:
+            raise ValidationError(errors)
+
+        return ret
 
 
 class EmptySerializer(DataSerializer): pass

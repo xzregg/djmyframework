@@ -404,7 +404,7 @@ class CurdViewSet(BaseViewSet):
         if not query_params.id:
             self.model_instance = self.model()
         else:
-            _queryset = self.model.objects
+            _queryset = self.get_queryset()
             try:
                 if queryset is not None:
                     _queryset = queryset

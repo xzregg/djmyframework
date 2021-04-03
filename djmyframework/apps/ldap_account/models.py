@@ -3,7 +3,7 @@
 import os
 import typing
 
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
 
 from framework.models import BaseNameModel, models
@@ -11,7 +11,7 @@ from framework.translation import _
 from framework.utils import mkdirs
 from framework.utils.cache import CacheAttribute
 from framework.utils.myenum import Enum
-from myadmin.models import Resource, Role, User, UserInfo
+from myadmin.models import Role, User, UserInfo
 from .ldap_server import get_db_path
 
 DBPATH = get_db_path()
@@ -85,12 +85,26 @@ class AccessDomain(BaseNameModel):
     def save(self, *args, **kwargs):
         self.create_ldap_access_people()
         if self.status == self.Status.Disable:
-            self.delete_ldap_access_people()
-        return super().save(*args, **kwargs)
+            self.remove_ldap_db_path()
+        ret = super().save(*args, **kwargs)
+        self.generate_db()
+        return ret
 
     def delete(self, *args, **kwargs):
-        self.delete_ldap_access_people()
+        self.remove_ldap_db_path()
         super().delete(*args, **kwargs)
+
+    def generate_db(self):
+        """
+        生成  ldap 数据库
+        :return:
+        """
+
+        roles = self.role.prefetch_related('parent').prefetch_related('user_set').distinct()
+        for user in User.get_normal_user_list().prefetch_related('userinfo_set').filter(role__in=roles).distinct():
+            self.create_people(user)
+        for role in roles:
+            self.create_role(role)
 
     def get_ldap_access_people(self):
         ldap_access_people = User()
@@ -98,6 +112,11 @@ class AccessDomain(BaseNameModel):
         ldap_access_people.alias = self.alias
         ldap_access_people.set_password(self.bindpw)
         return ldap_access_people
+
+    def remove_ldap_db_path(self):
+        domain_db_path = self.get_domain_db_path()
+        if os.path.isdir(domain_db_path):
+            os.path.remove(domain_db_path)
 
     def create_ldap_access_people(self):
         self.create_people(self.get_ldap_access_people())
@@ -153,7 +172,7 @@ class AccessDomain(BaseNameModel):
                 parent = role.parent.name
             ou_role_dir = self.role_db_path
             save_path = os.path.join(ou_role_dir, file_name)
-            memberuid_list = '\n'.join(['memberUid: %s' % v for v in role.user_set.all().values_list('username')])
+            memberuid_list = '\n'.join(['memberUid: %s' % v.username for v in role.user_set.all()])
 
             with open(save_path, 'w') as f:
                 ldap_cn_str = ou_role_tpl.format(cn=role.name, parent=parent, gidnumber=role.id, alias=role.alias,
@@ -170,7 +189,7 @@ class AccessDomain(BaseNameModel):
         pass
 
 
-#@receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
+@receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
 def user_save_ldap(sender, instance: User, update_fields=None, **kwargs):
     user: User = instance
 
@@ -183,13 +202,13 @@ def user_save_ldap(sender, instance: User, update_fields=None, **kwargs):
             access_domain.delete_people(user)
 
 
-#@receiver(pre_delete, sender=User, dispatch_uid="user_delete_ldap")
+@receiver(pre_delete, sender=User, dispatch_uid="user_delete_ldap")
 def user_delete_ldap(sender, instance: User, **kwargs):
     for access_domain in instance.get_resource('access_domain'):
         access_domain.delete_people(instance)
 
 
-# @receiver(post_save, sender=Role, dispatch_uid="role_save_ldap")
+###@receiver(post_save, sender=Role, dispatch_uid="role_save_ldap")
 def role_save_ldap(sender, instance: Role, **kwargs):
     role = instance
     access_domain_list = role.get_resource('access_domain').values_list('id', flat=True)
@@ -202,7 +221,7 @@ def role_save_ldap(sender, instance: Role, **kwargs):
             access_domain.delete_role(role)
 
 
-#@receiver(pre_delete, sender=Role, dispatch_uid="role_delete_ldap")
+@receiver(post_delete, sender=Role, dispatch_uid="role_delete_ldap")
 def role_delete_ldap(sender, instance: Role, **kwargs):
     role = instance
     access_domain_list: typing.List[AccessDomain] = AccessDomain.objects.all()
@@ -210,31 +229,29 @@ def role_delete_ldap(sender, instance: Role, **kwargs):
         access_domain.delete_role(role)
 
 
-#@receiver(post_save, sender=UserInfo, dispatch_uid="user_info_save_ldap")
+@receiver(post_save, sender=UserInfo, dispatch_uid="user_info_save_ldap")
 def user_info_save_ldap(sender, instance: UserInfo, **kwargs):
     user = instance.user
     user_save_ldap(sender, user)
 
 
-#@receiver(pre_delete, sender=UserInfo, dispatch_uid="user_info_delete_ldap")
+@receiver(pre_delete, sender=UserInfo, dispatch_uid="user_info_delete_ldap")
 def user_info_delete_ldap(sender, instance: UserInfo, **kwargs):
     user = instance.user
     user_delete_ldap(sender, user)
 
 
-#@receiver(post_save, sender=Resource, dispatch_uid="role_access_domain_resource_save")
-def role_access_domain_resource_save(sender, instance: Resource, **kwargs):
-    if instance.name == 'access_domain':
-        role = instance.role_set.first()
-        if role:
-            role_save_ldap(sender, role)
-
-
-# todo 按照模型同步 db 文件逻辑负载,尝试实现 ldap server 协议
-# @receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")
-def user_add_role_ldap(sender, action, instance: Role, reverse, model: Role, pk_set, using, **kwargs):
+@receiver(m2m_changed, sender=AccessDomain.role.through, dispatch_uid="access_domain_add_role_ldap")
+def access_domain_add_role_ldap(sender, action, instance: Role, reverse, model: AccessDomain, pk_set, using, **kwargs):
     if action in ['post_add', 'post_clear', 'post_remove']:
-        user_save_ldap(sender, instance)
-    # role_save_ldap(sender,model)
-    # print('user_role_add_ldap')
-    # print(sender,kwargs)
+        if reverse and isinstance(instance, Role):
+            role_save_ldap(sender, instance)
+
+
+@receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")
+def user_add_role_ldap(sender, action, instance: Role, reverse, model: User, pk_set, using, **kwargs):
+    if action in ['post_add', 'post_clear', 'post_remove']:
+        if reverse:
+            role_save_ldap(sender, instance)
+        else:
+            user_save_ldap(sender, instance)

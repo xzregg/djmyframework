@@ -138,7 +138,7 @@ class ModelResource(object):
         :param user_model:
         :return:
         """
-        model_resource_class = self.model_class
+        model_class = self.model_class
 
         resource_objs = Resource.objects.filter(role__in=roles, name=self.name)
         try:
@@ -149,7 +149,7 @@ class ModelResource(object):
         except TypeError as e:
             resource_ids = []
         q = self.get_q_condition(resource_ids)
-        return model_resource_class.objects.filter(q).distinct()
+        return model_class.objects.filter(q).distinct()
 
     def create_resource(self, role_model, members_list):
         """创建资源"""
@@ -171,6 +171,7 @@ class ModelResource(object):
         return {int(i) for i in members}
 
 
+
 class RelaRtionModelResource(ModelResource):
     """关联模型资源,需要在 model 上定义 role = models.ManyToManyField(Role, verbose_name=_('允许访问的角色')) 字段
     """
@@ -189,7 +190,7 @@ class RelaRtionModelResource(ModelResource):
                 self.related_field = field
                 return
         raise Exception(
-                '''需要在 %s model 上定义 role = models.ManyToManyField(Role, verbose_name=_('允许访问的角色')) 字段''' % cls.model_class)
+                '''需要在 %s model 上定义 role = models.ManyToManyField(Role, verbose_name=_('允许访问的角色')) 字段''' % self.model_class)
 
     def get_role_q(self, roles):
         return Q(**{'%s__in' % self.role_field_name: roles})
@@ -205,7 +206,7 @@ class RelaRtionModelResource(ModelResource):
         model_resource_class: BaseModel = self.model_class
         if user_model.is_root:
             return model_resource_class.objects.all()
-        return model_resource_class.objects.filter(self.get_role_q(roles)).distinct()
+        return self.get_role_resource(roles)
 
     def get_role_resource(self, roles):
         return self.model_class.objects.filter(self.get_role_q(roles)).distinct()
@@ -217,7 +218,8 @@ class RelaRtionModelResource(ModelResource):
         if not role_model.id:
             role_model.save()
         m2m_field_name = '%s_set' % self.model_class._meta.model_name
-        getattr(role_model, m2m_field_name).set(members_list, clear=True)
+        getattr(role_model, m2m_field_name).set(self.members_handle(members_list))
+
 
 
 class Resource(BaseModel):

@@ -99,8 +99,9 @@ class UserSet(CurdViewSet):
         """
         修改密码
         """
-        serializer = self.ChangePasswordSerializer(request.data).o
+
         if self.is_post():
+            serializer = self.ChangePasswordSerializer(request.data).o
             the_user: User = request.user
             old_password = serializer.old_password
             new_password1 = serializer.password

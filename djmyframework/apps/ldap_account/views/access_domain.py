@@ -15,7 +15,6 @@ from ldap_account.models import AccessDomain
 class AccessDomainSerializer(BaseModelSerializer):
     # https://www.django-rest-framework.org/api-guide/serializers/
     # https://www.django-rest-framework.org/api-guide/relations/
-    #role = s.PrimaryKeyRelatedField(many=True,label=_("允许访问的角色"),queryset=AccessDomain.role.field.related_model.objects.all() )
     status_alias = s.CharField(source='get_status_display',required=False, read_only=True)
 
     class Meta:

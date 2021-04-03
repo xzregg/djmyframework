@@ -7,10 +7,11 @@
         <div id="role-members-toolbar"><h3>{{ _('已选择') }} <span class="badge">((selected_num))</span></h3>
         </div>
 
-        <table id="role-members-table">
+        <table id="role-members-table" data-filter-control="true">
             <thead>
             <th data-checkbox="true"></th>
-            <th data-field="alias" data-click-to-select="true" data-align="left">{{ _('成员') }}</th>
+            <th data-field="alias" data-sortable="true" data-width="200" data-click-to-select="true" data-align="left">{{ _('成员') }}</th>
+            <th data-field="status_alias" data-width="100"  data-align="left" data-filter-control="select"></th>
             </thead>
         </table>
 
@@ -42,12 +43,12 @@
                 this.$roleMembersTable = $('#role-members-table')
                 var _this = this
                 $.when(
-                    $.get('{{ url('myadmin.role.members') }}', {id: _this.role_id}, function (rsp) {
+                    $.get('{{ url('myadmin.role.resource_members') }}', {id: _this.role_id}, function (rsp) {
                         if (rsp.code != 0) {
                             alertError(rsp.msg)
                             return
                         }
-                        _this.selected_list = rsp.data
+                        _this.selected_list = rsp.data.members.user
                     }, 'json')
                 ).done(function () {
 
@@ -56,7 +57,7 @@
                         uniqueId: 'id',
                         idField: 'id',
                         toolbar: '#role-members-toolbar',
-                        selectItemName: 'members',
+                        selectItemName: 'user[]',
                         data: _this.member_list,
                         groupBy: false,//分组
                         groupByField: 'status_alias',

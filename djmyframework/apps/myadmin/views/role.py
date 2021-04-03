@@ -26,13 +26,13 @@ class RoleSerializer(BaseModelSerializer):
     menu = ListStrField(label=_('菜单ID'), write_only=True, required=False)
     role = ListIntField(label=_('管理角色ID'), write_only=True, required=False)
 
-    members = ListIntField(label=_('成员'), write_only=True, required=False)
+    user = ListIntField(label=_('成员'), write_only=True, required=False)
 
     class Meta:
         model = Role
         fields = ['id', 'alias', 'name', 'parent', 'creater_alias', 'parent_alias', 'resource_map_ids', 'type',
                   'type_alias', 'remark',
-                  'home_index', 'create_datetime', 'update_datetime', 'members'] \
+                  'home_index', 'create_datetime', 'update_datetime', 'user'] \
                  + ['menu', 'role']
         # exclude = ['session_key']
         # read_only_fields = []
@@ -99,12 +99,12 @@ class RoleSet(CurdViewSet):
 
         for rsource_name, model_resource in Resource.get_resource_map().items():
             if not model_resource.is_inner:
-                role.create_resource(rsource_name, request.data.get(model_resource.id_field_lookup,[]))
+                role.create_resource(rsource_name, request.data.get(model_resource.id_field_lookup, []))
 
         role.create_resource('menu', params.menu or [])
         role.create_resource('role', manager_role_ids or [])
         if request.user.is_root:
-            role.user_set.set(params.members or [])
+            role.create_resource('user', params.user or [])
 
         return self.response(serializer.data, msg=msg)
 
@@ -112,21 +112,24 @@ class RoleSet(CurdViewSet):
     def delete(self, request, *args, **kwargs):
         return super(RoleSet, self).delete(request, *args, **kwargs)
 
-    @swagger_auto_schema(methods=['get'], query_serializer=IdSerializer, responses=IdsSerializer)
+    class RoleResourceMembersSer(IdSerializer):
+        members = s.DictField(child=s.ListField(), required=False, help_text=_('角色资源列表'), read_only=True)
+
+    @swagger_auto_schema(methods=['get'], query_serializer=IdSerializer, responses=RoleResourceMembersSer)
     @action(['get'])
-    def members(self, request):
+    def resource_members(self, request):
         """
         获取 角色下的成员
         :param request:
         :return:
         """
-        parmas = IdSerializer(request.query_params).params_data
-        data = []
+        parmas = self.RoleResourceMembersSer(request.query_params).params_data
+
         if parmas.id:
             role_model = self.get_queryset().filter(id=parmas.id).first()
             if role_model:
-                data = role_model.user_set.values_list('id', flat=True)
-        return JsonResponse(data)
+                parmas.members = role_model.resource_map_ids
+        return JsonResponse(parmas)
 
     @swagger_auto_schema(query_serializer=EditParams, responses=RoleSerializer)
     @action_post()

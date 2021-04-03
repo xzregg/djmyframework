@@ -7,10 +7,10 @@
 # @Desc    : 
 
 from framework.translation import _
-from .models import Menu, ModelResource, Resource, Role, User
+from .models import Menu, ModelResource, Resource, Role, User,RelaRtionModelResource
 
 
-class UserModelResource(ModelResource):
+class UserModelResource(RelaRtionModelResource):
     name = 'user'
     label = _('管理的用户')
     model_class = User

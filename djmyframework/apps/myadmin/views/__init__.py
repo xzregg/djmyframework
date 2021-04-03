@@ -73,7 +73,7 @@ def check_login_status(request):
             del request.session['err_count']
             del request.session['lock_time']
 
-    if request.POST.get('verify', '') != request.session.get('verify', ''):  # 验证码
+    if request.POST.get('verify', '') != request.session.get('verify', '') and not settings.DEBUG:  # 验证码
         request.COOKIES.clear()
         raise LoginErrors.VERIFY_CODE_ERROR
 
@@ -84,9 +84,9 @@ class LoginSerializer(ParamsSerializer):
     verify = s.CharField(label=_('验证码'))
 
 
-def ldap_login(request,username, password):
+def ldap_login(request, username, password):
     from django_auth_ldap.backend import LDAPBackend
-    the_user = LDAPBackend().authenticate(request,username, password)
+    the_user = LDAPBackend().authenticate(request, username, password)
     return the_user
 
 
@@ -107,26 +107,27 @@ def login(request: Request):
             request.COOKIES["username"] = params.username
             username = params.username
             password = params.passowrd
+            if not password:
+                raise LoginError('密码错误 !')
             check_login_status(request)
 
             if not username or not password:
                 raise LoginErrors.USERNAME_OR_PASSWORD_EMPTY
-
+            is_pass = False
             if settings.USE_LDAP_AUTH:
-                the_user = ldap_login(request,username, password)
+                the_user = ldap_login(request, username, password)
                 is_pass = the_user is not None
-            else:
+
+            if not is_pass:
                 the_user: User = User.objects.filter(username=username).first()
 
-                if not the_user:
-                    raise LoginErrors.ACCOUNT_NOT_EXIST
-                if not the_user.password:
-                    raise LoginError('密码错误 !')
-                if the_user.status == User.Status.NotActive:
-                    raise LoginError('%s 未激活' % the_user.alias)
-                if the_user.status != User.Status.NORMAL:
-                    raise LoginErrors.ACCOUNT_STATUS_ERROR(_('账户已 %s') % the_user.get_status_display())
                 is_pass = the_user.check_password(password)
+
+            if not the_user:
+                raise LoginErrors.ACCOUNT_NOT_EXIST
+
+            if the_user.status != User.Status.NORMAL:
+                raise LoginErrors.ACCOUNT_STATUS_ERROR(_('账户已 %s') % the_user.get_status_display())
 
             if is_pass:
                 User.login_user(request, the_user)

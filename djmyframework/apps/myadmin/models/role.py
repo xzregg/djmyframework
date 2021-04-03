@@ -97,13 +97,23 @@ class Role(RoleManagerMixin, BaseModel):
         if self.id:
             return self.get_type_display()
 
+    def get_resource_members(self, name):
+        model_resource = Resource.get_model_resource(name)
+        return model_resource.get_role_resource([self]).values_list(
+                model_resource.unique_filed_name,
+                flat=True)
+
     @CacheAttribute
     def resource_ids(self):
-        resource_map = {}
+        resource_map_ids = {}
         if self.id:
-            for resource_name,model_resource in Resource.get_resource_map().items():
-                resource_map[resource_name] = model_resource.get_role_resource([self]).values_list(model_resource.unique_filed_name,flat=True)
-        return resource_map
+            resource_map_ids = {r.name: r.members for r in self.resource.all()}
+            for resource_name, model_resource in Resource.get_resource_map().items():
+                if resource_map_ids.get(resource_name, None) is None:
+                    resource_map_ids[resource_name] = model_resource.get_role_resource([self]).values_list(
+                            model_resource.unique_filed_name,
+                            flat=True)
+        return resource_map_ids
 
     resource_map_ids = resource_ids
 

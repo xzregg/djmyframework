@@ -270,8 +270,8 @@ class BaseModel(models.Model, SqlModelMixin):
     id = models.BigAutoField(primary_key=True)
     _version = models.IntegerField(_("版本"), default=0, null=False)
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True,blank=True)
-    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True,blank=True)
+    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True)
+    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True)
 
     class Meta:
         abstract = True
@@ -354,24 +354,24 @@ class BaseModel(models.Model, SqlModelMixin):
             assert value != None and value != '', '%s 不能为空!' % self.get_verbose_name(name)
         setattr(self, name, value)
 
-    def to_dict(self, ignore_list=(),has_m2mfields=False,is_msgpack=False):
+    def to_dict(self, ignore_list=(), has_m2mfields=False, is_msgpack=False):
         d = {}
         for field in self._meta.fields:
             attr = field.name
             attr_value = getattr(self, attr)
 
-                # 特殊处理datetime的数据
+            # 特殊处理datetime的数据
             if isinstance(attr_value, datetime.datetime) and is_msgpack:
                 d[attr] = attr_value.strftime('%Y-%m-%d %H:%M:%S')
             elif isinstance(attr_value, datetime.date):
                 d[attr] = attr_value.strftime('%Y-%m-%d') and is_msgpack
             # 递归生成BaseModel类的dict
             elif isinstance(attr_value, BaseModel):
-                d[attr] = attr_value.get_dict(has_m2mfields=has_m2mfields,is_msgpack=is_msgpack)
-            elif isinstance(attr_value, (int,str,float)):
+                d[attr] = attr_value.get_dict(has_m2mfields=has_m2mfields, is_msgpack=is_msgpack)
+            elif isinstance(attr_value, (int, str, float)):
                 d[attr] = getattr(self, attr)
             elif not is_msgpack:
-                 d[attr] = getattr(self, attr)
+                d[attr] = getattr(self, attr)
 
         if has_m2mfields:
             m2mfields = self.__class__._meta.many_to_many
@@ -454,17 +454,20 @@ class BaseModel(models.Model, SqlModelMixin):
     def get_fields_name_list(cls, ignore_keys=('id',)):
         return [f.get_attname() for f in cls.get_fields() if f.attname not in ignore_keys]
 
-    @classmethod
-    def get_fields(cls, has_private=False):
-        """返回模型的相关字段定义
-        """
+    @CachedClassAttribute
+    def fields(cls):
         opts = cls._meta
         from django.db.models.fields import Field as ModelField
         from itertools import chain
         sortable_private_fields = [f for f in opts.private_fields if isinstance(f, ModelField)]
-        return [f for f in sorted(chain(opts.concrete_fields, sortable_private_fields, opts.many_to_many)) if
-                has_private or not f.name.startswith('_')]
+        return [f for f in sorted(chain(opts.concrete_fields, sortable_private_fields, opts.many_to_many))]
 
+    @classmethod
+    def get_fields(cls, has_private=False):
+        """返回模型的相关字段定义
+        """
+        return [f for f in cls.fields if
+                has_private or not f.name.startswith('_')]
 
     @classmethod
     def get_many_to_many_fileds(cls):
