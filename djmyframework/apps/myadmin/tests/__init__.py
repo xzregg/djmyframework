@@ -3,9 +3,8 @@ import json
 
 from django.db import connection
 from django.utils import log
-from drf_yasg import openapi
-from drf_yasg.generators import OpenAPISchemaGenerator
-from rest_framework.schemas import SchemaGenerator
+
+
 
 from framework.route import reverse_view
 from framework.tests import BaseTestCase
@@ -18,6 +17,7 @@ class LoginUserTestCase(BaseTestCase):
         super().setUp()
         self.user = User.create_root()
         self.client.real_ip = '127.0.0.1'
+        self.client.META = {}
         User.login_user(self.client, self.user)
         self.client._login(self.user)
 
@@ -32,7 +32,7 @@ class AdminTestCase(LoginUserTestCase):
     def test_index_view(self):
         from ..views import index
         # response = self.client.get(reverse_view('myadmin.test.test_task'))
-        request = self.factory.get(reverse_view('myadmin.test.test_task'))
+        request = self.factory.get(reverse_view('myadmin.index'))
         request.user = self.user
         response = index(request)
         self.assertEqual(response.status_code, 200)
@@ -82,6 +82,8 @@ class AdminTestCase(LoginUserTestCase):
         print(app_menu_map.keys())
 
     def test1_rest_docs(self):
+        from drf_yasg.generators import OpenAPISchemaGenerator
+        from rest_framework.schemas import SchemaGenerator
         from rest_framework import serializers
 
         class TestSerializer(serializers.Serializer):
@@ -101,6 +103,7 @@ class AdminTestCase(LoginUserTestCase):
             content = serializers.CharField(max_length=200)
             created = serializers.DateTimeField()
 
+        from drf_yasg import openapi
         from rest_framework.metadata import SimpleMetadata
         from drf_yasg.codecs import OpenAPICodecJson
         schema = OpenAPISchemaGenerator(openapi.Info(

@@ -99,7 +99,7 @@ logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
 # 日志打印 sql
 from . import logging_config
-logging_config.LOGGING['loggers']['django.db.backends'] = {
+logging_config.LOGGING['loggers']['adjango.db.backends'] = {
         'handlers' : ['console'],
         'propagate': False,
         'level'    : 'DEBUG',

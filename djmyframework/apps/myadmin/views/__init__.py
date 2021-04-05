@@ -85,8 +85,10 @@ class LoginSerializer(ParamsSerializer):
 
 
 def ldap_login(request, username, password):
-    from django_auth_ldap.backend import LDAPBackend
-    the_user = LDAPBackend().authenticate(request, username, password)
+    from myadmin.backend.ldap import LDAPBackend
+    ldap_backend = LDAPBackend(username, password)
+    the_user = ldap_backend.authenticate()
+    the_user.is_ldap = True
     return the_user
 
 

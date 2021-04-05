@@ -152,41 +152,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'   : 3,
 DJANGO_CELERY_BEAT_TZ_AWARE = False
 ########################################
 
-
-############# LDAP 验证设置 ##############
-# https://django-auth-ldap.readthedocs.io/en/latest/example.html
-
 USE_LDAP_AUTH = True
-AUTH_LDAP_SERVER_URI = "ldaps://127.0.0.1:13891"
-AUTH_LDAP_BASE_DN = 'dc=bigdata,dc=com'
-AUTH_LDAP_BIND_DN = "cn=bigdata,ou=people,%s" % AUTH_LDAP_BASE_DN
-AUTH_LDAP_BIND_PASSWORD = "123"
-AUTH_LDAP_START_TLS = True
-import ldap
-
-# 使用 ssl 时 关闭 ca证验证
-ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
-from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
-
-AUTH_LDAP_USER_SEARCH = LDAPSearch(
-        "ou=people,%s" % AUTH_LDAP_BASE_DN, ldap.SCOPE_SUBTREE, "(cn=%(user)s)"
-)
-
-AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
-        "ou=role,%s" % AUTH_LDAP_BASE_DN,
-        ldap.SCOPE_SUBTREE,
-        "(objectClass=posixGroup)",
-)
-AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
-
-AUTH_LDAP_USER_ATTR_MAP = {
-        "alias": "alias",
-        "name" : "cn",
-        "email": "email",
-}
-AUTH_LDAP_ALWAYS_UPDATE_USER = True
-########################################
-
 
 ############# api 文档设置 ##############
 
