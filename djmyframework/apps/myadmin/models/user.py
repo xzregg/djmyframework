@@ -138,7 +138,6 @@ class UserManagerMixin(object):
 
     _get_resource_from_model = _get_resource
 
-
     def get_roles(self):
         """获取角色
         """
@@ -288,6 +287,10 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
         the_user.last_ip = request.real_ip
         the_user.session_key = request.session.session_key
         the_user.save()
+
+    @property
+    def is_ldap(self):
+        return hasattr(self, 'ldap_attr_map')
 
     @CacheAttribute
     def user_info(self):

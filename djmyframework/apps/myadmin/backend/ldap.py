@@ -88,6 +88,7 @@ class LDAPBackend(object):
                 user, _ = User.objects.get_or_create(username=self.username)
                 for k, v in attr_map.items():
                     setattr(user, k, v.decode())
+                setattr(user, 'ldap_attr_map', attr_map)
                 return user
         except Exception as e:
             print(trace_msg())
