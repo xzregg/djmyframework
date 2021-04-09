@@ -192,7 +192,7 @@ class MenuConfig(ObjectDict):
             app_root_menu_config.name = app_name
             app_root_menu_config.app_name = app_name
             app_root_menu_config.app_alias = app_alias
-            app_root_menu_config.is_show = False
+            app_root_menu_config.is_show = True
             app_root_menu_config.is_log = False
             menu_config_list.append(app_root_menu_config)
 

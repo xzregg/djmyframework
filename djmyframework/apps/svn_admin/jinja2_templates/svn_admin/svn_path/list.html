@@ -119,12 +119,8 @@
 
                     // 默认过滤条件
                     var filter_conditions = [{
-                        name: 'alias',
-                        operator: "exact",
-                        value: "",
-                        type: "char",
-                        label: '{{ _('路径别名') }}',
-                        choices: [],
+                        name: 'project_name',
+
                         is_default: true
                     }]
                 </script>
@@ -136,18 +132,27 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="table-container">
-                <div id="toolbar" class="">
+                <div id="toolbar" class="" v-cloak>
+
                     <a id="add-btn" class="btn btn-sm btn-primary openDialog"
-                       href="{{ url('svn_admin.svn_path.edit') }}">
+                       :href="'{{ url('svn_admin.svn_path.edit') }}'">
                         <span class="glyphicon glyphicon-plus-sign"></span> {{ _('添加') }}
                     </a>
-                    <button id="delete-btn" class="btn btn-sm btn-danger " disabled>
+                    <button @click.prevent="onDelete"
+                            :disabled="selectIds.length==0"
+                            class="btn btn-sm btn-danger ">
                         <span class="glyphicon glyphicon-remove"></span> {{ _('删除') }}
+                        <span v-show="selectIds.length>0" class="badge">((selectIds.length))</span>
                     </button>
-                    <button id="expandAll-btn" class="btn btn-sm btn-default ">
+
+                    <button id="create-svnrepo-btn" class="btn btn-sm btn-info" @click="createSvnrepo">
+                        <span class="glyphicon glyphicon-plus-sign"></span> {{ _('创建仓库') }}
+                    </button>
+
+                    <button id="expandAll-btn" class="btn btn-sm btn-default " @click="onExpandAll">
                         {{ _('展开') }}
                     </button>
-                    <button id="collapseAll-btn" class="btn btn-sm btn-default ">
+                    <button id="collapseAll-btn" class="btn btn-sm btn-default " @click="onCollapseAll">
                         {{ _('收缩') }}
                     </button>
                     {% if request.allow_menu.svn_user_svn_path_preview_db_files %}
@@ -229,8 +234,8 @@
             fixedColumns: true,
             fixedNumber: 1,
             fixedRightNumber: 1,
-            groupBy: true,//分组
-            groupByField: 'type',
+            groupBy: false,//分组
+            groupByField: 'project_name',
             uniqueId: 'id',
             onDblClickRow: function (row, $element, field) {
                 $element.treegrid('toggle');
@@ -248,7 +253,7 @@
                         initialState: 'collapsed',//'expanded'
                         treeColumn: 4,
                         onChange: function () {
-                           $table.bootstrapTable('resetWidth')
+                            $table.bootstrapTable('resetWidth')
                         }
                     })
                     $table.treegrid('getRootNodes').treegrid('expand');
@@ -292,6 +297,7 @@
                     align: 'left',
                     valign: 'middle',
                     sortable: true,
+                    width: '200px',
                     visible: true,
                 },
                 {
@@ -387,52 +393,75 @@
             ]
         }
 
-        var $delete = $('#delete-btn')
 
-        // 刷新表格
-        function refreshTable() {
-            $table.bootstrapTable('refresh', {})
-        }
-
-        $('.filter-btn').click(function (event) {
-            event.preventDefault();
-            refreshTable()
-            return false
-        })
-
-        $('#expandAll-btn').click(function () {
-            $table.treegrid('expandAll');
-        })
-        $('#collapseAll-btn').click(function () {
-            $table.treegrid('collapseAll');
-        })
-
-        $(function () {
-            $table.bootstrapTable(bootstrapTableOption)
-            $table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
-                $delete.prop('disabled', !$table.bootstrapTable('getSelections').length)
-            })
-
-            $delete.click(function () {
-                if (!confirmRandom('确认删除吗?')) {
-                    return false
-                }
-                var ids = $.map($table.bootstrapTable('getSelections'), function (row) {
-                    return row.id
-                })
-                $.post("{{ url('svn_admin.svn_path.delete') }}", {id: ids}, function (data) {
-                    if (data.code == 0) {
-                        $table.bootstrapTable('remove', {
-                            field: 'id',
-                            values: ids
-                        })
-                        $delete.prop('disabled', true)
-                        art.dialog(data.msg).time(1)
-                    } else {
-                        art.dialog.alert(data.msg)
+        var toolbar_app = new Vue({
+            el: '#toolbar',
+            delimiters: ['((', '))'],
+            data() {
+                return {
+                    table: $table,
+                    selectIds: [],
+                    filter_field_schemas: filter_field_schemas,
+                    status: filter_field_schemas.status.choices[0][0]
+                };
+            },
+            computed: {},
+            methods: {
+                getSelectIds: function () {
+                    this.selectIds = $.map($table.bootstrapTable('getSelections'), function (row) {
+                        return row.id
+                    })
+                    return this.selectIds
+                },
+                onExpandAll: function () {
+                    $table.treegrid('expandAll');
+                },
+                onCollapseAll: function () {
+                    $table.treegrid('collapseAll');
+                },
+                onDelete: function () {
+                    if (!confirmRandom('确认删除吗?')) {
+                        return false
                     }
-                }, 'json')
-            })
+                    var ids = this.getSelectIds()
+                    $.post("{{ url('svn_admin.svn_path.delete') }}", {id: ids}, (rsp) => {
+                        if (rsp.code == 0) {
+                            $table.bootstrapTable('remove', {
+                                field: 'id',
+                                values: ids
+                            })
+
+                            art.dialog(rsp.msg).time(1)
+                        } else {
+                            art.dialog.alert(rsp.msg)
+                        }
+                    }, 'json')
+                },
+                createSvnrepo: function () {
+                    art.dialog.prompt('{{ _('请输入仓库代号,只能英文字符!')}}', (val) => {
+                        $.post('{{ url('svn_admin.svn_path.create_svnrepo') }}', {svnrepo_name: val}, (rsp) => {
+                            if (rsp.code == 0) {
+                                this.$message.success(rsp.msg)
+                            } else {
+                                this.$message.error(rsp.msg)
+                            }
+                            ;
+
+                        }, 'json')
+
+                    }, '');
+                }
+
+            },
+            mounted: function () {
+                $table.bootstrapTable('destroy').bootstrapTable(bootstrapTableOption)
+                $table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', () => {
+                    this.getSelectIds()
+                })
+
+
+            }
+
         })
 
     </script>

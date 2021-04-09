@@ -112,7 +112,7 @@ class UserSet(CurdViewSet):
                 raise RspError(_('新密码两次不一样!'))
             else:
                 if the_user.check_password(old_password):
-                    the_user.set_password(new_password1)
+                    the_user.make_password(new_password1)
                     the_user.clean_fields()
                     the_user.save(using='write')
                     from myadmin.views import logout

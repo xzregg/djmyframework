@@ -2,12 +2,20 @@
 import configparser
 import json
 import os
+import shutil
 
 from framework.models import BaseModel, JSONField, models
 from framework.translation import _
-from framework.validators import LetterValidator
+from framework.utils import mkdirs
 from framework.utils.myenum import Enum
-from .settings import SVN_AUTH_DB_FILE, SVN_PASSWORD_DB_FILE
+from framework.validators import LetterValidator
+from myadmin.models import User
+from .settings import SVN_AUTH_DB_FILE, SVN_GROUP_DB_FILE, SVN_PASSWORD_DB_FILE, SVN_ROOT
+
+
+class SvnUser(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    raw_password = models.CharField(max_length=128, null=False, default='')
 
 
 class SvnPath(BaseModel):
@@ -46,13 +54,52 @@ class SvnPath(BaseModel):
         unique_together = (('project_name', 'path'))
 
     def save(self, *args, **kwargs):
-        if self.path !='/':
-            self.parent = self.__class__.objects.get(project_name=self.project_name,parent=None,path='/')
+        if self.path != '/':
+            self.parent = self.__class__.objects.get(project_name=self.project_name, parent=None, path='/')
             self.path = self.path.strip('/')
 
         r = super(SvnPath, self).save(*args, **kwargs)
         SvnPath.sync_svn_config_file()
         return r
+
+    svn_root_conf_path = os.path.join(SVN_ROOT, 'conf')
+
+    @classmethod
+    def create_conf(cls):
+        default_svnserve_conf_text = '''
+### Visit http://subversion.apache.org/ for more information.
+[general]
+anon-access = none
+auth-access = write
+password-db = {password_db}
+authz-db = {authz_db}
+groups-db = {groups_db}
+# realm = My First Repository
+# force-username-case = none
+# hooks-env = hooks-env
+
+[sasl]
+# use-sasl = true
+# min-encryption = 0
+# max-encryption = 256
+        '''
+        mkdirs(cls.svn_root_conf_path)
+        svnserve_conf_file = os.path.join(cls.svn_root_conf_path, 'svnserve.conf')
+        if not os.path.isfile(svnserve_conf_file):
+            open(svnserve_conf_file, 'w').write(
+                    default_svnserve_conf_text.format(password_db=SVN_PASSWORD_DB_FILE, authz_db=SVN_AUTH_DB_FILE,
+                                                      groups_db=SVN_GROUP_DB_FILE))
+
+    @classmethod
+    def create_svnrepo(cls, svnrepo_name):
+        cls.create_conf()
+        svnrepo_path = os.path.join(SVN_ROOT, svnrepo_name)
+        svnrepo_conf_path = os.path.join(svnrepo_path, 'conf')
+        if not os.path.isdir(svnrepo_path):
+            os.system('svnadmin create %s' % svnrepo_path)
+        if not os.path.islink(svnrepo_conf_path):
+            shutil.rmtree(svnrepo_conf_path)
+            os.symlink(cls.svn_root_conf_path, svnrepo_conf_path)
 
     @property
     def section_name(self):
@@ -61,7 +108,7 @@ class SvnPath(BaseModel):
 
     @property
     def full_path(self):
-        return '/' + self.path
+        return '/' + self.path.strip('/')
 
     @classmethod
     def get_password_db(self):
@@ -76,8 +123,15 @@ class SvnPath(BaseModel):
         return authz_db
 
     @classmethod
+    def get_groups_db(self):
+        authz_db = configparser.ConfigParser()
+        authz_db.read(SVN_GROUP_DB_FILE)
+        return authz_db
+
+    @classmethod
     def sync_svn_config_file(cls):
         cls.sync_user_to_password_db()
+        cls.sync_group_menber_to_authz_db()
         cls.sync_svn_path_authz_db()
 
     USER_SECTION_NAME = 'users'
@@ -100,7 +154,7 @@ class SvnPath(BaseModel):
     def init_svn_projects(cls):
         project_list = cls.get_svn_project_list()
         for project_name in project_list:
-            svn_paht_model = cls.objects.get_or_create(project_name=project_name, parent=None,path='/')
+            svn_paht_model = cls.objects.get_or_create(project_name=project_name, parent=None, path='/')
             # svn_paht_model.parent = None
             # svn_paht_model.save()
 
@@ -113,29 +167,31 @@ class SvnPath(BaseModel):
             password_db.add_section(user_section_name)
 
         cls.user_set.clear()
-        for admin in User.get_normal_user_list():
-            password_db.set(user_section_name, admin.username, admin.password)
-            cls.user_set.add(admin.username)
+        for svnuser in SvnUser.objects.select_related('user').all():
+            user = svnuser.user
+            password_db.set(user_section_name, user.username, svnuser.raw_password)
+            cls.user_set.add(user.username)
         password_db.write(open(SVN_PASSWORD_DB_FILE, "w"))
 
     @classmethod
-    def _sync_group_menber_to_authz_db(cls, authz_db):
+    def sync_group_menber_to_authz_db(cls):
+        groups_db = cls.get_groups_db()
         group_section_name = cls.GROUP_SECTION_NAME
-        if not authz_db.has_section(group_section_name):
-            authz_db.add_section(group_section_name)
+        if not groups_db.has_section(group_section_name):
+            groups_db.add_section(group_section_name)
 
         cls.group_set.clear()
-        for role in Role.objects.filter(type=Role.RoleType.GROUP):
+        for role in Role.objects.prefetch_related('user_set').filter(type=Role.RoleType.GROUP):
             user_name_list = role.user_set.values_list('username', flat=True)
             if user_name_list:
                 cls.group_set.add('@%s' % role.name)
-                authz_db.set(group_section_name, role.name, ','.join(user_name_list))
+                groups_db.set(group_section_name, role.name, ','.join(user_name_list))
+        groups_db.write(open(SVN_GROUP_DB_FILE, "w"))
 
     @classmethod
     def sync_svn_path_authz_db(cls):
         authz_db = cls.get_authz_db()
         authz_db.clear()
-        cls._sync_group_menber_to_authz_db(authz_db)
 
         for svn_path_model in cls.objects.filter(status=cls.Status.Enable):
             svn_path_section_name = svn_path_model.section_name
@@ -168,23 +224,33 @@ from myadmin.models import User, Role
 
 @receiver(post_save, sender=User, dispatch_uid="user_save_svn")
 def user_save_svn(sender, instance, **kwargs):
-    admin: User = instance
+    user: User = instance
     password_db = SvnPath.get_password_db()
     user_section_name = SvnPath.USER_SECTION_NAME
     if not password_db.has_section(user_section_name):
         password_db.add_section(user_section_name)
 
-    if admin.status == User.Status.NORMAL:
-        password_db.set(user_section_name, admin.username, admin.password)
-        password_db.write(open(SVN_PASSWORD_DB_FILE, "w"))
+    if user.status == User.Status.NORMAL:
+        if user._password is not None:
+            svn_user_model, _ = SvnUser.objects.get_or_create(user=user)
+            svn_user_model.raw_password = user._password
+            svn_user_model.save()
+            password_db.set(user_section_name, user.username, svn_user_model.raw_password)
+            password_db.write(open(SVN_PASSWORD_DB_FILE, "w"))
     else:
         user_delete_svn(sender, instance)
 
 
 @receiver(post_delete, sender=User, dispatch_uid="user_delete_svn")
 def user_delete_svn(sender, instance, **kwargs):
-    admin: User = instance
+    user: User = instance
     password_db = SvnPath.get_password_db()
-    if password_db.has_option(SvnPath.USER_SECTION_NAME, admin.username):
-        password_db.remove_option(SvnPath.USER_SECTION_NAME, admin.username)
+    if password_db.has_option(SvnPath.USER_SECTION_NAME, user.username):
+        password_db.remove_option(SvnPath.USER_SECTION_NAME, user.username)
     password_db.write(open(SVN_PASSWORD_DB_FILE, "w"))
+
+
+# @receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")
+def user_add_role_ldap(sender, action, instance: Role, reverse, model: User, pk_set, using, **kwargs):
+    if action in ['post_add', 'post_clear', 'post_remove']:
+        pass
