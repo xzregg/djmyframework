@@ -3,4 +3,4 @@ from framework.translation import _
 
 class LdapAccountConfig(AppConfig):
     name = 'ldap_account'
-    label = _('Ldap 访问')
+    verbose_name = _('Ldap 账号系统')

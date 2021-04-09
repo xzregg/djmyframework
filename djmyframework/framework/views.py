@@ -5,7 +5,6 @@
 #
 # =========================================
 import functools
-import time
 import types
 from collections import OrderedDict
 
@@ -55,7 +54,7 @@ def is_notauth(view_func):
 
 def is_notcheck(view_func):
     """免权限检查"""
-    return hasattr(view_func, 'notcheck')
+    return is_notauth(view_func) or hasattr(view_func, 'notcheck')
 
 
 def json_response(func):
@@ -140,6 +139,7 @@ def model_search(request, model_objects, search=None, order=None, page_size=20, 
             "use_time"    : time.time() - _st
     }
     return params
+
 
 def api_view(http_method_names=None, detail=False):
     """
@@ -247,12 +247,14 @@ def action(methods=None, detail=False, url_path=None, url_name=None, **kwargs):
     return decorator
 
 
-action_get = functools.partial(action, 'get')
-action_post = functools.partial(action, 'post')
-action_get_post = functools.partial(action, ['post', 'get'])
+from .utils import DecoratorsPartial
 
-api_get = functools.partial(api_view, 'get')
-api_post = functools.partial(api_view, 'post')
+action_get = DecoratorsPartial(action, 'get')
+action_post = DecoratorsPartial(action, 'post')
+action_get_post = DecoratorsPartial(action, ['post', 'get'])
+
+api_get = DecoratorsPartial(api_view, 'get')
+api_post = DecoratorsPartial(api_view, 'post')
 
 from django.views.generic import View
 
@@ -459,7 +461,7 @@ class CurdViewSet(BaseViewSet):
             model_instance._prefetched_objects_cache = {}
         return serializer, msg
 
-    def save(self, request: Request,*args, **kwargs):
+    def save(self, request: Request, *args, **kwargs):
         """
         保存
         """

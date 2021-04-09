@@ -8,9 +8,9 @@ from drf_yasg.utils import swagger_auto_schema
 from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilter
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, PaginationSerializer, s
-from framework.views import action_get_post, CurdViewSet, notcheck, render_to_response
+from framework.views import action_get_post, CurdViewSet, notcheck, render_to_response, Request
 from myadmin.models import Menu
-from framework.utils import ObjectDict
+from ..models.menu import MenuConfig
 
 
 class MenuSerializer(BaseModelSerializer):
@@ -83,8 +83,8 @@ class MenuSet(CurdViewSet):
     def delete(self, request, *args, **kwargs):
         return super(MenuSet, self).delete(request, *args, **kwargs)
 
-    @action_get_post()
-    def update_menu(self, request, *args, **kwargs):
+    @action_get_post
+    def update_menu(self, request: Request):
         """
         更新菜单
         :param request:
@@ -92,18 +92,19 @@ class MenuSet(CurdViewSet):
         :param kwargs:
         :return:
         """
-        from django.apps import apps
-        from settings import APPS
-        data = ObjectDict()
 
-        for app in apps.get_app_configs():
-            data[app.name] = app.verbose_name
+        install_app_menu_config_list = MenuConfig.get_install_app_menu_config_list()
+
+        created_menu_name_list = set(list(Menu.objects.values_list('name', flat=True)))
+        to_be_added_menu_list = [mc for mc in install_app_menu_config_list if (not mc.name in created_menu_name_list) and mc.name]
+        msg = ''
         if self.is_post():
-            from ..models.menu import MenuConfig
+            add_menus = request.data.getlist('menu',[])
+            if add_menus:
+                MenuConfig.create_menu_from_config(install_app_menu_config_list, add_menus=add_menus)
+            msg = 'Create %s menu OK' % len(add_menus)
 
-            MenuConfig.create_menu_from_config(
-                MenuConfig.get_install_app_menu_config_list(request.data.get('app_name_list', [])))
-        return render_to_response('myadmin/menu/update_menu.html', data)
+        return render_to_response('myadmin/menu/update_menu.html', locals(), msg=msg)
 
     # @swagger_auto_schema(methods=['post'], request_body=MenuSerializer, responses=MenuSerializer)
     # @action(['post'])

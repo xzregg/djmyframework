@@ -5,7 +5,7 @@ from myadmin.models.menu import MenuConfig as _m
 
 MenuList = [
 
-_m('17',_('系统管理'),'system'),
+_m('17',_('系统管理'),name='system'),
 	_m('17.2',_('用户设置'),'/myadmin/user/list'),
 		_m('17.2.1',_('用户_添加'),'/myadmin/user/edit',0, 0),
 		_m('17.2.2',_('用户_编辑'),'/myadmin/user/delete',0, 0),
@@ -49,11 +49,6 @@ _m('17',_('系统管理'),'system'),
 		_m('17.10.3', _('同步模型_删除'), '/sync/backstage/remove', 0, 0),
 		_m('17.10.4', _('同步模型_推送'), '/sync/backstage/push', 0, 0),
 
-_m('18', _('SVN 管理'), reverse_view('svn_admin.svn_path.list'),is_show=1,is_log=0),
-	_m('18.1', _('SVN 路径_编辑'), reverse_view('svn_admin.svn_path.edit'), 0, 0),
-	_m('18.2', _('SVN 路径_保存'), reverse_view('svn_admin.svn_path.save'), 0, 0),
-	_m('18.3', _('SVN 路径_删除'), reverse_view('svn_admin.svn_path.delete'), 0, 0),
-	_m('18.3', _('SVN db 文件预览'), reverse_view('svn_admin.svn_path.preview_db_files'), 0, 0),
 
 _m('29',_('用户权限'),'user_permission',0,0),
 	_m('29.1',_('主页'), '/index', 1, 0),

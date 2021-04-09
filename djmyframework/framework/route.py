@@ -55,12 +55,12 @@ class CustomRestRouter(rest_route.DefaultRouter):
                     initkwargs={}
             ),
             rest_route.Route(
-                    url=r'^{prefix}/options$',
+                    url=r'^{prefix}/metadata$',
                     mapping={
-                            'get'    : 'options',
-                            'options': 'options',
+                            'get'    : 'metadata',
+                            'options': 'metadata',
                     },
-                    name='{basename}.options',
+                    name='{basename}.metadata',
                     detail=True,
                     initkwargs={}
             ),

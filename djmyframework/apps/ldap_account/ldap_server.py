@@ -40,10 +40,12 @@ def get_db():
 
 @single_process.SingleProcessDeco()
 def run_ldap_server(port=LDAP_ACCOUNT_SERVER_PORT, use_ssl=False):
+    os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
     import sys
     from twisted.python import log
     from twisted.internet import ssl, reactor
     log.startLogging(sys.stderr)
+
     # We initialize our tree
 
     # When the LDAP Server protocol wants to manipulate the DIT, it invokes
@@ -76,4 +78,5 @@ def run_ldap_server(port=LDAP_ACCOUNT_SERVER_PORT, use_ssl=False):
 
 
 if __name__ == '__main__':
+
     run_ldap_server()

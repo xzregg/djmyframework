@@ -14,11 +14,13 @@ from framework.utils.myenum import Enum
 from myadmin.models import Role, User, UserInfo
 from .settings import DBPATH
 
+from ldaptor.ldiftree import *
+import os
+
 APP_PATH = get_app_path('ldap_account')
 
 
 def get_db_path():
-
     tpl_db_path = os.path.join(APP_PATH, 'ldiftree')
     tmp_db_path = DBPATH
 
@@ -31,8 +33,6 @@ def get_db_path():
     mkdirs(OU_ROLE_DIR)
 
     return tmp_db_path
-
-
 
 
 # mail 字段是 mindoc 需要
@@ -279,9 +279,6 @@ def user_add_role_ldap(sender, action, instance: Role, reverse, model: User, pk_
             user_save_ldap(sender, instance)
 
 
-from ldaptor.ldiftree import *
-
-os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 
 @implementer(interfaces.IConnectedLDAPEntry)
@@ -322,7 +319,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
             elif second_attr_type.attributeType == 'role':
                 role_name = username = first_attr_type.value
                 role = self.access_domain.role.select_related('parent').prefetch_related(
-                'user_set__userinfo_set').filter(name=role_name).first()
+                        'user_set__userinfo_set').filter(name=role_name).first()
                 if role:
                     data = self.access_domain.create_role(role)
         self.genrate_for_receive_data(data)

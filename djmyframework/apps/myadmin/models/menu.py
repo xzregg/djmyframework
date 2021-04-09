@@ -10,15 +10,14 @@ import re
 import urllib
 
 from django.apps import apps
+from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_extensions.management.commands.show_urls import Command, simplify_regex
 
-from django.conf import settings
 from framework.enums import BoolEnum
 from framework.models import BaseModel
-from framework.views import is_notcheck
 from framework.utils import ObjectDict
 from framework.utils.single_process import SingleProcessDeco
 
@@ -95,9 +94,9 @@ class Menu(BaseModel):
         return set1.issubset(set2)
 
 
-class MenuConfig(object):
+class MenuConfig(ObjectDict):
 
-    def __init__(self, von='', menu_alias='', url='', is_log=0, is_show=1, name='', *args, **kwargs):
+    def __init__(self, von='', menu_alias='', url='', is_log=0, is_show=1, name='', app_name='', *args, **kwargs):
         self.von = str(von)
         self.parent_id = '0' if self.von.count('.') == 0 else self.von.split('.', 2)[0]
         self.alias = menu_alias
@@ -105,15 +104,16 @@ class MenuConfig(object):
         self.is_log = is_log
         self.is_show = is_show
         self.name = name
+        self.app_name = app_name
 
     @staticmethod
     def find_view_func_doc(func, method_name):
         _func = func
-        return _func.__doc__.split('\n')[0].strip()[:20] if _func.__doc__ else ''
+        return _func.__doc__.strip().split('\n')[0][:20] if _func.__doc__ else ''
 
     @classmethod
     def autodiscover_app_view_functions(cls):
-
+        from framework.views import is_notcheck
         urlconf = __import__(getattr(settings, 'ROOT_URLCONF'), {}, {}, [''])
         app_menu_map = {}
         views = []
@@ -142,36 +142,33 @@ class MenuConfig(object):
                 func_name = re.sub(r' at 0x[0-9a-f]+', '', repr(func))
 
             module = '{0}.{1}'.format(func.__module__, func_name)
-            url_name = url_name or ''
+            url_name = url_name or module
             url = simplify_regex(regex).replace('[/]', '')
             decorator = ', '.join(decorators)
 
-            if url_name.count('.') >= 2 and not is_notcheck(func):
+            if url_name.count('.') >= 1:
 
                 url_name_split = url_name.split('.')
                 method_name = url_name_split[-1]
                 if hasattr(func, 'actions'):
                     func = getattr(func.cls, method_name, None)
-                    if is_notcheck(func):
-                        _logger.info('%s is notcheck' % func)
-                        continue
+                if is_notcheck(func):
+                    _logger.info('%s is notcheck' % func)
+                    continue
                 views_data = ObjectDict()
                 views_data.url_name = url_name
                 views_data.method_name = method_name
-                views_data.app_name = url_name_split[0]
+                views_data.app_name = module.split('.')[0]
                 views_data.url = url
                 views_data.module = module
 
-                # print('Route' in func_globals, url, url_name, func, type(func), func.__module__, func.__name__,
-                #       func_name,
-                #       func.__doc__)
-
                 views_data.describe = MenuConfig.find_view_func_doc(func, views_data.method_name)
-                views_data.module_name = '.'.join(url_name_split[1:-1])
+                views_data.module_name = module
                 app_menu_map.setdefault(views_data.app_name, {})
                 app_menu_map[views_data.app_name].setdefault(views_data.module_name, [])
                 app_menu_map[views_data.app_name][views_data.module_name].append(views_data)
-                # print(views_data)
+            else:
+                a = 3
 
         return app_menu_map
 
@@ -180,7 +177,7 @@ class MenuConfig(object):
 
         menu_config_list = []
 
-        if not isinstance(app_name_list, (list, tuple)):
+        if not isinstance(app_name_list, (list, tuple)) and app_name_list is not None:
             app_name_list = [app_name_list]
         print(app_name_list)
         for app_i, (app_name, module_views_data_map) in enumerate(cls.autodiscover_app_view_functions().items()):
@@ -188,12 +185,14 @@ class MenuConfig(object):
             if app_name_list:
                 if app_name not in app_name_list:
                     continue
-
+            app_alias = apps.get_app_config(app_name).verbose_name or app_name
             app_root_menu_config = MenuConfig()
             app_root_menu_config.von = str(app_i + 1)
-            app_root_menu_config.alias = apps.get_app_config(app_name).verbose_name or app_name
+            app_root_menu_config.alias = app_alias
             app_root_menu_config.name = app_name
-            app_root_menu_config.is_show = True
+            app_root_menu_config.app_name = app_name
+            app_root_menu_config.app_alias = app_alias
+            app_root_menu_config.is_show = False
             app_root_menu_config.is_log = False
             menu_config_list.append(app_root_menu_config)
 
@@ -209,7 +208,10 @@ class MenuConfig(object):
                     module_menu_config.von = '.'.join(von_list)
 
                     module_menu_config.alias = views_data.describe or views_data.url_name
-                    module_menu_config.name = views_data.url_name.replace('.', '_')
+                    # module_menu_config.name = views_data.url_name.replace('.', '_')
+                    module_menu_config.name = views_data.url.replace('/', '_').strip('_')
+                    module_menu_config.app_name = app_name
+                    module_menu_config.app_alias = app_alias
                     module_menu_config.url = views_data.url
                     module_menu_config.is_show = views_data.method_name == 'list'
                     module_menu_config.is_log = True
@@ -222,7 +224,7 @@ class MenuConfig(object):
 
     @classmethod
     @SingleProcessDeco()
-    def create_menu_from_config(cls, menu_config_list=None, force=False):
+    def create_menu_from_config(cls, menu_config_list=None, force=False, add_menus=None):
 
         menu_config_list = menu_config_list
         for mc in menu_config_list:
@@ -239,15 +241,21 @@ class MenuConfig(object):
                 else:
                     name = mc.alias
 
+                cls.Menu_Map[mc.von] = name
+
                 menu_model = Menu.objects.filter(name=name).first()
                 is_exists = menu_model is not None
                 menu_model = menu_model or Menu()
                 if is_exists:
                     print('%s,%s is  is_exists' % (menu_model.name, menu_model.alias))
 
-                selfId, parentId, order = cls.getIdAndParentId(mc.von)  # 处理获得id，父id，排序
-                if not is_exists or force:
+                parentId, order = cls.get_mc_parent(mc)  # 处理获得id，父id，排序
 
+                if add_menus is not None:
+                    allow_save = not is_exists and mc.name in add_menus
+                else:
+                    allow_save = not is_exists or force
+                if allow_save:
                     menu_model.alias = alias if force else (menu_model.alias or alias)
                     menu_model.name = mc.name
                     menu_model.parent_id = parentId
@@ -256,16 +264,14 @@ class MenuConfig(object):
                     if parentId != 0:
                         if not menu_model.icon and not url and not menu_model.css and mc.is_show:
                             menu_model.css = menu_model.css or ''
-                        parent_model = cls.Menu_model_map.get(menu_model.parent_id, None)
+                        # parent_model = cls.Menu_model_map.get(menu_model.parent_id, None)
                         menu_model.url = url
                     menu_model.is_show = mc.is_show
                     menu_model.is_log = mc.is_log
                     menu_model.order = order
                     menu_model.save()
                     print('%s, %s %s 菜单添加完成.' % (menu_model.name, mc.von, menu_model.alias))
-
-                cls.Menu_Map[mc.von] = menu_model.id
-                cls.Menu_model_map[menu_model.id] = menu_model
+                cls.Menu_model_map[name] = menu_model
                 # print('%s %s [%s] %s done !' % (menu.alias , menu.name,url, menu.css))
             except Exception:
                 print('-' * 40)
@@ -273,19 +279,24 @@ class MenuConfig(object):
                 raise Exception
 
     @classmethod
-    def getIdAndParentId(cls, von):
+    def get_mc_parent(cls, mc):
+        von = mc.von
+        parentId = '0'
         if not '.' in von:
-            selfId = von
-            parentId = '0'
             cls.fixId += 1
             order = cls.fixId
         else:
             von_split = von.split('.')
-            selfId = von
             parent_von = '.'.join(von_split[:-1])
             order = von_split[-1]
-            parentId = cls.Menu_Map.get(parent_von)
-        return selfId, int(parentId), order
+            parent_name = cls.Menu_Map.get(parent_von)
+
+            parent_menu_model = cls.Menu_model_map.get(parent_name,
+                                                       Menu.objects.filter(name=parent_name).only('id').first())
+            if parent_menu_model:
+                parentId = parent_menu_model.id or parentId
+
+        return parentId, order
 
 
 class UserDefinedMenu(BaseModel):
