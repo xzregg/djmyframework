@@ -6,4 +6,6 @@
 # @Contact : xzregg@gmail.com
 # @Desc :
 
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy
+
+_ = gettext_lazy

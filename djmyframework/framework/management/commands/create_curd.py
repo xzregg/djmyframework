@@ -149,6 +149,14 @@ class Command(BaseCommand):
 
         model_class: BaseModel = getattr(models, model_name)
 
+        if not issubclass(model_class,BaseModel):
+            #raise Exception('不是继承于 BaseModel' )
+            model_class._meta.abstract=True
+            model_class = type(
+                    model_class.__name__,
+                    (BaseModel,model_class),
+                    {'__module__': model_class.__module__,'__doc__': model_class.__name__}
+            )
         if not model_class:
             self.stderr.write('%s 模型载入失败' % model_name)
             return
@@ -196,9 +204,9 @@ class Command(BaseCommand):
         parmas['model_form'] = model_form
 
         parmas['model_many_to_many'] = model_class._meta.many_to_many
-        parmas['model_foreigns'] = [f for f in model_class.get_fields() if isinstance(f, ForeignKey)]
-        parmas['model_choices_fields'] = [f for f in model_class.get_fields() if f.choices]
-        parmas['model_desc'] = model_class.__doc__.split('\n')[0] or model_name
+        parmas['model_foreigns'] = [f for f in _fields if isinstance(f, ForeignKey)]
+        parmas['model_choices_fields'] = [f for f in _fields if f.choices]
+        parmas['model_desc'] = model_class.__doc__.strip().split('\n')[0] or model_name
 
         parmas['fields_name_list'] = [f.name for f in fields]
         parmas['all_fields_name_list'] = parmas['fields_name_list'] + ['%s_alias' % f.name for f in

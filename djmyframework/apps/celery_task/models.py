@@ -1,12 +1,12 @@
 from celery import states, Task
-from django.db import models
+from django_celery_beat.models import *
 from django_celery_results.models import TaskResult
 
 from framework.models import BaseModel
 from framework.translation import _
 from framework.utils.cache import CacheAttribute
 
-PROGRESS = 'PROGRESS'
+states.PROGRESS = 'PROGRESS'
 
 
 class ReturnResultTask(Task):
@@ -72,7 +72,7 @@ class AssociatedTaskResult(BaseModel):
         a_task_result = AssociatedTaskResult.create(a_type_name=task_name,
                                                     a_id=a_id)
         a_task_result.add_task_result(celecry_task.request.id)
-        celecry_task.update_state(state=PROGRESS, request=celecry_task.request)
+        celecry_task.update_state(state=states.PROGRESS, request=celecry_task.request)
 
     def task_result_id(self):
         return [t.task_id for t in self.task_result.all()]

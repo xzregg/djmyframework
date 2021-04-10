@@ -15,7 +15,7 @@ from django.http import (
 )
 from django.utils._os import safe_join
 from django.utils.http import http_date
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django.views.static import directory_index, was_modified_since
 import settings
 from django.views import static

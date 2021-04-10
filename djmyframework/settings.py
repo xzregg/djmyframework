@@ -39,7 +39,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
-APPS = ['myadmin', 'analysis', 'celery_task_result', 'log_def', 'upload', 'sync_model', 'ws_gateway']
+APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway']
 APPS += ['ldap_account']
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
@@ -78,6 +78,7 @@ INSTALLED_APPS = ['djorm_pool',
                   'django_filters',
                   'rest_framework',
                   'django_celery_results',
+                  'django_celery_beat',
                   'drf_yasg',
                   'django_extensions'
                   ] + APPS
@@ -150,6 +151,8 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'   : 3,
                                    "interval_max"  : 3  # 最大 sleep 秒数量
                                    }
 DJANGO_CELERY_BEAT_TZ_AWARE = False
+DJANGO_CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
 ########################################
 
 USE_LDAP_AUTH = True

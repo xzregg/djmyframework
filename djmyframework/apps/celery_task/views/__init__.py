@@ -2,16 +2,17 @@ from celery import Task
 from celery.result import AsyncResult
 from django.db.models import Q
 from django_celery_results.models import TaskResult
+
 from drf_yasg.utils import swagger_auto_schema
 
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, DataSerializer, ListIntField, ListStrField, ParamsSerializer, s
 from framework.translation import _
 from framework.views import action, action_get, BaseViewSet, JsonResponse, notcheck, render_to_response, Request
-from .models import AssociatedTaskResult, states
+from ..models import AssociatedTaskResult, states
 
 
-class CeleryTaskResultSerializer(BaseModelSerializer):
+class CeleryTaskSerializer(BaseModelSerializer):
     class Meta:
         model = TaskResult
         fields = ['id', 'task_id', 'task_name', 'result', 'status', 'date_done', 'meta', 'traceback']
@@ -32,10 +33,10 @@ class TaskIdMapSerializer(DataSerializer):
     idmap = s.DictField(label=_('任务状态 Map,通过 task id 获取启动状态'), required=False, default={})
 
 
-@Route('celery_task_result')
+@Route('celery_task')
 class CeleryTask(BaseViewSet):
     # swagger_schema = None
-    serializer_class = CeleryTaskResultSerializer
+    serializer_class = CeleryTaskSerializer
 
     class CeleryTaskQueryParams(ParamsSerializer):
         task_id = s.ListField(label='Celery任务ID列表', child=s.CharField(), help_text=_('celery 任务ID列表'), required=True)
@@ -44,7 +45,7 @@ class CeleryTask(BaseViewSet):
     @action_get()
     def test(self, request):
         """测试 celery 任务能否提交"""
-        from .tasks import test_live
+        from ..tasks import test_live
 
         try:
             s: AsyncResult = test_live.delay()
@@ -56,7 +57,7 @@ class CeleryTask(BaseViewSet):
     @action_get()
     def js(self, request):
         """Celery任务js库"""
-        return render_to_response('celery_task_result/celery_task_result.js', AssociatedTaskResult,
+        return render_to_response('celery_task/celery_task.js', AssociatedTaskResult,
                                   content_type='application/javascript')
 
     @swagger_auto_schema(query_serializer=CeleryTaskQueryParams, responses=CeleryTaskQueryParams)
@@ -88,7 +89,7 @@ class CeleryTask(BaseViewSet):
         params = self.CeleryTaskQueryParams(request.query_params).params_data
 
         task_result = TaskResult.objects.filter(task_id__in=params.task_id)
-        serializer = CeleryTaskResultSerializer(task_result, many=True)
+        serializer = CeleryTaskSerializer(task_result, many=True)
         return JsonResponse(serializer, request=request)
 
     class AssociatedTaskResultQueryParmas(ParamsSerializer):

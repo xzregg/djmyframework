@@ -80,7 +80,7 @@ function CelertTasKResult(field_name, $bootstrap_table, query_interval, loading_
                 return
             }
 
-            $.get("{{ url('celery_task_result.query') }}", {task_id: task_queue}, function (rsp) {
+            $.get("{{ url('celery_task.query') }}", {task_id: task_queue}, function (rsp) {
                     if (rsp.code == 0) {
                         var task_list = rsp.data
                         if (task_list.length == 0) {
@@ -128,7 +128,7 @@ function CelertTasKResult(field_name, $bootstrap_table, query_interval, loading_
             })
         }
 
-        $.post("{{ url('celery_task_result.revoke_task') }}", {task_id: task_ids}, (rsp) => {
+        $.post("{{ url('celery_task.revoke_task') }}", {task_id: task_ids}, (rsp) => {
                 callback(rsp)
             }
         )
@@ -136,7 +136,7 @@ function CelertTasKResult(field_name, $bootstrap_table, query_interval, loading_
 
     // 查询正在执行的任务
     this.queryProgressTask = function (a_ids, a_type_names, callback) {
-        $.getJSON("{{ url('celery_task_result.query_progress') }}", {
+        $.getJSON("{{ url('celery_task.query_progress') }}", {
                 a_id: a_ids,
                 a_type_name: a_type_names
             }, (rsp) => {
