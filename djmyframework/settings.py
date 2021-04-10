@@ -65,12 +65,14 @@ TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = 'myadmin.User'
 
+USE_LDAP_AUTH = True
+
 APPS = sort_set_list(APPS + settings.APPS)
 
 INSTALLED_APPS = ['djorm_pool',
                   'framework',
                   'channels',
-                  #'django.contrib.admin',
+                  # 'django.contrib.admin',
                   'django.contrib.auth',
                   'django.contrib.contenttypes',
                   'django.contrib.sessions',
@@ -114,7 +116,6 @@ CHANNEL_LAYERS = {
 ########################################
 
 
-
 ############# 数据库连接池 配置 #############
 DJORM_POOL_OPTIONS = {
         "pool_size"   : 5,
@@ -129,27 +130,8 @@ DJORM_POOL_OPTIONS = {
 # SESSION_SAVE_EVERY_REQUEST = True
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
 
-############# CELERY 配置 #############
-# https://docs.celeryproject.org/en/v5.0.5/userguide/configuration.html
-CELERY_TIMEZONE = 'Asia/Shanghai'  # 并没有北京时区，与DJANGO TIME_ZONE应该一致
-CELERY_BROKER_URL = 'redis://:123456@10.19.200.185:6379/1'
-CELERY_RESULT_BACKEND = 'django-db'
-# CELERY_CACHE_BACKEND = 'django-cache'
-## 异步任务发送最大重试次数,redis 任务发送错误,重试次数
-CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'   : 3,
-                                   "interval_start": 0,
-                                   "interval_step" : 0.5,
-                                   "interval_max"  : 3  # 最大 sleep 秒数量
-                                   }
-DJANGO_CELERY_BEAT_TZ_AWARE = False
-DJANGO_CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-
-########################################
-
-USE_LDAP_AUTH = True
 
 ############# api 文档设置 ##############
-
 SWAGGER_SETTINGS = {
         # https://drf-yasg.readthedocs.io/en/stable/security.html
         'USE_SESSION_AUTH'         : True,
@@ -251,10 +233,27 @@ LANGUAGES = (
 TIME_ZONE = 'Asia/Shanghai'
 LOCALE_PATHS = [os.path.join(settings.BASE_DIR, 'locale'), os.path.join(PROJECT_ROOT, 'locale')]
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = False
+
+############# CELERY 配置 #############
+# https://docs.celeryproject.org/en/v5.0.5/userguide/configuration.html
+CELERY_TIMEZONE = TIME_ZONE  # 并没有北京时区，与DJANGO TIME_ZONE应该一致
+CELERY_BROKER_URL = 'redis://:123456@10.19.200.185:6379/1'
+CELERY_RESULT_BACKEND = 'django-db'
+# CELERY_CACHE_BACKEND = 'django-cache'
+## 异步任务发送最大重试次数,redis 任务发送错误,重试次数
+CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'   : 3,
+                                   "interval_start": 0,
+                                   "interval_step" : 0.5,
+                                   "interval_max"  : 3,  # 最大 sleep 秒数量
+                                   'visibility_timeout': 43200
+                                   }
+DJANGO_CELERY_BEAT_TZ_AWARE = False
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_WORKER_POOL_RESTARTS=True
+########################################
+
 
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 STATIC_DIR = os.path.join(settings.BASE_DIR, 'static/')

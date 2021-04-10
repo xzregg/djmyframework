@@ -10,7 +10,7 @@ import time
 
 from django.db import close_old_connections, connections
 
-from celery_app import app
+from config.celery_app import app
 from framework.utils.log import log
 
 

@@ -13,17 +13,20 @@ DAEMON_SERVICE_MAP = {
                             remark="ldap 服务器", off=True),
 
         "asgi"       : dict(
-            command="gunicorn asgi -c config/gunicorn_config.py -k uvicorn.workers.UvicornWorker --access-logfile - --error-logfile - ",
-            stopsignal='TERM',
-            remark="gunicorn asgi 服务"),
+                command="gunicorn asgi -c config/gunicorn_config.py -k uvicorn.workers.UvicornWorker --access-logfile - --error-logfile - ",
+                stopsignal='TERM',
+                remark="gunicorn asgi 服务"),
 
         "wsgi"       : dict(command="gunicorn wsgi -c config/gunicorn_config.py --access-logfile - --error-logfile - ",
                             stopsignal='TERM',
                             remark="gunicorn wsgi 服务", off=False),
-        "celery_work": dict(command="celery -A config.celery_app worker -l info -E -c 2 ",
+        "celery_work": dict(command="celery -A config.celery_app worker -l info -E -c 2 -O fair  --purge ", # 在守护进程启动之前清除所有等待的任务,防止定时任务积压
                             stopsignal='TERM',
-                            remark="Celery 工作服务", off=False),
-        "celery_beat": dict(command="celery -A config.celery_app worker -B -l info -Q cron -c 1",
+                            remark="Celery 工作服务", off=False, environment='DJANGO_ENV = "prod"'),
+        "celery_beat": dict(command="celery -A config.celery_app beat -l info -S django",
                             stopsignal='TERM',
-                            remark="Celery 定时任务", off=False),
+                            remark="Celery 定时任务", off=False, environment='DJANGO_ENV = "prod"'),
+        "celery_flower": dict(command="celery -A config.celery_app flower -l info",
+                            stopsignal='TERM',
+                            remark="Celery 任务监控", off=True, environment='DJANGO_ENV = "prod"'),
 }
