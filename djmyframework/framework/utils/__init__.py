@@ -115,7 +115,10 @@ class MyJsonEncoder(JSONEncoder):
             return [m.to_dict() if hasattr(m, 'to_dict') else m for m in obj]
         elif isinstance(obj, serializers.Serializer):
             return obj.data
-        return super(MyJsonEncoder, self).default(obj)
+        try:
+            return super().default(obj)
+        except TypeError as e:
+            return str(obj)
 
 
 def json_dumps(obj, *args, **kwargs):

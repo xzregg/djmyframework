@@ -101,8 +101,8 @@ def exception_handler(exc, context):
     #elif isinstance(exc, PermissionDenied):
     #    exc = exceptions.PermissionDenied()
 
-#    elif isinstance(exc, ValidationError):
-#        exc = exceptions.ValidationError(exc.message_dict)
+    #elif isinstance(exc, ValidationError):
+     #   exc = exceptions.ValidationError(exc.message_dict)
 
     if isinstance(exc, exceptions.APIException):
         headers = {}

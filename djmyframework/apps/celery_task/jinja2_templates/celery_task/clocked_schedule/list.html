@@ -1,18 +1,14 @@
 {% extends "framework/base.html" %}
 
 {% block header %}
-    <title>{{ _('${model_desc} 列表') }}</title>
+    <title>{{ _('ClockedSchedule 列表') }}</title>
 {% endblock %}
-<%!
-from django.db.models.fields import IntegerField,CharField,DateTimeField,BigAutoField,TextField
-from django.db.models.fields.related import ManyToManyField
-from framework.utils import json_dumps
-%>
+
 
 {% block content %}
     <div class="row header">
         <div class="col-sm-5">
-            <h1>{{ _('${model_desc}') }}
+            <h1>{{ _('ClockedSchedule') }}
                 <small>{{ _('列表') }}</small>
             </h1>
         </div>
@@ -24,7 +20,40 @@ from framework.utils import json_dumps
 
         <div class="pane">
                 <input style="display:none" type="text">
-                <%include file="filter_form.htm" args="filter_field_schemas=filter_field_schemas"/>
+                
+
+
+                    <script>
+                    // 过滤条件字段定义
+                    var filter_field_schemas = {
+                         id :
+                         {
+                            label: '{{ _('ID') }}',
+                            name:'id',
+                            type:'number',
+                            data_url: '',
+                         },
+                         clocked_time :
+                         {
+                            label: '{{ _('Clock Time') }}',
+                            name:'clocked_time',
+                            type:'date',
+                            data_url: '',
+                         },
+                    }
+
+                    // 默认过滤条件
+                    var filter_conditions = [{
+                        name: 'id',
+                        operator: "exact",
+                        value: "",
+                        type: "number",
+                        label: '{{ _('ID') }}',
+                        choices: [],
+                        is_default:true
+                    }]
+                    </script>
+                    {% include "framework/widgets/filter.html" %}
             </div>
 
         </div>
@@ -34,10 +63,10 @@ from framework.utils import json_dumps
         <div class="col-sm-12 ">
             <div id="vue-container" v-cloak >
                 <div id="toolbar" class="" >
-                    <a type="button"  id="add-btn" class="btn btn-sm btn-primary openDialog"
-                       href="{{ url('${app_name}.${model_lower_name}.edit') }}">
+                    <button type="button"  id="add-btn" class="btn btn-sm btn-primary openDialog"
+                       href="{{ url('celery_task.clocked_schedule.edit') }}">
                         <span class="glyphicon glyphicon-plus-sign"></span> {{ _('添加') }}
-                    </a>
+                    </button>
 
                     <button type="button"  @click.prevent="onDelete"  :disabled="selectIds.length==0" class="btn btn-sm btn-danger " >
                         <span class="glyphicon glyphicon-remove"></span> {{ _('删除') }} <span v-show="selectIds.length>0" class="badge">((selectIds.length))</span>
@@ -165,21 +194,22 @@ from framework.utils import json_dumps
                 align: 'center',
                 valign: 'middle'
               },
-            % for f in fields:
              {
-                field: '${f.name}',
-                title: "{{ _('${f.verbose_name}') }}",
+                field: 'id',
+                title: "{{ _('ID') }}",
                 align: 'center',
                 valign: 'middle',
                 sortable: true,
                 visible:true,
-                % if f.choices:
-                formatter:function(value,row,index){
-                     return row.${f.name}_alias.toString()
-                }
-                % endif
              },
-            % endfor
+             {
+                field: 'clocked_time',
+                title: "{{ _('Clock Time') }}",
+                align: 'center',
+                valign: 'middle',
+                sortable: true,
+                visible:true,
+             },
             {
                 field: '_operate',
                 title: '{{ _('操作') }}',
@@ -187,8 +217,8 @@ from framework.utils import json_dumps
                 valign: 'middle',
                 formatter: function(value, row, index){
                       return [
-                            '<a href="{{ url('${app_name}.${model_lower_name}.edit') }}?id='+row.id+'" class="btn btn-xs btn-info openDialog">{{ _('编辑') }}</a> ',
-                            '<a href="{{ url('${app_name}.${model_lower_name}.edit') }}?id='+row.id+'&is_copy=1" class="btn btn-default btn-xs openDialog">{{ _('复制') }}</a> ',
+                            '<a href="{{ url('celery_task.clocked_schedule.edit') }}?id='+row.id+'" class="btn btn-xs btn-info openDialog">{{ _('编辑') }}</a> ',
+                            '<a href="{{ url('celery_task.clocked_schedule.edit') }}?id='+row.id+'&is_copy=1" class="btn btn-default btn-xs openDialog">{{ _('复制') }}</a> ',
                         ].join('');
              },
             },
@@ -236,7 +266,7 @@ from framework.utils import json_dumps
                         return false
                     }
                     var ids = this.getSelectIds()
-                    $.post("{{ url('${app_name}.${model_lower_name}.delete') }}", {id: ids}, (rsp) => {
+                    $.post("{{ url('celery_task.clocked_schedule.delete') }}", {id: ids}, (rsp) => {
                         if (rsp.code == 0) {
                             $table.bootstrapTable('remove', {
                                 field: 'id',

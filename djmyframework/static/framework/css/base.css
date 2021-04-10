@@ -4,6 +4,7 @@ html {
 }
 
 body {
+    min-height: 500px;
     font-size: 13px;
 }
 

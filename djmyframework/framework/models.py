@@ -361,7 +361,7 @@ class BaseModelMixin(SqlModelMixin):
             elif isinstance(attr_value, (int, str, float)):
                 d[attr] = getattr(self, attr)
             elif not is_msgpack:
-                d[attr] = getattr(self, attr)
+                d[attr] = field.get_prep_value(getattr(self, attr))
 
         if has_m2mfields:
             m2mfields = self.__class__._meta.many_to_many
@@ -404,8 +404,9 @@ class BaseModelMixin(SqlModelMixin):
                 return x.verbose_name
 
     @classmethod
-    def get_list_view_name(cls):
-        return '%s.%s.list' % (cls.get_app_name(), cls.lower_name)
+    def get_list_view_name(cls,model_class=None):
+        model_class = model_class or cls
+        return '%s.%s.list' % (model_class._meta.app_label, cls.get_lower_name(model_class))
 
     @classmethod
     def get_list_url(cls):
@@ -416,9 +417,9 @@ class BaseModelMixin(SqlModelMixin):
         return cls.get_lower_name()
 
     @classmethod
-    def get_lower_name(cls):
+    def get_lower_name(cls, model_class=None):
         new_lower_name_list = []
-        name_str = cls.__name__
+        name_str = model_class.__name__ if model_class else cls.__name__
         for i, c in enumerate(name_str):
             if i > 0 and c.isupper():
                 if name_str[i - 1].islower() or name_str[i + 1].islower():

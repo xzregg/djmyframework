@@ -12,7 +12,7 @@
                             type:'${f.type}',
                             data_url: '${f.data_url}',
                             % if f.choices:
-                            choices:[{% for o in request.parser_context.view.model.fields_map.${f.name}.choices %}
+                            choices:[{% for o in request.parser_context.view.model._meta._forward_fields_map.${f.name}.choices %}
                              ["{{ o.0 }}", '{{ o.1 }}'],{% endfor %}
                                     ]
                             % endif

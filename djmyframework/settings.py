@@ -70,6 +70,7 @@ APPS = sort_set_list(APPS + settings.APPS)
 INSTALLED_APPS = ['djorm_pool',
                   'framework',
                   'channels',
+                  #'django.contrib.admin',
                   'django.contrib.auth',
                   'django.contrib.contenttypes',
                   'django.contrib.sessions',
@@ -141,7 +142,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'   : 3,
                                    "interval_max"  : 3  # 最大 sleep 秒数量
                                    }
 DJANGO_CELERY_BEAT_TZ_AWARE = False
-#DJANGO_CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+DJANGO_CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 ########################################
 

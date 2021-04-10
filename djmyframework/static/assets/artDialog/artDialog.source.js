@@ -947,7 +947,7 @@ artDialog.fn = artDialog.prototype = {
         DOM.full_screen.unbind('click').bind('click',function(){
 
             if(!that._full_screen){
-                that.position(0,0).size('100%','98%')
+                that.position(0,0).size('100%','100%')
                 that._full_screen = true
             }else{
                 that._full_screen = false

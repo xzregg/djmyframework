@@ -179,13 +179,12 @@ artDialog.open = function (url, options, cache) {
 
 		 var iWindowWidth = parseInt(document.body.offsetWidth * 1)
 		 _iWidth = iWidth > iWindowWidth ? iWindowWidth : iWidth
-		 _iWidth = aConfig.width === 'auto' ? iWindowWidth : _iWidth
-		 _iWidth = _iWidth + 'px'
+		 _iWidth = aConfig.width === 'auto' ? iWindowWidth * 0.95 : _iWidth
+		 _iWidth = parseInt(_iWidth) + 'px'
 
-		_iHeight = iHeight > $(parent.window).height() ? '99%' : iHeight
-		
+		_iHeight = iHeight > $(window).height() ? $(window).height() *0.95 : iHeight
+		_iHeight = parseInt(_iHeight) + 'px'
 		api.size(_iWidth, _iHeight);
-
 		// 调整对话框位置
 		aConfig.follow
 		? api.follow(aConfig.follow)
@@ -197,6 +196,7 @@ artDialog.open = function (url, options, cache) {
 		options.init && options.init.call(api, iwin, top);
 		options.init = null;
 		$iframe.unbind('load');
+
 	};
 		
 	var config = {

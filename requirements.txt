@@ -44,3 +44,4 @@ ldaptor==19.1.0
 django-celery-results==2.0.1
 django-celery-beat==2.2.0
 django_user_agents
+python-ldap

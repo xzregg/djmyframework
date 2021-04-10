@@ -46,7 +46,7 @@
                             name:'period',
                             type:'choice',
                             data_url: '',
-                            choices:[{% for o in request.parser_context.view.model.fields_map.period.choices %}
+                            choices:[{% for o in request.parser_context.view.model._meta._forward_fields_map.period.choices %}
                              ["{{ o.0 }}", '{{ o.1 }}'],{% endfor %}
                                     ]
                          },
@@ -293,7 +293,7 @@
                                 field: 'id',
                                 values: ids
                             })
-
+                            this.getSelectIds()
                             art.dialog(rsp.msg).time(1)
                         } else {
                             art.dialog.alert(rsp.msg)

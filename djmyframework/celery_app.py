@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2019-09-02 17:57
-# @Author  : xzr
-# @File    : celery_app
+# @Time : 2021-04-10 17:03
+# @Author : xzr
+# @File : celery_app.py
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
-# @Desc    : 
+# @Desc :
 
-from config.celery_app import *
+from config.celery_app import app

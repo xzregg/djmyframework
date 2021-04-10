@@ -2,7 +2,6 @@ from celery import Task
 from celery.result import AsyncResult
 from django.db.models import Q
 from django_celery_results.models import TaskResult
-
 from drf_yasg.utils import swagger_auto_schema
 
 from framework.route import Route
@@ -117,3 +116,16 @@ class CeleryTask(BaseViewSet):
 
         serializer = AssociatedTaskResultSer(a_task_results, many=True)
         return JsonResponse(serializer, request=request)
+
+    @notcheck
+    @action('get')
+    def tasks(self, request: Request):
+        """
+        查询 Celery 注册的任务
+        """
+        from celery import current_app
+
+        tasks = list(sorted(name for name in current_app.tasks
+                            if not name.startswith('celery.')))
+
+        return JsonResponse(tasks, request=request)

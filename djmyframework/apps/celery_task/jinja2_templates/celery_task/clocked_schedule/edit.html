@@ -1,7 +1,7 @@
 {% extends "framework/base.html" %}
 
 {% block header %}
-    <title>{{ _('IntervalSchedule 编辑') }}</title>
+    <title>{{ _('ClockedSchedule 编辑') }}</title>
 {% endblock %}
 
 
@@ -9,7 +9,7 @@
     <div id="vue-container" v-cloak>
         <div class="row header">
             <div class="col-sm-5">
-                <h1>{{ _('IntervalSchedule') }}
+                <h1>{{ _('ClockedSchedule') }}
                     <small>{{ _('编辑') }}</small>
                 </h1>
             </div>
@@ -42,36 +42,16 @@
 
 
         <div class="form-group" style="">
-            <label class="col-sm-3 control-label no-padding-right" for="id_every">
+            <label class="col-sm-3 control-label no-padding-right" for="id_clocked_time">
                 <span class="text-danger">*</span>
-                {{ _('Number of Periods') }} </label>
+                {{ _('Clock Time') }} </label>
 
             <div class="col-sm-8">
-                 <input type="number" id="id_every" name="every" v-model="model.every"
-                        class="form-control" value="{{ data.every or ""}}"
-                        required=true
-                         >
-                <span class="help-block">{{ _('Number of interval periods to wait before running the task again') }}</span>
-                <div id="help_text_every" class="middle text-danger help_text"></div>
-            </div>
-        </div>
-                
-
-
-        <div class="form-group" style="">
-            <label class="col-sm-3 control-label no-padding-right" for="id_period">
-                <span class="text-danger">*</span>
-                {{ _('Interval Period') }} </label>
-
-            <div class="col-sm-8">
-                <select v-select2 v-model="model.period" class="form-control col-lg-5 select2" id="id_period" data-placeholder="{{ _('Interval Period') }}" name="period" svalue="{{ data.period }}">
-                    {% for o in data.serializer.instance._meta._forward_fields_map.period.choices %}
-                        <option value="{{ o.0 }}">{{ o.1 }}</option>
-                    {% endfor %}
-                </select>
-
-                <span class="help-block">{{ _('The type of period between task runs (Example: days)') }}</span>
-                <div id="help_text_period" class="middle text-danger help_text"></div>
+                    <input type="text" id="id_clocked_time" name="clocked_time" v-model="model.clocked_time"
+                           class="form-control datetime " value="{{ data.clocked_time  or "" }}"
+                           required=true >
+                <span class="help-block">{{ _('Run the task at clocked time') }}</span>
+                <div id="help_text_clocked_time" class="middle text-danger help_text"></div>
             </div>
         </div>
                 </div>
@@ -100,7 +80,7 @@
 
     </div>
     <script>
-        var modelData = Object({{ data|json_dumps|safe }}) || Object({"id": 1, "every": null, "period": ""})
+        var modelData = Object({{ data|json_dumps|safe }}) || Object({"id": 1, "clocked_time": null})
         
         var modelShema = Object({{ data.serializer.to_schema()|json_dumps|safe }})
 
@@ -122,7 +102,7 @@
                     $.ajax({
                         async: true,
                         type: "POST",
-                        url: "{{ url('celery_task.interval_schedule.save') }}?{% if data.id %}id={{ data.id }}{% endif %}{% if request.query_params.is_copy %}&is_copy=1{% endif %}",
+                        url: "{{ url('celery_task.clocked_schedule.save') }}?{% if data.id %}id={{ data.id }}{% endif %}{% if request.query_params.is_copy %}&is_copy=1{% endif %}",
                         dataType: 'json',
                         data: JSON.stringify(post_data),
                         contentType: 'application/json',

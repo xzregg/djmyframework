@@ -187,6 +187,7 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
         NORMAL = (0, _('正常'))  # 正常用户
         CHANNEL = (1, _('渠道'))  # 渠道用户
 
+    is_staff = False
     role = models.ManyToManyField(Role, verbose_name=_('所属角色'), blank=True)
     alias = models.CharField(_('别名'), max_length=50, db_index=True)
 

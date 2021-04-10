@@ -18,7 +18,7 @@ from framework.settings import settings
 from framework.utils import TIMEFORMAT
 from framework.validators import LetterValidator, PasswordValidator
 from framework.views import api_view, notauth, notcheck, render_to_response, Request, Response, RspError, RspErrorEnum, \
-    swagger_auto_schema
+    swagger_auto_schema, APIException
 from myadmin.models import User
 
 
@@ -81,13 +81,13 @@ def check_login_status(request):
 class LoginSerializer(ParamsSerializer):
     username = s.CharField(label=_('登录用户名'), help_text=_('登录用户名'))
     passowrd = s.CharField(label=_('用户密码'), help_text=_('用户密码'))
-    verify = s.CharField(label=_('验证码'))
+    verify = s.CharField(label=_('验证码'),required=False,allow_blank=True)
 
 
 def ldap_login(request, username, password):
     from myadmin.backend.ldap import LDAPBackend
     ldap_backend = LDAPBackend(username, password)
-    the_user:User = ldap_backend.authenticate()
+    the_user: User = ldap_backend.authenticate()
 
     return the_user
 
@@ -122,11 +122,9 @@ def login(request: Request):
 
             if not is_pass:
                 the_user: User = User.objects.filter(username=username).first()
-
+                if not the_user:
+                    raise LoginErrors.ACCOUNT_NOT_EXIST
                 is_pass = the_user.check_password(password)
-
-            if not the_user:
-                raise LoginErrors.ACCOUNT_NOT_EXIST
 
             if the_user.status != User.Status.NORMAL:
                 raise LoginErrors.ACCOUNT_STATUS_ERROR(_('账户已 %s') % the_user.get_status_display())
@@ -140,7 +138,8 @@ def login(request: Request):
         except RspError as error:
             request.session['err_count'] = request.session.get('err_count', 0) + 1
             msg = error.msg
-
+        except APIException as error:
+            msg = error.default_detail
     return render_to_response('myadmin/login.html', locals())
 
 
