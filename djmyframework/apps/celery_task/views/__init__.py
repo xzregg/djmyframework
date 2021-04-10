@@ -7,7 +7,8 @@ from drf_yasg.utils import swagger_auto_schema
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, DataSerializer, ListIntField, ListStrField, ParamsSerializer, s
 from framework.translation import _
-from framework.views import action, action_get, BaseViewSet, JsonResponse, notcheck, render_to_response, Request
+from framework.views import action, action_get, BaseViewSet, JsonResponse, notcheck, ObjectDict, render_to_response, \
+    Request
 from ..models import AssociatedTaskResult, states
 
 
@@ -124,8 +125,9 @@ class CeleryTask(BaseViewSet):
         查询 Celery 注册的任务
         """
         from celery import current_app
+        data = ObjectDict()
+        tasks = [dict(id=name, alias=(task.__doc__ or name).strip().split()[0]) for name, task in current_app.tasks.items()
+                 if not name.startswith('celery.')]
 
-        tasks = list(sorted(name for name in current_app.tasks
-                            if not name.startswith('celery.')))
-
-        return JsonResponse(tasks, request=request)
+        data.results = tasks
+        return JsonResponse(data, request=request)

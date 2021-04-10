@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <div class="col-sm-12 text-center mT10">
+    <div :class="{'col-sm-12':filter_conditions.length>=3, 'col-sm-4':filter_conditions.length<3,'text-center':true}">
 
         <button @click="doSearch"
                 type="button"
