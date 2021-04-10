@@ -249,12 +249,12 @@ def action(methods=None, detail=False, url_path=None, url_name=None, **kwargs):
 
 from .utils import DecoratorsPartial
 
-action_get = DecoratorsPartial(action, 'get')
-action_post = DecoratorsPartial(action, 'post')
-action_get_post = DecoratorsPartial(action, ['post', 'get'])
+action_get = functools.partial(action, 'get')
+action_post = functools.partial(action, 'post')
+action_get_post = functools.partial(action, ['post', 'get'])
 
-api_get = DecoratorsPartial(api_view, 'get')
-api_post = DecoratorsPartial(api_view, 'post')
+api_get = functools.partial(api_view, 'get')
+api_post = functools.partial(api_view, 'post')
 
 from django.views.generic import View
 

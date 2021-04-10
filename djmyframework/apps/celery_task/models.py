@@ -1,13 +1,12 @@
 from celery import states, Task
-from django_celery_beat.models import *
+#from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from django_celery_results.models import TaskResult
 
-from framework.models import BaseModel
+from framework.models import BaseModel, models, BaseModelMixin
 from framework.translation import _
 from framework.utils.cache import CacheAttribute
 
 states.PROGRESS = 'PROGRESS'
-
 
 class ReturnResultTask(Task):
 

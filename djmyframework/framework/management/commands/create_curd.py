@@ -13,7 +13,7 @@ from django.forms import ModelForm
 from mako.lookup import TemplateLookup
 
 from framework.filters import MyFilterBackend
-from framework.models import BaseModel
+from framework.models import BaseModel, BaseModelMixin
 from framework.route import reverse_view
 from ...utils import mkdirs, ObjectDict
 
@@ -149,12 +149,12 @@ class Command(BaseCommand):
 
         model_class: BaseModel = getattr(models, model_name)
 
-        if not issubclass(model_class,BaseModel):
+        if not issubclass(model_class, BaseModelMixin):
             #raise Exception('不是继承于 BaseModel' )
             model_class._meta.abstract=True
             model_class = type(
                     model_class.__name__,
-                    (BaseModel,model_class),
+                    (model_class,BaseModelMixin),
                     {'__module__': model_class.__module__,'__doc__': model_class.__name__}
             )
         if not model_class:

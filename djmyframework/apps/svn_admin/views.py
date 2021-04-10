@@ -96,7 +96,11 @@ class SvnPathSet(CurdViewSet):
 
     @action('post')
     def create_svnrepo(self, request):
-
+        """
+        创建 SVN 仓库
+        :param request:
+        :return:
+        """
         svnrepo_name = request.POST.get('svnrepo_name', '').strip()
         if svnrepo_name:
             SvnPath.create_svnrepo(svnrepo_name)

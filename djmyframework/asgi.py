@@ -30,7 +30,7 @@ protocol_router = {
         ),
 }
 
-if django.__version__ >= '3.1':
+if django.__version__ > '3.1':
     protocol_router.pop('http', None)
 
 application = ProtocolTypeRouter(protocol_router)

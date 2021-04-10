@@ -262,20 +262,10 @@ class SqlModelMixin(object):
         return cls._meta.db_table
 
 
-class BaseModel(models.Model, SqlModelMixin):
+class BaseModelMixin(SqlModelMixin):
     """
     基本模型
     """
-
-    id = models.BigAutoField(primary_key=True)
-    _version = models.IntegerField(_("版本"), default=0, null=False)
-    # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True)
-    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True)
-
-    class Meta:
-        abstract = True
-        ordering = ['id']
 
     def is_related_field(self, field):
         return isinstance(field, (models.ForeignKey, models.ManyToManyField, models.OneToOneRel))
@@ -485,6 +475,18 @@ class BaseModel(models.Model, SqlModelMixin):
     @classmethod
     def prefetch_related_all(cls):
         return cls.objects.prefetch_related(*[f.attname for f in cls._meta.many_to_many])
+
+
+class BaseModel(models.Model, BaseModelMixin):
+    id = models.BigAutoField(primary_key=True)
+    _version = models.IntegerField(_("版本"), default=0, null=False)
+    # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
+    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True)
+    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True)
+
+    class Meta:
+        abstract = True
+        ordering = ['id']
 
 
 class BaseNameModel(BaseModel):

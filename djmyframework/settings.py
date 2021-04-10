@@ -113,17 +113,6 @@ CHANNEL_LAYERS = {
 ########################################
 
 
-############# channels 配置 #############
-CHANNEL_LAYERS = {
-        "default": {
-                "BACKEND": "channels_redis.core.RedisChannelLayer",
-                "CONFIG" : {
-                        "hosts": ["redis://:123456@10.19.200.185:6379/2"],
-                },
-        },
-}
-########################################
-
 
 ############# 数据库连接池 配置 #############
 DJORM_POOL_OPTIONS = {
@@ -152,7 +141,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'   : 3,
                                    "interval_max"  : 3  # 最大 sleep 秒数量
                                    }
 DJANGO_CELERY_BEAT_TZ_AWARE = False
-DJANGO_CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+#DJANGO_CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 ########################################
 
