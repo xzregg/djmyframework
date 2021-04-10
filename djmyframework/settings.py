@@ -41,6 +41,7 @@ PROJECT_ROOT = BASE_DIR
 
 APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway']
 APPS += ['ldap_account']
+APPS += ['svn_admin']
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
 # Quick-start development settings - unsuitable for production

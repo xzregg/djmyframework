@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 # @Time: 2020-07-07 18:59:41.458233
-
+import os
 
 from drf_yasg.utils import swagger_auto_schema
 
 from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilter
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, PaginationSerializer, s
-from framework.views import action, CurdViewSet, Response,JsonResponse
-from svn_admin.models import SvnPath
-from framework.utils import ObjectDict
 from framework.translation import _
+from framework.utils import ObjectDict
+from framework.views import action, CurdViewSet, JsonResponse, render_to_response, Response
+from svn_admin.models import SvnPath
+
 
 class SvnPathSerializer(BaseModelSerializer):
     # https://www.django-rest-framework.org/api-guide/serializers/
@@ -20,7 +21,7 @@ class SvnPathSerializer(BaseModelSerializer):
     other_permission_alias = s.CharField(source='get_other_permission_display', required=False, read_only=True)
 
     def validate_path(self, value):
-        if value == '/' and SvnPath.objects.filter(project_name=self.instance.project_name,path='/').exclude(
+        if value == '/' and SvnPath.objects.filter(project_name=self.instance.project_name, path='/').exclude(
                 id=self.instance.id).exists():
             raise s.ValidationError(_(' 相同 [ %s ] 项目只能有一个 / 根') % self.instance.project_name)
         return value
@@ -57,30 +58,28 @@ class SvnPathSet(CurdViewSet):
         return SvnPath.objects.all().prefetch_related(*[]).select_related(*['parent'])
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListSvnPathRspSerializer)
-    def list(self, request, *args, **kwargs):
+    def list(self, request):
         """ 列表"""
         SvnPath.init_svn_projects()
-        return super(SvnPathSet, self).list(request, *args, **kwargs)
+        return render_to_response('svn_admin/svn_path/list.html', super().list(request))
 
     @swagger_auto_schema(query_serializer=EditParams, responses=SvnPathSerializer)
-    def edit(self, request, *args, **kwargs):
+    def edit(self, request):
         """ 编辑"""
-
-        return super(SvnPathSet, self).edit(request, *args, **kwargs)
+        return render_to_response('svn_admin/svn_path/edit.html', super().edit(request))
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=SvnPathSerializer, responses=SvnPathSerializer)
-    def save(self, request, *args, **kwargs):
+    def save(self, request):
         """ 保存"""
 
-        return super(SvnPathSet, self).save(request, *args, **kwargs)
+        return super(SvnPathSet, self).save(request)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
-    def delete(self, request, *args, **kwargs):
-        return super(SvnPathSet, self).delete(request, *args, **kwargs)
-
+    def delete(self, request):
+        return super(SvnPathSet, self).delete(request)
 
     @action('get')
-    def svn_project_list(self, request, *args, **kwargs):
+    def svn_project_list(self, request):
         project_list = SvnPath.get_svn_project_list()
         data = ObjectDict()
         data.results = []
@@ -89,11 +88,21 @@ class SvnPathSet(CurdViewSet):
         return JsonResponse(data)
 
     @action('get')
-    def preview_db_files(self, request, *args, **kwargs):
-        from settings import SVN_AUTH_DB_FILE
-        auth_db_content = open(SVN_AUTH_DB_FILE).read()
+    def preview_db_files(self, request):
+        from .settings import SVN_AUTH_DB_FILE, SVN_GROUP_DB_FILE
+        auth_db_content = open(SVN_GROUP_DB_FILE).read() + open(SVN_AUTH_DB_FILE).read()
         passowrd_db_content = ''  # open(SVN_PASSWORD_DB_FILE).read()
         return Response(locals())
+
+    @action('post')
+    def create_svnrepo(self, request):
+
+        svnrepo_name = request.POST.get('svnrepo_name', '').strip()
+        if svnrepo_name:
+            SvnPath.create_svnrepo(svnrepo_name)
+
+        return render_to_response('svn_admin/svn_path/create_svnrepo.html', super().edit(request))
+
 
     # @swagger_auto_schema(methods=['post'], request_body=SvnPathSerializer, responses=SvnPathSerializer)
     # @action(['post'])

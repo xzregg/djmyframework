@@ -87,8 +87,8 @@ class LoginSerializer(ParamsSerializer):
 def ldap_login(request, username, password):
     from myadmin.backend.ldap import LDAPBackend
     ldap_backend = LDAPBackend(username, password)
-    the_user = ldap_backend.authenticate()
-    the_user.is_ldap = True
+    the_user:User = ldap_backend.authenticate()
+
     return the_user
 
 

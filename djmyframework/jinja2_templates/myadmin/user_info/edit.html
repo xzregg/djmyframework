@@ -39,15 +39,15 @@
 
 
         <div class="form-group" style="">
-            <label class="col-sm-3 control-label no-padding-right" for="id_admin">
+            <label class="col-sm-3 control-label no-padding-right" for="id_user">
                 <span class="text-danger">*</span>
-                {{ _('所属管理员') }} </label>
+                {{ _('所属用户') }} </label>
 
             <div class="col-sm-8">
-                <select class="form-control select2" id="id_admin" data-placeholder="{{ _('所属管理员') }}"
-                        name="admin" data-url="/myadmin/user/list"
-                    {% if data.admin %}disabled="disabled"{% endif %}>
-                    <option value="{{ data.admin }}" selected="selected">{{ data.admin }}</option>
+                <select class="form-control select2" id="id_admin" data-placeholder="{{ _('所属用户') }}"
+                        name="user" data-url="/myadmin/user/list"
+                    {% if data.user %}disabled="disabled"{% endif %}>
+                    <option value="{{ data.user }}" selected="selected">{{ data.user }}</option>
                 </select>
 
             </div>

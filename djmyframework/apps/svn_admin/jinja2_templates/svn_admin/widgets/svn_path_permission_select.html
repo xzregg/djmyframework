@@ -9,7 +9,7 @@
             <div class="panel-body">
 
 
-                <table id="read-member-table">
+                <table id="read-member-table" data-show-columns="false" data-show-export="false">
                     <thead>
                     <th data-checkbox="true"></th>
                     <th data-field="alias" data-click-to-select="true" data-align="left"></th>
@@ -26,7 +26,7 @@
             <div class="panel-heading"><h3>{{ _('可写') }} <span class="badge">(( select_write_member_num ))</span>
             </h3></div>
             <div class="panel-body">
-                <table id="write-member-table">
+                <table id="write-member-table" data-show-columns="false" data-show-export="false">
                     <thead>
                     <th data-checkbox="true"></th>
                     <th data-field="alias" data-click-to-select="true" data-align="left">
@@ -58,13 +58,13 @@
 
             var _this = this
             $.when(
-                $.get('/myadmin/user/list?fields=username,alias,status,status_alias&page_size=10000&', '', function (rsp) {
+                $.get('/myadmin/user/list?fields=username,alias,status,status_alias&page_size=10000&status__in=0', '', function (rsp) {
                     if (rsp.code != 0) {
                         alertError(rsp.msg)
                         return
                     }
                     _this.user_list = $.map(rsp.data.results, function (item) {
-                        return {name: item.username, alias: item.alias +' ('+item.status_alias + ')', type_alias: '{{ _('用户') }}', parent: null}
+                        return {name: item.username, alias: item.alias +' ('+item.username + ')', type_alias: '{{ _('用户') }}', parent: null}
                     })
                 }, 'json'),
                 $.get('/myadmin/role/list?type__exact=2&fields=name,alias,parent&page_size=10000', '', function (rsp) {

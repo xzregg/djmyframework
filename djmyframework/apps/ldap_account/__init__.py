@@ -1,7 +1,6 @@
+default_app_config = 'ldap_account.apps.LdapAccountConfig'
 
 from framework.utils import threadpoll
-
-
 
 from .settings import LDAP_ACCOUNT_FOLLOW_START
 

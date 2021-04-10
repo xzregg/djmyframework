@@ -78,6 +78,26 @@ def import_func(name):
 import_view = import_func
 import_module_attr = import_view
 
+import functools
+from inspect import isfunction
+
+
+class DecoratorsPartial(object):
+    def __init__(self, decorator_func, *args, **kwargs):
+        self.decorator_func = decorator_func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, *args, **kwargs):
+        if len(args) == 1 and isfunction(args[0]):
+            return self.decorator_func(*self.args, **self.kwargs)(args[0])
+        else:
+            @functools.wraps(self.decorator_func)
+            def decorator(func):
+                return self.decorator_func(*args, **kwargs)(func)
+
+            return decorator
+
 
 class DateEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -92,7 +112,7 @@ class MyJsonEncoder(JSONEncoder):
             if hasattr(obj, 'to_dict'):
                 return obj.to_dict()
         elif isinstance(obj, QuerySet):
-            return [m.to_dict() if hasattr(m, 'to_dict') else m for m in obj  ]
+            return [m.to_dict() if hasattr(m, 'to_dict') else m for m in obj]
         elif isinstance(obj, serializers.Serializer):
             return obj.data
         return super(MyJsonEncoder, self).default(obj)

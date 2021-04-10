@@ -35,7 +35,7 @@ class Command(BaseCommand):
         print(len(app_names), app_names)
         if options['auto']:
             app_name_list = app_names
-            menu_config_list = MenuConfig.get_install_app_menu_config_list(app_names)
+            menu_config_list = MenuConfig.get_install_app_menu_config_list(app_name_list)
             MenuConfig.create_menu_from_config(menu_config_list, options['force'])
         elif options['menu']:
             module_str = options['menu'].strip('.py')

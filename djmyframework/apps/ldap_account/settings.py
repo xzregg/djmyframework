@@ -15,4 +15,5 @@ LDAP_ACCOUNT_FOLLOW_START = False
 LDAP_ACCOUNT_SERVER_PORT = 3891
 DBPATH = os.path.join(settings.PROJECT_ROOT, 'ldiftree.tmp')
 
+
 from settings import *

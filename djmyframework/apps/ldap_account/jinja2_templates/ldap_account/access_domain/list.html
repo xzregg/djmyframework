@@ -14,135 +14,138 @@
         </div>
     </div>
 
- <form id="filter-form" class="form-inline">
-    <div class="row ">
-        <div class="col-sm-12">
+    <form id="filter-form" class="form-inline">
+        <div class="row ">
+            <div class="col-sm-12">
 
-        <div class="pane">
-                <input style="display:none" type="text">
-                
+                <div class="pane">
+                    <input style="display:none" type="text">
 
 
                     <script>
-                    // 过滤条件字段定义
-                    var filter_field_schemas = {
-                         id :
-                         {
-                            label: '{{ _('id') }}',
-                            name:'id',
-                            type:'number',
-                            data_url: '',
-                         },
-                         name :
-                         {
-                            label: '{{ _('名称') }}',
-                            name:'name',
-                            type:'char',
-                            data_url: '',
-                         },
-                         alias :
-                         {
-                            label: '{{ _('别名') }}',
-                            name:'alias',
-                            type:'char',
-                            data_url: '',
-                         },
-                         bindpw :
-                         {
-                            label: '{{ _('访问密钥') }}',
-                            name:'bindpw',
-                            type:'char',
-                            data_url: '',
-                         },
-                         access_address :
-                         {
-                            label: '{{ _('访问地址') }}',
-                            name:'access_address',
-                            type:'char',
-                            data_url: '',
-                         },
-                         status :
-                         {
-                            label: '{{ _('状态') }}',
-                            name:'status',
-                            type:'choice',
-                            data_url: '',
-                            choices:[{% for o in request.parser_context.view.model.fields_map.status.choices %}
-                             ["{{ o.0 }}", '{{ o.1 }}'],{% endfor %}
+                        // 过滤条件字段定义
+                        var filter_field_schemas = {
+                            id:
+                                {
+                                    label: '{{ _('id') }}',
+                                    name: 'id',
+                                    type: 'number',
+                                    data_url: '',
+                                },
+                            name:
+                                {
+                                    label: '{{ _('名称') }}',
+                                    name: 'name',
+                                    type: 'char',
+                                    data_url: '',
+                                },
+                            alias:
+                                {
+                                    label: '{{ _('别名') }}',
+                                    name: 'alias',
+                                    type: 'char',
+                                    data_url: '',
+                                },
+                            bindpw:
+                                {
+                                    label: '{{ _('访问密钥') }}',
+                                    name: 'bindpw',
+                                    type: 'char',
+                                    data_url: '',
+                                },
+                            access_address:
+                                {
+                                    label: '{{ _('访问地址') }}',
+                                    name: 'access_address',
+                                    type: 'char',
+                                    data_url: '',
+                                },
+                            status:
+                                {
+                                    label: '{{ _('状态') }}',
+                                    name: 'status',
+                                    type: 'choice',
+                                    data_url: '',
+                                    choices: [{% for o in request.parser_context.view.model.fields_map.status.choices %}
+                                        ["{{ o.0 }}", '{{ o.1 }}'],{% endfor %}
                                     ]
-                         },
-                         role :
-                         {
-                            label: '{{ _('允许访问的角色') }}',
-                            name:'role',
-                            type:'choice',
-                            data_url: '/ldap_account/access_domain/list',
-                         },
-                         create_datetime :
-                         {
-                            label: '{{ _('创建时间') }}',
-                            name:'create_datetime',
-                            type:'date',
-                            data_url: '',
-                         },
-                         update_datetime :
-                         {
-                            label: '{{ _('更新时间') }}',
-                            name:'update_datetime',
-                            type:'date',
-                            data_url: '',
-                         },
-                    }
+                                },
+                            role:
+                                {
+                                    label: '{{ _('允许访问的角色') }}',
+                                    name: 'role',
+                                    type: 'choice',
+                                    data_url: '/ldap_account/access_domain/list',
+                                },
+                            create_datetime:
+                                {
+                                    label: '{{ _('创建时间') }}',
+                                    name: 'create_datetime',
+                                    type: 'date',
+                                    data_url: '',
+                                },
+                            update_datetime:
+                                {
+                                    label: '{{ _('更新时间') }}',
+                                    name: 'update_datetime',
+                                    type: 'date',
+                                    data_url: '',
+                                },
+                        }
 
-                    // 默认过滤条件
-                    var filter_conditions = [{
-                        name: 'id',
-                        operator: "exact",
-                        value: "",
-                        type: "number",
-                        label: '{{ _('ID') }}',
-                        choices: [],
-                        is_default:true
-                    }]
+                        // 默认过滤条件
+                        var filter_conditions = [{
+                            name: 'id',
+                            operator: "exact",
+                            value: "",
+                            type: "number",
+                            label: '{{ _('ID') }}',
+                            choices: [],
+                            is_default: true
+                        }]
                     </script>
                     {% include "framework/widgets/filter.html" %}
+                </div>
+
             </div>
-
         </div>
-    </div>
 
-    <div class="row" >
-        <div class="col-sm-12 ">
-            <div id="vue-container" v-cloak >
-                <div id="toolbar" class="" >
-                    <button type="button"  id="add-btn" class="btn btn-sm btn-primary openDialog"
-                       href="{{ url('ldap_account.access_domain.edit') }}">
-                        <span class="glyphicon glyphicon-plus-sign"></span> {{ _('添加') }}
-                    </button>
+        <div class="row">
+            <div class="col-sm-12 ">
+                <div id="vue-container" v-cloak>
+                    <div id="toolbar" class="">
+                        <button type="button" id="add-btn" class="btn btn-sm btn-primary openDialog"
+                                href="{{ url('ldap_account.access_domain.edit') }}">
+                            <span class="glyphicon glyphicon-plus-sign"></span> {{ _('添加') }}
+                        </button>
 
-                    <button type="button"  @click.prevent="onDelete"  :disabled="selectIds.length==0" class="btn btn-sm btn-danger " >
-                        <span class="glyphicon glyphicon-remove"></span> {{ _('删除') }} <span v-show="selectIds.length>0" class="badge">((selectIds.length))</span>
-                    </button>
-                    <!--button id="expandAll-btn" class="btn btn-sm btn-default ">
+                        <button type="button"
+                                @click.prevent="onDelete"
+                                :disabled="selectIds.length==0"
+                                class="btn btn-sm btn-danger ">
+                            <span class="glyphicon glyphicon-remove"></span> {{ _('删除') }}
+                            <span v-show="selectIds.length>0" class="badge">((selectIds.length))</span>
+                        </button>
+                        <!--button id="expandAll-btn" class="btn btn-sm btn-default ">
                         {{ _('展开') }}
                 </button-->
-                    <!--button id="collapseAll-btn" class="btn btn-sm btn-default ">
+                        <!--button id="collapseAll-btn" class="btn btn-sm btn-default ">
                         {{ _('收缩') }}
                 </button-->
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="table" class="table"></table>
                 </div>
             </div>
-            <div class="table-container">
-                <table id="table" class="table"></table>
-            </div>
         </div>
-    </div>
-</form>
+    </form>
 
     <script>
 
         var $table = $('#table')
         var bootstrapTableOption = {
-            height: Math.max(400, getWindowHeightWidth()[1] - Math.min($('html').height(), $table.offset().top) - 20 ),
+            height: Math.max(400, getWindowHeightWidth()[1] - Math.min($('html').height(), $table.offset().top) - 20),
             url: window.location.pathname,  //请求后台的URL（*）
             locale: BootstrapTableLocale,
             toolbar: '#toolbar',
@@ -241,98 +244,114 @@
                 $('[data-toggle="popover"]').popover()
             },
             // -- end
-             columns: [{
+            columns: [{
                 checkbox: true,
                 align: 'center',
                 valign: 'middle'
-              },
-             {
-                field: 'id',
-                title: "{{ _('id') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-             {
-                field: 'name',
-                title: "{{ _('名称') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-             {
-                field: 'alias',
-                title: "{{ _('别名') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-             {
-                field: 'bindpw',
-                title: "{{ _('访问密钥') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-             {
-                field: 'access_address',
-                title: "{{ _('访问地址') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-             {
-                field: 'status',
-                title: "{{ _('状态') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-                formatter:function(value,row,index){
-                     return row.status_alias.toString()
-                }
-             },
-             {
-                field: 'role',
-                title: "{{ _('允许访问的角色') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-             {
-                field: 'create_datetime',
-                title: "{{ _('创建时间') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-             {
-                field: 'update_datetime',
-                title: "{{ _('更新时间') }}",
-                align: 'center',
-                valign: 'middle',
-                sortable: true,
-                visible:true,
-             },
-            {
-                field: '_operate',
-                title: '{{ _('操作') }}',
-                align: 'center',
-                valign: 'middle',
-                formatter: function(value, row, index){
-                      return [
-                            '<a href="{{ url('ldap_account.access_domain.edit') }}?id='+row.id+'" class="btn btn-xs btn-info openDialog">{{ _('编辑') }}</a> ',
-                            '<a href="{{ url('ldap_account.access_domain.edit') }}?id='+row.id+'&is_copy=1" class="btn btn-default btn-xs openDialog">{{ _('复制') }}</a> ',
-                        ].join('');
-             },
             },
+                {
+                    field: 'id',
+                    title: "{{ _('id') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'name',
+                    title: "{{ _('名称') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'alias',
+                    title: "{{ _('别名') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'authdn',
+                    title: "{{ _('访问账号') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'bindpw',
+                    title: "{{ _('访问密钥') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'basedn',
+                    title: "{{ _('basedn') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'access_address',
+                    title: "{{ _('访问地址') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'status',
+                    title: "{{ _('状态') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                    formatter: function (value, row, index) {
+                        return row.status_alias.toString()
+                    }
+                },
+                {
+                    field: 'role',
+                    title: "{{ _('允许访问的角色') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'create_datetime',
+                    title: "{{ _('创建时间') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: 'update_datetime',
+                    title: "{{ _('更新时间') }}",
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    visible: true,
+                },
+                {
+                    field: '_operate',
+                    title: '{{ _('操作') }}',
+                    align: 'center',
+                    valign: 'middle',
+                    formatter: function (value, row, index) {
+                        return [
+                            '<a href="{{ url('ldap_account.access_domain.edit') }}?id=' + row.id + '" class="btn btn-xs btn-info openDialog">{{ _('编辑') }}</a> ',
+                            '<a href="{{ url('ldap_account.access_domain.edit') }}?id=' + row.id + '&is_copy=1" class="btn btn-default btn-xs openDialog">{{ _('复制') }}</a> ',
+                        ].join('');
+                    },
+                },
             ]
         }
 
@@ -341,12 +360,13 @@
         function refreshTable() {
             $table.bootstrapTable('refresh', {})
         }
+
         window.addEventListener("refreshTable", (e) => {
             refreshTable()
         })
         window.addEventListener("filterCondition", (e) => {
             refreshTable()
-	        console.dir(e.detail)
+            console.dir(e.detail)
         })
 
         var vue_app = new Vue({

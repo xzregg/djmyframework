@@ -7,7 +7,7 @@ from framework.translation import _
 
 
 class MyadminConfig(AppConfig):
-    app_label = 'myadmin'
+    #app_label = 'myadmin'
     name = 'myadmin'
     verbose_name = _('MyAdmin 管理系统')
 

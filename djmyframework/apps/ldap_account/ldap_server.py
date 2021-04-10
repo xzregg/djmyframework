@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-
 from twisted.internet.endpoints import serverFromString
 
 try:
@@ -13,21 +10,13 @@ except ImportError:
 from twisted.application import service
 from twisted.internet.protocol import ServerFactory
 from twisted.python.components import registerAdapter
-from twisted.python import log
 from ldaptor.interfaces import IConnectedLDAPEntry
 from ldaptor.protocols.ldap.ldapserver import LDAPServer
-import shutil
-from ldaptor import ldiftree
 from .settings import LDAP_ACCOUNT_SERVER_PORT
 from framework.utils import single_process
-from framework.apps import get_app_path
-from .settings import DBPATH
-from twisted.internet import ssl, reactor
 
-APP_PATH = get_app_path('ldap_account')
-
-class modelLDAPServer(LDAPServer):
-    pass
+from ldaptor.ldiftree import *
+from .models import ModelTreeEntry, APP_PATH, get_db_path
 
 
 class LDAPServerFactory(ServerFactory):
@@ -43,24 +32,20 @@ class LDAPServerFactory(ServerFactory):
         return proto
 
 
-def get_db_path():
-    TPL_DBPATH = os.path.join(APP_PATH, 'ldiftree')
-    tmp_db_path = DBPATH
-
-    if not os.path.exists(tmp_db_path):
-        shutil.rmtree(tmp_db_path, ignore_errors=True)
-        shutil.copytree(TPL_DBPATH, tmp_db_path)
-    return tmp_db_path
-
-
 def get_db():
-    db = ldiftree.LDIFTreeEntry(get_db_path())
+    #db = LDIFTreeEntry(get_db_path())
+    db = ModelTreeEntry()
     return db
 
 
 @single_process.SingleProcessDeco()
 def run_ldap_server(port=LDAP_ACCOUNT_SERVER_PORT, use_ssl=False):
+    os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+    import sys
+    from twisted.python import log
+    from twisted.internet import ssl, reactor
     log.startLogging(sys.stderr)
+
     # We initialize our tree
 
     # When the LDAP Server protocol wants to manipulate the DIT, it invokes
@@ -93,4 +78,5 @@ def run_ldap_server(port=LDAP_ACCOUNT_SERVER_PORT, use_ssl=False):
 
 
 if __name__ == '__main__':
+
     run_ldap_server()

@@ -216,7 +216,7 @@
 
             },
             pagination: false, //是否显示分页（*）
-            sidePagination: "clinet", //分页方式：client 客户端分页，server 服务端分页（*）
+            sidePagination: "client", //分页方式：client 客户端分页，server 服务端分页（*）
             queryParamsType: "",      //https://examples.bootstrap-table.com/index.html?bootstrap3#options/query-params-type.html
             pageNumber: 1, //初始化加载第一页，默认第一页
             pageSize: 10000, //每页的记录行数（*）
@@ -234,7 +234,7 @@
             showToggle: false, //是否显示详细视图和列表视图的切换按钮
             cardView: false,   //是否显示详细视图
             detailView: false,//显示详情
-            fixedColumns: true,
+            fixedColumns: false,
             fixedNumber: 1,
             fixedRightNumber: 1,
             uniqueId: 'id',
@@ -275,6 +275,7 @@
                     align: 'center',
                     valign: 'middle',
                     sortable: true,
+                    width: '200px',
                 },
 
                 {
@@ -283,6 +284,7 @@
                     align: 'left',
                     valign: 'middle',
                     sortable: true,
+                    width: '300px',
                 },
 
                 {
@@ -308,6 +310,7 @@
                     align: 'center',
                     valign: 'middle',
                     sortable: true,
+
                 },
                 {
                     field: 'is_show',
@@ -354,15 +357,15 @@
             parentIdField: 'parent_id',
             onPostBody: function (data) {
                 var columns = $table.bootstrapTable('getOptions').columns
-
+                console.dir('onPostBody')
                 if (columns && columns[0][1].visible) {
                     $table.treegrid({
                         initialState: 'collapsed',// 所有节点都折叠
                         //initialState: 'expanded',
                         treeColumn: 2,
                         onChange: function () {
-                            //$table.bootstrapTable('resetWidth')
-                            $table.bootstrapTable('resetView')
+                            $table.bootstrapTable('resetWidth')
+                            //$table.bootstrapTable('resetView')
                         }
                     })
                     //只展开树形的第一级节点
@@ -375,12 +378,12 @@
                             'c_add_child': function (t) {
                                 var row = $table.bootstrapTable('getRowByUniqueId', t.dataset.uniqueid)
                                 console.dir(row)
-                                art.dialog.open('/myadmin/menu/edit?parent_id=' + row.id)
+                                art.dialog.open('{{ url('myadmin.menu.edit') }}?parent_id=' + row.id)
                             }
                         }
 
                 });
-                $('[data-toggle="tooltip"]').tooltip()
+                //$('[data-toggle="tooltip"]').tooltip()
 
             },
 
