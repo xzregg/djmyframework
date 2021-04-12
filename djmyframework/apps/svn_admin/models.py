@@ -217,7 +217,7 @@ groups-db = {groups_db}
         authz_db.write(open(SVN_AUTH_DB_FILE, "w"))
 
 
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save,m2m_changed
 from django.dispatch import receiver
 from myadmin.models import User, Role
 
@@ -250,7 +250,7 @@ def user_delete_svn(sender, instance, **kwargs):
     password_db.write(open(SVN_PASSWORD_DB_FILE, "w"))
 
 
-# @receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")
+@receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role_ldap")
 def user_add_role_ldap(sender, action, instance: Role, reverse, model: User, pk_set, using, **kwargs):
     if action in ['post_add', 'post_clear', 'post_remove']:
-        pass
+        SvnPath.sync_group_menber_to_authz_db()
