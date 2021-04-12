@@ -151,6 +151,18 @@ groups-db = {groups_db}
         return project_list
 
     @classmethod
+    def get_tree_list(cls, project_name, list_path='/'):
+        project_path = os.path.join(SVN_ROOT, project_name)
+        cmd = 'svnlook tree -N --full-paths {project_path} {list_path} '.format(project_path=project_path,
+                                                                                  list_path=list_path)
+        result = {project_name: []}
+        for path in os.popen(cmd).readlines():
+            path = path.strip()
+            if path and path[-1] == '/' and path!=list_path:
+                result[project_name].append(path)
+        return result
+
+    @classmethod
     def init_svn_projects(cls):
         project_list = cls.get_svn_project_list()
         for project_name in project_list:
@@ -217,7 +229,7 @@ groups-db = {groups_db}
         authz_db.write(open(SVN_AUTH_DB_FILE, "w"))
 
 
-from django.db.models.signals import post_delete, post_save,m2m_changed
+from django.db.models.signals import post_delete, post_save, m2m_changed
 from django.dispatch import receiver
 from myadmin.models import User, Role
 
