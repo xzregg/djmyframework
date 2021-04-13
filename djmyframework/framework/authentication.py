@@ -62,8 +62,7 @@ class MySessionAuthentication(SessionAuthentication):
     def authenticate(self, request):
         user = getattr(request._request, 'user', None)
 
-        # Unauthenticated, CSRF validation not required
-        if not user or not user.is_active:
+        if not user :
             return None
 
         return (user, None)

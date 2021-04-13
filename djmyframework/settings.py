@@ -63,6 +63,8 @@ INDEX_VIEW = 'myadmin.views.index'
 DEBUG = settings.DEBUG
 TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
+ALLOW_REGISTER = True
+
 AUTH_USER_MODEL = 'myadmin.User'
 
 USE_LDAP_AUTH = True

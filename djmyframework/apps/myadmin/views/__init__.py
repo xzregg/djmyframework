@@ -17,8 +17,8 @@ from framework.serializer import ParamsSerializer, s
 from framework.settings import settings
 from framework.utils import TIMEFORMAT
 from framework.validators import LetterValidator, PasswordValidator
-from framework.views import api_view, notauth, notcheck, render_to_response, Request, Response, RspError, RspErrorEnum, \
-    swagger_auto_schema, APIException
+from framework.views import api_view, notauth, notcheck, render_to_response, Request, Response, RspError, \
+    RspErrorEnum, swagger_auto_schema
 from myadmin.models import User
 
 
@@ -73,15 +73,15 @@ def check_login_status(request):
             del request.session['err_count']
             del request.session['lock_time']
 
-    if request.POST.get('verify', '') != request.session.get('verify', '') and not settings.DEBUG:  # 验证码
+    if request.POST.get('verify', '') != request.session.get('verify', ''):  # 验证码
         request.COOKIES.clear()
         raise LoginErrors.VERIFY_CODE_ERROR
 
 
 class LoginSerializer(ParamsSerializer):
     username = s.CharField(label=_('登录用户名'), help_text=_('登录用户名'))
-    passowrd = s.CharField(label=_('用户密码'), help_text=_('用户密码'))
-    verify = s.CharField(label=_('验证码'),required=False,allow_blank=True)
+    password = s.CharField(label=_('用户密码'), help_text=_('用户密码'))
+    verify = s.CharField(label=_('验证码'), required=False, allow_blank=True)
 
 
 def ldap_login(request, username, password):
@@ -99,7 +99,7 @@ def ldap_login(request, username, password):
 def login(request: Request):
     """登录
     """
-
+    msg = ''
     now = datetime.datetime.now()
     if request.is_post():
         try:
@@ -108,7 +108,7 @@ def login(request: Request):
 
             request.COOKIES["username"] = params.username
             username = params.username
-            password = params.passowrd
+            password = params.password
             if not password:
                 raise LoginError('密码错误 !')
             check_login_status(request)
@@ -122,6 +122,10 @@ def login(request: Request):
 
             if not is_pass:
                 the_user: User = User.objects.filter(username=username).first()
+                if not the_user and '@' in username:
+                    user_info = UserInfo.objects.filter(email=username).first()
+                    if user_info:
+                        the_user = user_info.user
                 if not the_user:
                     raise LoginErrors.ACCOUNT_NOT_EXIST
                 is_pass = the_user.check_password(password)
@@ -132,14 +136,15 @@ def login(request: Request):
             if is_pass:
                 User.login_user(request, the_user)
                 redirect_url = request.query_params.get('from_url', settings.INDEX_URL)
-                return HttpResponseRedirect(redirect_url)
+                if request.is_ajax():
+                    return Response(LoginRspSer(dict(url=redirect_url)))
+                else:
+                    return HttpResponseRedirect(redirect_url)
             else:
                 raise LoginErrors.USERNAME_OR_PASSWORD_FAIL
         except RspError as error:
             request.session['err_count'] = request.session.get('err_count', 0) + 1
-            msg = error.msg
-        except APIException as error:
-            msg = error.default_detail
+            raise error
     return render_to_response('myadmin/login.html', locals())
 
 
@@ -239,7 +244,7 @@ def register(request: Request, **kwargs):
         user_model.clean_fields()
         user_model.save()
 
-        user_info_model, _created = UserInfo.objects.get_or_create(admin=user_model)
+        user_info_model, _created = UserInfo.objects.get_or_create(user=user_model)
         user_info_model.email = params.email
         user_info_model.qq = params.qq
         user_info_model.phone = params.phone
