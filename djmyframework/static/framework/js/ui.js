@@ -120,6 +120,7 @@ Vue ? Vue.directive('select2', {
     inserted: function (el, binding, vnode) {
 
         $(el).on("change", function (e) {
+
             for (var i = 0; i < vnode.data.directives.length; i++) {
                 if (vnode.data.directives[i].name == "model") {
                     var expression = vnode.data.directives[i].expression
@@ -141,12 +142,12 @@ Vue ? Vue.directive('select2', {
     },
 
     update: function (el, binding, vnode) {
-        // for (var i = 0; i < vnode.data.directives.length; i++) {
-        //     if (vnode.data.directives[i].name == "model") {
-        //         $(el).val(vnode.data.directives[i].value).trigger("change");
-        //         break
-        //     }
-        // }
+        for (var i = 0; i < vnode.data.directives.length; i++) {
+            if (vnode.data.directives[i].name == "model") {
+                $(el).val(vnode.data.directives[i].value).trigger("change");
+                break
+            }
+        }
 
     },
     unbind: function (el) {

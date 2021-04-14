@@ -96,29 +96,6 @@
                 </div>
 
 
-{#                <div class="form-group" style="">#}
-{#                    <label class="col-sm-3 control-label no-padding-right" for="id_parent">#}
-{##}
-{#                        {{ _('上级路径') }} </label>#}
-{##}
-{#                    <div class="col-sm-8">#}
-{##}
-{##}
-{#                        <select class="form-control select2 "#}
-{#                                id="id_parent"#}
-{#                                data-key="path"#}
-{#                                data-placeholder="{{ _('根') }}"#}
-{#                                name="parent"#}
-{#                                data-url="{{ url('svn_admin.svn_path.list') }}?{% if data.id %}id__not_exact={{ data.id }}{% endif %}">#}
-{##}
-{#                            <option value="{{ data.parent }}" selected="selected">{{ data.parent }}</option>#}
-{#                        </select>#}
-{##}
-{##}
-{#                    </div>#}
-{#                </div>#}
-
-
                 <div class="form-group" style="">
                     <label class="col-sm-3 control-label no-padding-right" for="id_status">
 
@@ -166,8 +143,6 @@
                         {{ _('其他默认权限') }} </label>
 
                     <div class="col-sm-8">
-
-
                         <select class="form-control col-lg-5 select2"
                                 id="id_other_permission"
                                 data-placeholder="{{ _('其他访问权限') }}"
@@ -204,11 +179,7 @@
             </div>
 
             <div class="col-sm-6">
-
-
                     {% include 'svn_admin/widgets/svn_path_permission_select.html' %}
-
-
             </div>
         </div>
 

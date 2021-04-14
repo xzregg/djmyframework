@@ -6,25 +6,31 @@
 # @Contact : xzregg@gmail.com
 # @Desc    :
 
+from framework.conf import SettingOptions, settings
 
 AUTH_USER_MODEL = 'myadmin.models.user.User'
 
 USE_LDAP_AUTH = True
-LDAP_HOST = 'ldaps://127.0.0.1:13891'
-LDAP_BASE_DN = 'dc=bigdata,dc=com'
 
-LDAP_BIND_DN = "cn=bigdata,ou=people,%s" % LDAP_BASE_DN
-LDAP_BIND_PASSWORD = "123"
+LDAP_HOST = SettingOptions('ldaps://127.0.0.1:13891', 'LDAP 连接地址', 'LDAP_HOST', 'ldap')
+_LDAP_BASE_DN = 'dc=bigdata,dc=com'
+LDAP_BASE_DN = SettingOptions(_LDAP_BASE_DN, 'LDAP BASE_DN', 'LDAP_BASE_DN', 'ldap')
 
-LDAP_USER_BASE_DN = "ou=people,%s" % LDAP_BASE_DN
-LDAP_USER_FILTER = '(objectClass=posixAccount)'
+LDAP_BIND_DN = SettingOptions("cn=bigdata,ou=people,%s" % _LDAP_BASE_DN, 'LDAP 绑定账号', 'LDAP_BIND_DN', 'ldap')
 
-LDAP_GROUP_BASE_DN = "ou=role,%s" % LDAP_BASE_DN
-LDAP_GROUP_FILTER = '(objectClass=posixGroup)'
+LDAP_BIND_PASSWORD = SettingOptions("123", 'LDAP 绑定密码', 'LDAP_BIND_PASSWORD', 'ldap')
+
+LDAP_USER_BASE_DN = SettingOptions("ou=people,%s" % _LDAP_BASE_DN, 'LDAP 用户域名', 'LDAP_USER_BASE_DN', 'ldap')
+
+LDAP_USER_FILTER = SettingOptions('(objectClass=posixAccount)', 'LDAP 用户过滤条件', 'LDAP_USER_FILTER', 'ladp')
+
+LDAP_GROUP_BASE_DN = SettingOptions("ou=role,%s" % _LDAP_BASE_DN, 'LDAP 组域', 'LDAP_GROUP_BASE_DN', 'ldap')
+
+LDAP_GROUP_FILTER = SettingOptions('(objectClass=posixGroup)', 'LDAP 组过滤', 'LDAP_GROUP_FILTER', 'ldap')
 
 LDAP_USER_ATTR_MAP = {
         "alias": "alias",
-        "cn" : "name",
+        "cn"   : "name",
         "email": "email",
 }
 
@@ -32,6 +38,8 @@ LDAP_GROUP_ATTR_MAP = {
         "alias": "alias",
         "name" : "cn",
 }
+
+settings.merge(locals())
 
 
 class SMS_CONFIG:

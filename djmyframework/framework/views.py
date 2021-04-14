@@ -503,7 +503,7 @@ class I18n(BaseViewSet):
         """
         return set_language(request)
 
-    @notcheck
+    @notauth
     @action('get')
     def js(self, request):
         """js语言切换,加载

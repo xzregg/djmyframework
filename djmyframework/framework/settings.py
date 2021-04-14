@@ -7,7 +7,4 @@
 # @Desc    :
 
 
-from django.conf import LazySettings,settings
-
-
-
+from .conf import settings

@@ -46,8 +46,10 @@ sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, A
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
+from framework.conf import SettingOptions
 
-TITLE = _('管理后台')
+TITLE = SettingOptions('管理后台', _('系统标题'), 'TITLE', type=_)
+# TITLE = _('管理后台')
 
 VERSION = 'v3.7'
 RELEASE = '01'
@@ -55,17 +57,21 @@ RELEASE = '01'
 ROOT_URLCONF = 'urls'
 
 LOGIN_URL = '/myadmin/login'
+INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'index')
+# INDEX_URL = '/'
 
-INDEX_URL = '/'
 INDEX_VIEW = 'myadmin.views.index'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = settings.DEBUG
 TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
+ALLOW_REGISTER = SettingOptions(True, _('是否开启注册功能'), 'ALLOW_REGISTER', type=bool)
+
 AUTH_USER_MODEL = 'myadmin.User'
 
-USE_LDAP_AUTH = True
+INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'index')
+USE_LDAP_AUTH = SettingOptions(True, _('是否使用LDAP验证'), 'USE_LDAP_AUTH', 'ldap', type=bool)
 
 APPS = sort_set_list(APPS + settings.APPS)
 
@@ -115,6 +121,10 @@ CHANNEL_LAYERS = {
 }
 ########################################
 
+
+SETINGS_ETCD = dict(host='localhost', port=2379,
+                    ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
+                    user=None, password=None, grpc_options=None)
 
 ############# 数据库连接池 配置 #############
 DJORM_POOL_OPTIONS = {
@@ -243,15 +253,15 @@ CELERY_BROKER_URL = 'redis://:123456@10.19.200.185:6379/1'
 CELERY_RESULT_BACKEND = 'django-db'
 # CELERY_CACHE_BACKEND = 'django-cache'
 ## 异步任务发送最大重试次数,redis 任务发送错误,重试次数
-CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'   : 3,
-                                   "interval_start": 0,
-                                   "interval_step" : 0.5,
-                                   "interval_max"  : 3,  # 最大 sleep 秒数量
+CELERY_BROKER_TRANSPORT_OPTIONS = {'max_retries'       : 3,
+                                   "interval_start"    : 0,
+                                   "interval_step"     : 0.5,
+                                   "interval_max"      : 3,  # 最大 sleep 秒数量
                                    'visibility_timeout': 43200
                                    }
 DJANGO_CELERY_BEAT_TZ_AWARE = False
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-CELERY_WORKER_POOL_RESTARTS=True
+CELERY_WORKER_POOL_RESTARTS = True
 ########################################
 
 

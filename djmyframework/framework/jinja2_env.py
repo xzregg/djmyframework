@@ -8,7 +8,7 @@
 
 import re
 
-from django.conf import settings
+from framework.conf import settings
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.template.backends.jinja2 import Jinja2
 from django.template.library import import_library

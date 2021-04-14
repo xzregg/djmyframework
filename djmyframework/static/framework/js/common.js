@@ -365,6 +365,10 @@ function ListTreeChildren(srcList, idKeyName, parentKeyName) {
                 return
             }
             let parent = nodeInfo[parentKey]
+            if (!parent) {
+                alert(parentKey)
+                return
+            }
             parent.children = parent.children || []
             parent.children.push(node)
         })

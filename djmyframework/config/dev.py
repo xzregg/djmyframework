@@ -33,9 +33,9 @@ STATIC_ROOT = None
 DATABASES = {
         'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
-                'NAME'  : os.path.join(settings.BASE_DIR, 'db.sqlite3'),
+                'NAME'  : os.path.join(settings.BASE_DIR, 'sqlite3.db'),
                 'TEST'  : {
-                        'NAME': os.path.join(settings.BASE_DIR, 'test.db.sqlite3')
+                        'NAME': os.path.join(settings.BASE_DIR, 'test.db.sqlite3.db')
 
                 }
         },
