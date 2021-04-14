@@ -10,8 +10,7 @@ import time
 
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
-
-import settings
+from framework.conf import settings
 from framework.route import Route
 from framework.serializer import ParamsSerializer, s
 from framework.settings import settings
@@ -58,6 +57,7 @@ class LoginRspSer(s.Serializer):
 def check_login_status(request):
     """登录状态检测
     """
+
     if settings.DEBUG:
         return
     now = datetime.datetime.now()
