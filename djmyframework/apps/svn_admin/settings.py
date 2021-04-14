@@ -7,8 +7,9 @@
 # @Desc    :
 
 import os
+from settings import BASE_DIR
 
-SVN_ROOT = '/Users/xzr/Desktop/svn'
+SVN_ROOT = '%s/svn' % BASE_DIR
 
 # 对应  svnserve.conf  password-db 文件路径
 SVN_PASSWORD_DB_FILE = os.path.join(SVN_ROOT, 'conf', 'password.ini')

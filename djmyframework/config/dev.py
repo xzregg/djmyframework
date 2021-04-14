@@ -30,7 +30,7 @@ from settings import *
 
 STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
 STATIC_ROOT = None
-_DATABASES = {
+DATABASES = {
         'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME'  : os.path.join(settings.BASE_DIR, 'db.sqlite3'),
@@ -42,7 +42,7 @@ _DATABASES = {
 
 }
 
-DATABASES = {
+_DATABASES = {
         'default': {
 
                 'ENGINE'  : 'django.db.backends.mysql',
