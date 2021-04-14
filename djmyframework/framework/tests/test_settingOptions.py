@@ -7,14 +7,14 @@
 # @Desc    :
 
 from . import BaseTestCase
-from ..conf import Etcd3SettingsBackend, SettingOptions,settings
+from ..conf import Etcd3SettingsLoader, SettingOptions,settings
 
 
 class TestSettingOptions(BaseTestCase):
     pass
 
     def test_etcd3(self):
-        ec = Etcd3SettingsBackend()
+        ec = Etcd3SettingsLoader()
         ec.set_value('tt', 1)
         ec.set_value('asd1', 'asd')
         ec.set_value('asd2', [3, 4, 23])
@@ -40,6 +40,10 @@ class TestSettingOptions(BaseTestCase):
     def test_system_settings(self):
         from settings import INDEX_URL
         from framework.conf import settings
+        from framework.utils import json_dumps
         settings.INDEX_URL
         from myadmin.settings import LDAP_HOST
+        isinstance(LDAP_HOST, str)
         print(LDAP_HOST)
+
+

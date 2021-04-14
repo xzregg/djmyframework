@@ -115,6 +115,8 @@ class MyJsonEncoder(JSONEncoder):
             return [m.to_dict() if hasattr(m, 'to_dict') else m for m in obj]
         elif isinstance(obj, serializers.Serializer):
             return obj.data
+        elif hasattr(obj, '__getstate__'):
+            return obj.__getstate__()
         try:
             return super().default(obj)
         except TypeError as e:

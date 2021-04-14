@@ -4,8 +4,8 @@
 # @File    : conf
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
-# @Desc    : 
-
+# @Desc    :
+import copy
 import json
 
 import etcd3
@@ -16,24 +16,24 @@ from etcd3.watch import WatchResponse
 from framework.utils.signals import add_signal_handler, signal
 
 
-class AbsSettingsBackend(object):
+class AbsSettingsLoader(object):
 
-    def get_value(self, name): pass
+    def get_value(self, name, default_value): return default_value
 
     def set_value(self, name, value): pass
 
     def watch_config(self): pass
 
 
-class Etcd3SettingsBackend(AbsSettingsBackend):
+class Etcd3SettingsLoader(AbsSettingsLoader):
     prefix_key = '/django/settings/'
     config = {}
 
-    def __init__(self):
-        _SETINGS_ETCD = getattr(_settings, 'SETINGS_ETCD', {})
-        prefix_key = _SETINGS_ETCD.pop('prefix_key', 'default')
+    def __init__(self, **kwargs):
+
+        prefix_key = kwargs.pop('prefix_key', 'default')
         self.prefix_key = '%s%s/' % (self.prefix_key, prefix_key)
-        self.etcd = etcd3.client(**_SETINGS_ETCD)
+        self.etcd = etcd3.client(**kwargs)
         self.init_config()
         self.watch_id = None
 
@@ -100,31 +100,34 @@ settings = Settings()
 
 
 def get_settings_backend():
-    return Etcd3SettingsBackend()
+    _SETTINGS_LOADER_ETCD = getattr(_settings, 'SETTINGS_LOADER_ETCD', {})
+    if _SETTINGS_LOADER_ETCD:
+        return Etcd3SettingsLoader(**_SETTINGS_LOADER_ETCD)
+    return AbsSettingsLoader()
 
 
 class SettingOptionsManager(object):
     settings_options_map = {}
-    backend: AbsSettingsBackend = get_settings_backend()
+    loader: AbsSettingsLoader = get_settings_backend()
 
     def genrate_options_key(self, options):
         return '%s/%s' % (options.group, options.name)
 
     def get_value(self, name):
         options: SettingOptions = self.settings_options_map.get(name, None)
-        if options:
+        if options is not None:
             name = self.genrate_options_key(options)
-            value = self.backend.get_value(name, options.default_value)
+            value = self.loader.get_value(name, options.default_value)
             return value if value is not None else options.default_value
 
     def set_value(self, name, value):
         options: SettingOptions = self.settings_options_map.get(name, None)
-        if options:
+        if options is not None:
             name = self.genrate_options_key(options)
-            return self.backend.set_value(name, value)
+            return self.loader.set_value(name, value)
 
     def watch_config(self):
-        self.backend.watch_config()
+        self.loader.watch_config()
 
 
 settings_manager = SettingOptionsManager()
@@ -133,9 +136,9 @@ settings_manager = SettingOptionsManager()
 class SettingOptions(object):
     manager = settings_manager
 
-    def __init__(self, default_value, alias, name=None, group='defaults', choices=None, type=str):
+    def __init__(self, default_value, alias='', name=None, group='defaults', choices=None, type=str):
         self.alias = alias
-        self.type = type
+        self.type = type(default_value)
         self.default_value = default_value
         self.choices = choices
         self.name = name
@@ -153,28 +156,83 @@ class SettingOptions(object):
 
     def get_value(self):
         if self.name:
-            return self.type(self.manager.get_value(self.name))
+            return self.manager.get_value(self.name)
+
+    @property
+    def value(self):
+        return self.get_value()
 
     def set_value(self, value):
         return self.manager.set_value(self.name, value)
 
+    def __getstate__(self):
+        return self.value
+
     def __get__(self, instance, owner):
-        return self.get_value()
+        return self.value
+
+    def __eq__(self, other):
+        return self.value.__eq__(other)
+
+    def __ne__(self, other):
+        return self.value.__ne__(other)
+
+    def __reduce__(self):
+        return self.value.__reduce__()
+
+    def __copy__(self):
+        return copy.copy(self.value)
+
+    def __deepcopy__(self, memo):
+        return copy.deepcopy(self.value)
+
+    def __bytes__(self):
+        return self.value.__bytes__()
 
     def __str__(self):
-        return self.get_value()
+        return self.value.__str__()
 
+    def __int__(self):
+        return int(self.value)
 
-class __SettingOptions(object):
+    def __float__(self):
+        return float(self.value)
 
-    def __new__(cls, *args, **kwargs) -> _SettingOptions:
-        value = args[0]
-        python_class_type = type(value)
+    def __bool__(self):
+        return self.value.__bool__()
 
-        _clazz = type(
-                cls.__name__,
-                (_SettingOptions,python_class_type(value)),
-                {}
-        )
+    def __eq__(self, other):
+        return self.value.__eq__(other)
 
-        return _clazz(*args, **kwargs)
+    def __lt__(self, other):
+        return self.value.__lt__(other)
+
+    def __gt__(self, other):
+        return self.value.__gt__(other)
+
+    def __ne__(self, other):
+        return self.value.__ne__(other)
+
+    def __hash__(self):
+        return self.value.__hash__()
+
+    def __getitem__(self, key):
+        return self.value.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        return self.value.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        return self.value.__delitem__(key)
+
+    def __iter__(self):
+        return self.value.__iter__()
+
+    def __len__(self):
+        return self.value.__len__()
+
+    def __contains__(self, other):
+        return self.value.__contains__(other)
+
+    def __instancecheck__(self, instance):
+        return self.value.__instancecheck__(instance)
