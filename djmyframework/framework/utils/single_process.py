@@ -1,10 +1,8 @@
 #coding:utf-8
-from functools import wraps
 import fcntl
-import os
 import logging
-
-
+import os
+from functools import wraps
 
 
 class PidFileError(Exception):pass

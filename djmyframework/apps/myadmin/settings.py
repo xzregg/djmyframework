@@ -5,12 +5,14 @@
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
 # @Desc    :
+from __future__ import absolute_import
 
-from framework.conf import SettingOptions, settings
+from framework.conf import SettingOptions
+from framework.translation import _
 
 AUTH_USER_MODEL = 'myadmin.models.user.User'
 
-USE_LDAP_AUTH = True
+USE_LDAP_AUTH = SettingOptions(True, _('是否使用LDAP验证'), 'USE_LDAP_AUTH', 'ldap')
 
 LDAP_HOST = SettingOptions('ldaps://127.0.0.1:13891', 'LDAP 连接地址', 'LDAP_HOST', 'ldap')
 _LDAP_BASE_DN = 'dc=bigdata,dc=com'
@@ -22,7 +24,7 @@ LDAP_BIND_PASSWORD = SettingOptions("123", 'LDAP 绑定密码', 'LDAP_BIND_PASSW
 
 LDAP_USER_BASE_DN = SettingOptions("ou=people,%s" % _LDAP_BASE_DN, 'LDAP 用户域名', 'LDAP_USER_BASE_DN', 'ldap')
 
-LDAP_USER_FILTER = SettingOptions('(objectClass=posixAccount)', 'LDAP 用户过滤条件', 'LDAP_USER_FILTER', 'ladp')
+LDAP_USER_FILTER = SettingOptions('(objectClass=posixAccount)', 'LDAP 用户过滤条件', 'LDAP_USER_FILTER', 'ldap')
 
 LDAP_GROUP_BASE_DN = SettingOptions("ou=role,%s" % _LDAP_BASE_DN, 'LDAP 组域', 'LDAP_GROUP_BASE_DN', 'ldap')
 
@@ -38,8 +40,6 @@ LDAP_GROUP_ATTR_MAP = {
         "alias": "alias",
         "name" : "cn",
 }
-
-settings.merge(locals())
 
 
 class SMS_CONFIG:

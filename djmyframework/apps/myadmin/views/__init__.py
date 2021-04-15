@@ -10,10 +10,10 @@ import time
 
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
-from framework.conf import settings
+
 from framework.route import Route
 from framework.serializer import ParamsSerializer, s
-from framework.settings import settings
+from .. import settings
 from framework.utils import TIMEFORMAT
 from framework.validators import LetterValidator, PasswordValidator
 from framework.views import api_view, notauth, notcheck, render_to_response, Request, Response, RspError, \

@@ -5,6 +5,7 @@
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
 # @Desc    :
+import time
 
 from . import BaseTestCase
 from ..conf import Etcd3SettingsLoader, SettingOptions,settings
@@ -39,11 +40,15 @@ class TestSettingOptions(BaseTestCase):
 
     def test_system_settings(self):
         from settings import INDEX_URL
-        from framework.conf import settings
+        from framework.conf import settings,SettingOptionsManager
         from framework.utils import json_dumps
         settings.INDEX_URL
         from myadmin.settings import LDAP_HOST
+        from settings import USE_LDAP_AUTH
         isinstance(LDAP_HOST, str)
+        SettingOptionsManager().set_value('LDAP_HOST','asd33')
+        time.sleep(1)
+        self.assertEqual(LDAP_HOST,'asd33')
         print(LDAP_HOST)
 
 

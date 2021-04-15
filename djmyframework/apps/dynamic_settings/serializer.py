@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2021-04-14 18:00
+# @Time    : 2019-09-09 15:42
 # @Author  : xzr
-# @File    : conf
+# @File    : serializer
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
 # @Desc    :
 
-from dynamic_settings.conf import *
+from framework.serializer import DataSerializer,s

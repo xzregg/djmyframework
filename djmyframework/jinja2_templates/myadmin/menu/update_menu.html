@@ -6,8 +6,9 @@
 
 
 {% block content %}
+    <div style="height: 600px">
     <br>
-    <form action="" method="POST" class=" pane">
+    <form action="" method="POST" class=" ">
         {{ csrf_input }}
 
         {% if msg %}
@@ -24,6 +25,7 @@
         </div>
         <table
                 id="update-menu-tree-table"
+                data-height="600"
                 data-toggle="table"
                 data-group-by="true"
                 data-group-by-field="app_alias"
@@ -66,5 +68,5 @@
 
 
     </form>
-
+</div>
 {% endblock %}

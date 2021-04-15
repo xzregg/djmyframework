@@ -11,6 +11,7 @@ import logging
 import os
 import random
 import re
+import threading
 import time
 import traceback
 from collections import OrderedDict
@@ -36,6 +37,17 @@ def find_djapp_name(app_root_path):
         app_path = os.path.join(app_root_path, p)
         if os.path.isdir(app_path) and os.path.exists(os.path.join(app_path, '__init__.py')):
             yield p
+
+
+class SingleInstance(object):
+    _instance = None
+    __instance_lock = threading.Lock()
+
+    def __new__(cls, *args, **kw):
+        with cls.__instance_lock:
+            if cls._instance is None:
+                cls._instance = object.__new__(cls, *args, **kw)
+            return cls._instance
 
 
 def sort_set_list(l):

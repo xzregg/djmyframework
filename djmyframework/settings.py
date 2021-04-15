@@ -39,16 +39,25 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
-APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway']
+APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway','dynamic_settings']
 APPS += ['ldap_account']
 APPS += ['svn_admin']
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
+
+
 from framework.conf import SettingOptions
 
-TITLE = SettingOptions('管理后台', _('系统标题'), 'TITLE', type=_)
+SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
+                            ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
+                            user=None, password=None, grpc_options=None, prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
+
+SETTINGS_LOADER_REDIS = dict(url='redis://:123456@10.19.200.185:6379/5', decode_responses=True,
+                             prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
+
+TITLE = SettingOptions('管理后台', _('系统标题'), 'TITLE', lazy=_)
 # TITLE = _('管理后台')
 
 VERSION = 'v3.7'
@@ -66,12 +75,12 @@ INDEX_VIEW = 'myadmin.views.index'
 DEBUG = settings.DEBUG
 TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
-ALLOW_REGISTER = SettingOptions(True, _('是否开启注册功能'), 'ALLOW_REGISTER', type=bool)
+ALLOW_REGISTER = SettingOptions(True, _('是否开启注册功能'), 'ALLOW_REGISTER', )
 
 AUTH_USER_MODEL = 'myadmin.User'
 
 INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'index')
-USE_LDAP_AUTH = SettingOptions(True, _('是否使用LDAP验证'), 'USE_LDAP_AUTH', 'ldap', type=bool)
+
 
 APPS = sort_set_list(APPS + settings.APPS)
 
@@ -121,10 +130,6 @@ CHANNEL_LAYERS = {
 }
 ########################################
 
-
-SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
-                    ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
-                    user=None, password=None, grpc_options=None)
 
 ############# 数据库连接池 配置 #############
 DJORM_POOL_OPTIONS = {
