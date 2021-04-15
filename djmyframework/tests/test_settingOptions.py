@@ -16,22 +16,32 @@ class TestSettingOptions(TestCase):
             def __new__(cls, value, *args, **kwargs):
                 if kwargs.pop('is_new', True):
                     _t = type(value)
-                    clazz = type('cc', (cls, _t), {})
+                    clazz = type('cc', (cls,_t), {})
                     kwargs['is_new'] = False
-                    self = clazz.__new__(clazz, value,*args, **kwargs)
+                    self = clazz.__new__(clazz, value, *args, **kwargs)
                     return self
                 else:
                     return super().__new__(cls, value)
 
-            def __init__(self, a=1, b=2, c=3, d=4):
+            def __init__(self, value=1, b=2, c=3, d=4):
                 self.p = 1
-                self.a = a
+                self.value= value
+                self.type=type(value)
                 self.b = b
                 self.c = c
                 self.d = d
-
+                self.__type= type(value)
             def __bool__(self):
                 return bool(self.a)
+
+            def __get__(self, name):
+                return super().__get__(name)
+            def __getattr__(self, name):
+                return super().__getattribute__(name)
+
+            def __getattribute__(self, item):
+
+                return super().__getattribute__(item)
 
             def pp(self):
                 print('pp')
@@ -44,10 +54,13 @@ class TestSettingOptions(TestCase):
         # B=type('cc',(Parent,int),{})
 
         a = Parent('a', 2, 3, 4)
+        a.a = 'asdasd'
+
         b = Parent(1, 2, 3, 4)
         c = Parent([3,4], 2, 3, 4)
         d = Parent({2:3}, 2, 3, 4)
         e = Parent(set([2,3,4]), 2, 3, 4)
+        a.lower()
         if a:
             print(3)
         print(type(a))

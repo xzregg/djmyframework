@@ -233,6 +233,13 @@ class SettingOptions(object):
     def __getattr__(self, item):
         return getattr(self.value, item)
 
+    def __getattribute__(self, item):
+        type_attributes = super().__getattribute__('type').__dict__
+        if item in type_attributes:
+            return super().__getattribute__('value').__getattribute__(item)
+        else:
+            return super().__getattribute__(item)
+
     def __getstate__(self):
         return self.to_dict()
 
@@ -304,4 +311,3 @@ class SettingOptions(object):
 
     def __instancecheck__(self, instance):
         return isinstance(instance, type(self.value))
-

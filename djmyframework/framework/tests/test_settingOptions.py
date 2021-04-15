@@ -46,8 +46,11 @@ class TestSettingOptions(BaseTestCase):
         from myadmin.settings import LDAP_HOST
         isinstance(1,LDAP_HOST)
         self.assertTrue(isinstance(LDAP_HOST, str))
+        LDAP_HOST.lower()
         SettingOptionsManager().set_value('LDAP_HOST','asd33')
+        #self.assertEqual(LDAP_HOST.lower() , LDAP_HOST)
         time.sleep(1)
+
         self.assertEqual(LDAP_HOST,'asd33')
         self.assertTrue(LDAP_HOST>'as')
         self.assertTrue(LDAP_HOST < 'asd33asd33asd33')

@@ -50,11 +50,12 @@ sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, A
 
 from framework.conf import SettingOptions
 
-SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
+
+_ETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
                             ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
                             user=None, password=None, grpc_options=None, prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
-_SETTINGS_LOADER_REDIS = dict(url='redis://:123456@10.19.200.185:6379/5', decode_responses=True,
+_SETTINGS_LOADER_REDIS = dict(url='redis://:123456@10.19.200.185:6379/5', decode_responses=True, socket_connect_timeout=3,
                              prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
 TITLE = SettingOptions('管理后台', _('系统标题'), 'TITLE','System', lazy=_)
@@ -66,7 +67,9 @@ RELEASE = '01'
 ROOT_URLCONF = 'urls'
 
 LOGIN_URL = '/myadmin/login'
+
 INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'System')
+
 # INDEX_URL = '/'
 
 INDEX_VIEW = 'myadmin.views.index'
