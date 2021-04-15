@@ -108,7 +108,8 @@
             computed: {},
             methods: {
                 changeSettings(item) {
-                    this.postData[item.name] = item.value == '' ? item.default_value : item.value
+                    this.postData[item.name] = item.value === '' ? item.default_value : item.value
+
                 },
                 saveSettings() {
                     var data = JSON.stringify({settings_data: this.postData})

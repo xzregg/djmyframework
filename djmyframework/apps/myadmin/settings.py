@@ -47,3 +47,5 @@ class SMS_CONFIG:
     AppSecret = '122424d328d272fa85cc01d874fa5066'
     sms_free_sign_name = "游娱"
     sms_template_code = "16858"
+
+from settings import *

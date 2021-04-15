@@ -25,6 +25,7 @@ class LDAPBackend(object):
     def __init__(self, username, passwd):
         self.username = username
         self.passwd = passwd
+
         self.use_tls = False
         self.ldap_url = ldapurl.LDAPUrl(settings.LDAP_HOST)
         if self.ldap_url.urlscheme == 'ldaps':

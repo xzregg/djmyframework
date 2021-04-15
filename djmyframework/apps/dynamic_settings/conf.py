@@ -119,7 +119,6 @@ class Settings(LazySettings):
         if isinstance(val, SettingOptions):
             val.set_name(name)
             val = val.get_value()
-        self.__dict__[name] = val
         return val
 
     def merge(self, settings_dict):
@@ -167,21 +166,30 @@ class SettingOptionsManager(SingleInstance):
 
     @CacheAttribute
     def group_options_map(self):
-        from django.apps import apps,AppConfig
+        from django.apps import apps, AppConfig
 
         group_map = {}
         for k, options in self.settings_options_map.items():
             group_name = options.group
-            dj_app_config:AppConfig = apps.app_configs.get(group_name,None)
+            dj_app_config: AppConfig = apps.app_configs.get(group_name, None)
             if dj_app_config:
                 group_name = dj_app_config.verbose_name
             group_map.setdefault(group_name, [])
-            group_map[options.group].append(options)
+            group_map[options.group].append(options.to_dict())
         return group_map
 
 
 class SettingOptions(object):
     manager = SettingOptionsManager()
+    # todo 扩展默认类型
+    # def __new__(cls, default_value, is_new=True,*args, **kwargs):
+    #     vaule_type = type(default_value)
+    #     vaule_type = int if vaule_type == bool else vaule_type  # type 'bool' is not an acceptable base type
+    #
+    #     clazz = type(cls.__name__, (SettingOptions,vaule_type), {})
+    #     if is_new:
+    #         self = clazz(default_value,is_new=False)
+    #     return self
 
     def __init__(self, default_value, alias='', name=None, group='defaults', choices=None, lazy=None):
         self.alias = alias
@@ -213,9 +221,15 @@ class SettingOptions(object):
     def set_value(self, value):
         return self.manager.set_value(self.name, value)
 
-    def __getstate__(self):
+    def to_dict(self):
         return dict(value=self.value, alias=self.alias, type=self.type.__name__, choices=self.choices, name=self.name,
                     default_value=self.default_value)
+
+    def __getattr__(self, item):
+        return getattr(self.value, item)
+
+    def __getstate__(self):
+        return self.to_dict()
 
     def __get__(self, instance, owner):
         return self.value
@@ -248,7 +262,7 @@ class SettingOptions(object):
         return float(self.value)
 
     def __bool__(self):
-        return self.value.__bool__()
+        return bool(self.value)
 
     def __eq__(self, other):
         return self.value.__eq__(other)
@@ -284,4 +298,4 @@ class SettingOptions(object):
         return self.value.__contains__(other)
 
     def __instancecheck__(self, instance):
-        return self.value.__instancecheck__(instance)
+        return isinstance(instance,type(self.value))

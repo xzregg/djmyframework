@@ -44,7 +44,7 @@ class TestSettingOptions(BaseTestCase):
         from framework.utils import json_dumps
         settings.INDEX_URL
         from myadmin.settings import LDAP_HOST
-        from settings import USE_LDAP_AUTH
+        isinstance(1,LDAP_HOST)
         isinstance(LDAP_HOST, str)
         SettingOptionsManager().set_value('LDAP_HOST','asd33')
         time.sleep(1)
