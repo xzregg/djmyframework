@@ -45,10 +45,14 @@ class TestSettingOptions(BaseTestCase):
         settings.INDEX_URL
         from myadmin.settings import LDAP_HOST
         isinstance(1,LDAP_HOST)
-
+        self.assertTrue(isinstance(LDAP_HOST, str))
         SettingOptionsManager().set_value('LDAP_HOST','asd33')
         time.sleep(1)
         self.assertEqual(LDAP_HOST,'asd33')
+        self.assertTrue(LDAP_HOST>'as')
+        self.assertTrue(LDAP_HOST < 'asd33asd33asd33')
+        if LDAP_HOST:
+            pass
         print(LDAP_HOST)
 
 

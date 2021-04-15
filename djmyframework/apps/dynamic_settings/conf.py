@@ -27,9 +27,11 @@ class DefaultsSettingsLoader(object):
         self.prefix_key = '%s%s/' % (self.prefix_key, other_key)
         return self.prefix_key
 
-    def get_value(self, name, default_value): return default_value
+    def get_value(self, name, default_value):
+        return self.config.get(name, default_value)
 
-    def set_value(self, name, value): pass
+    def set_value(self, name, value):
+        self.config[name] = value
 
     def watch_config(self): pass
 
@@ -116,7 +118,7 @@ class Settings(LazySettings):
         if self._wrapped is empty:
             self._setup(name)
         val = getattr(self._wrapped, name)
-        if isinstance(val,  _SettingOptions):
+        if isinstance(val, SettingOptions):
             val.set_name(name)
             val = val.get_value()
         return val
@@ -179,7 +181,19 @@ class SettingOptionsManager(SingleInstance):
         return group_map
 
 
-class _SettingOptions(object):
+class SettingOptions(object):
+
+    def __new__(cls, value, *args, **kwargs):
+        if kwargs.pop('is_new', True):
+            value_type = type(value)
+            value_type = int if value_type == bool else value_type  # type 'bool' is not an acceptable base type
+            clazz = type(cls.__name__, (cls, value_type), {})
+            kwargs['is_new'] = False
+            self = clazz.__new__(clazz, value, *args, **kwargs)
+            return self
+        else:
+            return super().__new__(cls, value)
+
     manager = SettingOptionsManager()
 
     def __init__(self, default_value, alias='', name=None, group='defaults', choices=None, lazy=None):
@@ -291,14 +305,3 @@ class _SettingOptions(object):
     def __instancecheck__(self, instance):
         return isinstance(instance, type(self.value))
 
-
-class SettingOptions(object):
-
-    # todo 扩展默认类型
-    def __new__(cls, default_value, alias='', name=None, group='defaults', choices=None, lazy=None):
-        vaule_type = type(default_value)
-        vaule_type = int if vaule_type == bool else vaule_type  # type 'bool' is not an acceptable base type
-        clazz = type(cls.__name__, (_SettingOptions, vaule_type), {})
-        self = clazz(default_value)
-        self.__init__(default_value, alias, name, group, choices, lazy)
-        return self
