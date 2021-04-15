@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from framework.route import Route
-from framework.views import api_get, api_post, render_to_response, Request, Response,notauth
+from framework.views import api_get, api_post, render_to_response, Request, Response,notauth,action_get,action_post
 from ..conf import SettingOptionsManager
 
 

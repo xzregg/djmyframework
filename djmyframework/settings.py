@@ -54,10 +54,10 @@ SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
                             ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
                             user=None, password=None, grpc_options=None, prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
-SETTINGS_LOADER_REDIS = dict(url='redis://:123456@10.19.200.185:6379/5', decode_responses=True,
+_SETTINGS_LOADER_REDIS = dict(url='redis://:123456@10.19.200.185:6379/5', decode_responses=True,
                              prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
-TITLE = SettingOptions('管理后台', _('系统标题'), 'TITLE', lazy=_)
+TITLE = SettingOptions('管理后台', _('系统标题'), 'TITLE','System', lazy=_)
 # TITLE = _('管理后台')
 
 VERSION = 'v3.7'
@@ -66,7 +66,7 @@ RELEASE = '01'
 ROOT_URLCONF = 'urls'
 
 LOGIN_URL = '/myadmin/login'
-INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'index')
+INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'System')
 # INDEX_URL = '/'
 
 INDEX_VIEW = 'myadmin.views.index'
@@ -75,11 +75,11 @@ INDEX_VIEW = 'myadmin.views.index'
 DEBUG = settings.DEBUG
 TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = ["*"]
-ALLOW_REGISTER = SettingOptions(True, _('是否开启注册功能'), 'ALLOW_REGISTER', )
+ALLOW_REGISTER = SettingOptions(True, _('是否开启账号注册'), 'ALLOW_REGISTER','System' )
 
 AUTH_USER_MODEL = 'myadmin.User'
 
-INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'index')
+INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'System',choices=[('/index',_('主页')),('/myadmin/index',_('管理主页'))])
 
 
 APPS = sort_set_list(APPS + settings.APPS)

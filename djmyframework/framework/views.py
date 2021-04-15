@@ -5,6 +5,7 @@
 #
 # =========================================
 import functools
+import inspect
 import types
 from collections import OrderedDict
 
@@ -246,15 +247,23 @@ def action(methods=None, detail=False, url_path=None, url_name=None, **kwargs):
 
     return decorator
 
+def api_action_judge(*args,**kwargs):
+
+    def decorator(func):
+        if inspect.getfullargspec(func).args[0] == 'self':
+            return action(*args,**kwargs)(func)
+        else:
+            return api_view(*args, **kwargs)(func)
+    return decorator
 
 from .utils import DecoratorsPartial
 
-action_get = DecoratorsPartial(action, 'get')
-action_post = DecoratorsPartial(action, 'post')
-action_get_post = DecoratorsPartial(action, ['post', 'get'])
+action_get = DecoratorsPartial(api_action_judge, 'get')
+action_post = DecoratorsPartial(api_action_judge, 'post')
+action_get_post = DecoratorsPartial(api_action_judge, ['post', 'get'])
 
-api_get = DecoratorsPartial(api_view, 'get')
-api_post = DecoratorsPartial(api_view, 'post')
+api_get = DecoratorsPartial(api_action_judge, 'get')
+api_post = DecoratorsPartial(api_action_judge, 'post')
 
 from django.views.generic import View
 

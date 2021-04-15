@@ -24,7 +24,7 @@
                             <a-anchor-link v-for="(items, key) in groupOptionsMap"
                                            a-anchor-link
                                            :href="'#'+key"
-                                           :title="key">
+                                           :title="key.toUpperCase()">
                                 <a-anchor-link v-for="(item, i) in items" :href="'#'+item.name" :title="item.alias"/>
 
                             </a-anchor-link>
@@ -34,15 +34,36 @@
                     </template>
                 </div>
 
-                <div class="col-sm-4">
+                <div class="col-sm-9">
 
                     <a-card v-for="(items, key) in groupOptionsMap"
-                            :id="key" :title="key" :bordered="false">
+                            :id="key" :title="key.toUpperCase()" :bordered="false">
 
-                        <a-form>
-                            <a-form-item v-for="(item, i) in items">
+                        <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }" >
+                            <a-form-item v-for="(item, i) in items" >
                                 <span :id="item.name" slot="label">((item.alias))</span>
-                                <a-input v-model="item.value" :allow-clear="true" @change="changeSettings(item)"/>
+
+
+                                <a-input-number v-if="item.type=='int'"
+                                                v-model="item.value"
+                                                @change="changeSettings(item)"
+                                                :placeholder="item.default_value"></a-input-number>
+
+                                <a-select v-else-if="item.choices"
+                                          v-model="item.value"
+                                          @change="changeSettings(item)"
+                                          :placeholder="item.default_value">
+                                    <a-select-option v-for="(t,ii) in item.choices" :value="t[0]">(( t[1] ))
+                                    </a-select-option>
+
+                                </a-select>
+                                <a-switch v-else-if="item.type=='bool'" :placeholder="item.default_value"
+                                          v-model="item.value"
+                                          @change="changeSettings(item)"></a-switch>
+                                <a-input v-else :placeholder="item.default_value"
+                                         v-model="item.value"
+                                         :allow-clear="true"
+                                         @change="changeSettings(item)"></a-input>
                             </a-form-item>
 
                         </a-form>
@@ -87,15 +108,30 @@
             computed: {},
             methods: {
                 changeSettings(item) {
-                    this.postData[item.name] = item.value
+                    this.postData[item.name] = item.value == '' ? item.default_value : item.value
                 },
                 saveSettings() {
-                    $.post('{{ url('dynamic_settings.save') }}', JSON.stringify({settings_data: this.postData}), (rsp) => {
+                    var data = JSON.stringify({settings_data: this.postData})
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ url('dynamic_settings.save') }}",
+                        dataType: 'json',
+                        data: data,
+                        contentType: 'application/json',
+                        success: (rsp) => {
+                            this.$message.success(rsp.msg)
+                            this.postData = {}
+                        },
+                        error: (jqXHR, statusText, errorMsg) => {
+                            ajaxError(jqXHR, statusText, errorMsg)
 
-                        this.$message.success(rsp.msg)
-                        this.postData = {}
+                        },
+                        complete: (jqXHR, statusText) => {
+                            this.isExecuting = false
+                        }
 
-                    }, 'json')
+                    })
+
                 },
             },
             mounted: function () {
