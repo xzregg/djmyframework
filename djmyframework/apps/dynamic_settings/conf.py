@@ -116,7 +116,7 @@ class Settings(LazySettings):
         if self._wrapped is empty:
             self._setup(name)
         val = getattr(self._wrapped, name)
-        if isinstance(val, SettingOptions):
+        if isinstance(val,  _SettingOptions):
             val.set_name(name)
             val = val.get_value()
         return val
@@ -179,17 +179,8 @@ class SettingOptionsManager(SingleInstance):
         return group_map
 
 
-class SettingOptions(object):
+class _SettingOptions(object):
     manager = SettingOptionsManager()
-    # todo 扩展默认类型
-    # def __new__(cls, default_value, is_new=True,*args, **kwargs):
-    #     vaule_type = type(default_value)
-    #     vaule_type = int if vaule_type == bool else vaule_type  # type 'bool' is not an acceptable base type
-    #
-    #     clazz = type(cls.__name__, (SettingOptions,vaule_type), {})
-    #     if is_new:
-    #         self = clazz(default_value,is_new=False)
-    #     return self
 
     def __init__(self, default_value, alias='', name=None, group='defaults', choices=None, lazy=None):
         self.alias = alias
@@ -298,4 +289,16 @@ class SettingOptions(object):
         return self.value.__contains__(other)
 
     def __instancecheck__(self, instance):
-        return isinstance(instance,type(self.value))
+        return isinstance(instance, type(self.value))
+
+
+class SettingOptions(object):
+
+    # todo 扩展默认类型
+    def __new__(cls, default_value, alias='', name=None, group='defaults', choices=None, lazy=None):
+        vaule_type = type(default_value)
+        vaule_type = int if vaule_type == bool else vaule_type  # type 'bool' is not an acceptable base type
+        clazz = type(cls.__name__, (_SettingOptions, vaule_type), {})
+        self = clazz(default_value)
+        self.__init__(default_value, alias, name, group, choices, lazy)
+        return self
