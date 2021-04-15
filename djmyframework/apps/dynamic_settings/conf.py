@@ -181,7 +181,10 @@ class SettingOptionsManager(SingleInstance):
         return group_map
 
 
+settings_manager = SettingOptionsManager()
+
 class SettingOptions(object):
+    manager = settings_manager
 
     def __new__(cls, value, *args, **kwargs):
         if kwargs.pop('is_new', True):
@@ -194,7 +197,7 @@ class SettingOptions(object):
         else:
             return super().__new__(cls, value)
 
-    manager = SettingOptionsManager()
+
 
     def __init__(self, default_value, alias='', name=None, group='defaults', choices=None, lazy=None):
         self.alias = alias

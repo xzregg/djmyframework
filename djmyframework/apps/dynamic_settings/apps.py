@@ -10,5 +10,5 @@ class DynamicSettingsConfig(AppConfig):
     verbose_name = _('动态配置')
 
     def ready(self):
-        from .conf import SettingOptionsManager
-        SettingOptionsManager().watch_config()
+        from .conf import settings_manager
+        settings_manager.watch_config()
