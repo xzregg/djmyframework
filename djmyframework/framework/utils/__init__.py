@@ -299,6 +299,15 @@ def convert_to_datetime(input_value):
     raise TypeError('Unsupported input type: %s' % type(input_value))
 
 
+def is_valid_datetime(str):
+    '''判断是否是一个有效的日期字符串'''
+    try:
+        convert_to_datetime(str)
+        return True
+    except:
+        return False
+
+
 try:
     from hashlib import sha1
 except ImportError:

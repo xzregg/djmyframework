@@ -51,7 +51,7 @@ sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, A
 from framework.conf import SettingOptions
 
 
-_ETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
+SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
                             ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
                             user=None, password=None, grpc_options=None, prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 

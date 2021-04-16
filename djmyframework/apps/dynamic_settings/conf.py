@@ -166,7 +166,7 @@ class SettingOptionsManager(SingleInstance):
         self.loader = get_settings_loader()
         self.loader.watch_config()
 
-    @CacheAttribute
+    @property
     def group_options_map(self):
         from django.apps import apps, AppConfig
 
@@ -183,6 +183,14 @@ class SettingOptionsManager(SingleInstance):
 
 settings_manager = SettingOptionsManager()
 
+
+def get_type_name(value):
+    from framework.utils import is_valid_datetime
+    if is_valid_datetime(value):
+        return 'datetime'
+    return type(value).__name__
+
+
 class SettingOptions(object):
     manager = settings_manager
 
@@ -197,8 +205,6 @@ class SettingOptions(object):
         else:
             return super().__new__(cls, value)
 
-
-
     def __init__(self, default_value, alias='', name=None, group='defaults', choices=None, lazy=None):
         self.alias = alias
         self.type = type(default_value)
@@ -207,6 +213,7 @@ class SettingOptions(object):
         self.choices = choices
         self.name = name
         self.group = group
+        self.type_name = get_type_name(default_value)
         self._join_to_manager()
 
     def _join_to_manager(self):
@@ -230,7 +237,7 @@ class SettingOptions(object):
         return self.manager.set_value(self.name, value)
 
     def to_dict(self):
-        return dict(value=self.value, alias=self.alias, type=self.type.__name__, choices=self.choices, name=self.name,
+        return dict(value=self.value, alias=self.alias, type=self.type_name, choices=self.choices, name=self.name,
                     default_value=self.default_value)
 
     def __getattr__(self, item):
@@ -269,6 +276,9 @@ class SettingOptions(object):
 
     def __str__(self):
         return self.value.__str__()
+
+    def __repr__(self):
+        return self.value.__repr__()
 
     def __int__(self):
         return int(self.value)
