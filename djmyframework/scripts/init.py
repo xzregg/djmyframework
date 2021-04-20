@@ -24,6 +24,12 @@ APPS = ['djmyframework']
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 
 from djmyframework.settings import *
+LANGUAGES = (
+        ('de', _('German')),
+        ('en', _('English')),
+        ('zh-hans', _('简体')),
+        ('zh-hant', _('繁体')),
+)
 
 PROJECT_ROOT = BASE_DIR
 

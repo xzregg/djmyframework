@@ -16,21 +16,21 @@
 {% if has_sdate or has_edate %}
 
     {% if has_edate %}
-        <b>时间区间选择：</b><input type="text" id="wdate" class="large" value="" style="margin-bottom: 5px">
+        <label>时间区间选择：<input type="text" id="wdate" class="input input-lg large" value="" ></label>
     {% else %}
-        <b>时间选择：</b><input type="text" id="wdate" value="" style="margin-bottom: 5px">
+        <label>时间选择：<input type="text" id="wdate" value="" class="input input-lg" ></label>
     {% endif %}
 
     {% if has_sdate %}
         <span style="display: inline-block;">
         <input type="hidden" style="font-weight: bold;color: black;" name="sdate"
-                            class="Wdate" value="{{ sdate }}"/>
+                            class="Wdate input" value="{{ sdate }}"/>
         </span>
     {% endif %}
     {% if has_edate %}
         <span style="display: inline-block;">
         <input type="hidden" style="font-weight: bold;color: black;" name="edate"
-                            class="Wdate" value="{{ edate }}"/>
+                            class="Wdate input " value="{{ edate }}"/>
         </span>
     {% endif %}
 

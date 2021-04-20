@@ -40,6 +40,12 @@ def get_model_class(model_id):
         # 新的方式获取模型class
         return import_module_attr(model_id)
 
+def get_old_model_id(backsData, model_id):
+    if backsData['is_old']:
+        for k, v in SyncModelMap.items():
+            if v == model_id:
+                return k
+
 
 @notauth
 @Route('sync/backstage/list')
@@ -58,6 +64,8 @@ def backstage_list(request):
         if is_remote:
             backsData = get_backstage_data(bid=backs_id)
             back_url = backsData['url'] + 'sync/backstage/'
+            model_id = get_old_model_id(backsData,model_id)
+
             try:
                 response = requests.get(back_url, {"Modelid": model_id, "Servid": backs_id},
                                         timeout=60).content
@@ -109,6 +117,7 @@ def backstage_edit(request):
         model.key = backstage_key
         model.name = backstage_name
         model.url = backstage_url
+        model.is_old = True if request.POST.get('is_old', False) else False
         model.save()
 
     return render(request, "sync_model/sync_backstage_edit.html", {'data': model})
@@ -132,7 +141,7 @@ def backstage_push(request):
     push_id = int(request.GET.get('Pushid', 0))
     is_local = int(request.GET.get('is_local', 0))  # 本地同步标识
 
-    syncMod  = get_model_class(model_id) # 根据传入的model_id获取数据模型
+    syncMod = get_model_class(model_id)  # 根据传入的model_id获取数据模型
 
     if not syncMod or not serv_id or not push_id:
         return HttpResponse('{"code": 1, "msg": "缺少请求所需参数"}')
@@ -146,6 +155,7 @@ def backstage_push(request):
     if is_local:
         # 从指定后台获取数据同步至本地
         url = serv_url + 'sync/backstage/remotedb'
+        model_id = get_old_model_id(serv_info, model_id)
         post_data = {"Modelid": model_id, "Pushid": push_id}
         serialize_data = requests.post(url, data=post_data).content
 
@@ -170,7 +180,7 @@ def backstage_push(request):
         hashObj = md5()
         hashObj.update(
                 post_datas.encode(encoding='utf-8') + model_id.encode(encoding='utf-8') + _AUTHKEY.encode(
-                    encoding='utf-8'))
+                        encoding='utf-8'))
 
         # 序列化模型和数据
         post_params = {'model': model_id, 'datas': post_datas, 'sign': hashObj.hexdigest()}

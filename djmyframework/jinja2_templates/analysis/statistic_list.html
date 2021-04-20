@@ -1,4 +1,4 @@
-{% extends "old/base.html" %}
+{% extends "analysis/old/base.html" %}
 
 {% block header%}
 <title>统计列表</title>
@@ -17,7 +17,7 @@
 	<a href="/log/log_define/list">日志类型列表-></a>
 	{% endif %}
 	统计列表
-	<div class="buttons"><a href="/analysis/statistic/edit?log_type={{log_type}}" class="openDialog">添加</a> <a href="/log/list">返回</a> </div>
+	<div class="buttons"><a href="/analysis/statistic/edit?log_type={{log_type}}" class="openDialog">添加</a> </div>
 </div>
 
 <div class="sub-menu-1">
@@ -64,7 +64,7 @@
 		<th>表位置</th>
 		<th>备注</th>
 		<th >自动统计</th>
-        <th >执行递减</th> 
+        <th >执行递减</th>
 		<th >上次执行时间</th>
 		<th >操作1</th>
 	</tr>
@@ -81,7 +81,7 @@
 				<b class="blue">中央服</b>
 			{%else%}
 				<b >分服</b>
-			{%endif%} 
+			{%endif%}
 		</td>
 		<td>{{item.remark|linebreaksbr}}</td>
 		{%if item.is_auto_execute%}
@@ -130,7 +130,7 @@
 		<div class="hr hr-24"></div>
 		<div id="statistic-select-server-div" class="col-sm-12">
             {% with group_servers_dict=group_servers_dict %}
-			{%include "game_manage/widgets/group_server.html" %}
+
             {% endwith %}
 		</div>
 
@@ -228,7 +228,7 @@ function StatisticExcute(){
 			This.statistic_name_map[ele.value] = $ele.attr('statistic_name')
 			if ((This.is_center && is_center_statistic) || (!This.is_center && !is_center_statistic)) {
 				statistic_ids.push(ele.value)
-			} 
+			}
 		})
 		return statistic_ids
 	}
@@ -242,14 +242,14 @@ function StatisticExcute(){
 		var statistic_ids = this.get_statistic_ids()
 		if (statistic_ids.length<=0) {
 			alert('没有勾选匹配统计项目!')
-			return 
+			return
 		}
 
 		var param_list = []
 		this.statistic_process_table.dataTable().fnDestroy()
 		this.statistic_process_table.width('100%')
 		this.process_table_cont.html('')
-		
+
 		for (var i=0;i<server_ids.length;i++){
 			var server_id = server_ids[i]
 			this.server_name_map[server_id] = get_server_name(server_id)
@@ -288,7 +288,7 @@ function StatisticExcute(){
 	}
 
 	this.excute = function(){
-		
+
 		if (This.set_param_list()) {
 			This.process_cont.dialog({"lock":true,"left":"25%","close":function(){
 				if(confirm('关闭后将停止运行统计！')){
@@ -297,7 +297,7 @@ function StatisticExcute(){
 				} else{
 					return false
 				}
-				
+
 			}})
 
 			console.dir(This.params_list)
@@ -314,7 +314,7 @@ function StatisticExcute(){
 			} else {
 				This.runing = false
 				$('#statistic-process-table').dataTable()
-			}	
+			}
 	}
 	this.ajax_do = function(params,error_count){
 		error_count = error_count ? error_count : 0
@@ -351,11 +351,11 @@ function StatisticExcute(){
 				change_process_status(params,x+'-'+o.responseText,'red')
 				This.check_finish()
 			}
-			
-		})		
+
+		})
 
 
-		
+
 	}
 
 
@@ -366,7 +366,7 @@ var statistic_excute = new StatisticExcute()
 
 $('#statistic-execute-btn').click(function(){
 	statistic_excute.show()
-	
+
 })
 
 $('#is_center-checkbox').click(function(){

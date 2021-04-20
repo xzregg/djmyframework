@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    {% include "old/header.html" %}
+    {% include "analysis/old/header.html" %}
     {% block header %} {% endblock %}
     {% block css %}{% endblock %}
 </head>
@@ -25,10 +25,12 @@
         </div>
     </div>
 {% endif %}
+<div class=" container-fluid">
 {% block content %}
 {% endblock %}
+</div>
 <div id="tip_box" title="提示框"></div>
-{% include "old/shangxia.html" %}
+{% include "analysis/old/shangxia.html" %}
 </body>
 {% block js %}
 

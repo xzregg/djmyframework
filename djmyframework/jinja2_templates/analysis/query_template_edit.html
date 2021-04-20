@@ -1,4 +1,4 @@
-{% extends "old/base.html" %}
+{% extends "analysis/base.html" %}
 
 {% block header %}
     <title>[{{ template_name }}]编辑</title>
@@ -8,13 +8,23 @@
 {% block content %}
     <form action="/analysis/query/template_edit?template_name={{ template_name }}&edit_type={{ edit_type }}&action=save"
           method="post">
-        <div id="bar">
-            [{{ template_name }}] 模版编辑
-            <div class="buttons">
-                <input class="submit" class="btn btn-default" type="submit" value="保存">
-                <a href="javascript:window.close()">关闭</a>
+        <div class="row header">
+            <div class="col-sm-5">
+                <h1>[{{ template_name }}]
+                    <small>{{ _('编辑') }}</small>
+                </h1>
+            </div>
+
+
+            <div class="col-sm-offset-4 col-sm-3">
+                <div class="pull-right">
+                    <button class="btn btn-sm btn-default" type="submit" value="保存">保存</button>
+                    <a class="btn btn-sm btn-default" href="javascript:window.close()">关闭</a>
+                </div>
             </div>
         </div>
+
+
         <div class="sub-menu">
 
             <textarea id="code" name="code">{{ file_content|safe }}</textarea>
@@ -47,7 +57,7 @@
         </div>
     </form>
 
-    {% with URL = '/static/assets/codemirror'  %}
+    {% with URL = '/static/assets/codemirror' %}
 
         <script src={{ URL }}/lib/codemirror.js></script>
         <link rel="stylesheet" href="{{ URL }}/lib/codemirror.css"/>
@@ -58,7 +68,8 @@
         <script src="{{ URL }}/mode/htmlmixed/htmlmixed.js"></script>
 
         <script type="text/javascript">
-            window.onload = function () {
+            $(function () {
+
                 var mixedMode = {
                     name: "htmlmixed",
                     scriptTypes: [{
@@ -82,7 +93,8 @@
                 });
                 editor.setSize('100%', '100%')
 
-            };
+
+            })
         </script>
     {% endwith %}
 {% endblock %}

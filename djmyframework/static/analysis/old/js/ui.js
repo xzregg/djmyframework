@@ -301,31 +301,8 @@ $(document).ready(function () {
         }
     });
 
-    //树表格
-    $(".treetable").treetable(
-        {expandable: true, clickableNodeNames: false}
-    ).on('dblclick', 'tbody>tr', function () {
-        var This = $(this)
-        var tt_id = This.attr("data-tt-id")
-        var action = This.find('[title="Expand"]').length > 0 ? "expandNode" : "collapseNode"
-        This.closest('.treetable').treetable(action, tt_id)
-    })
 
-    // table 选中
-    $('.datatable,.treetable').on("mousedown", "tbody>tr", function (e) {
-        $(".selected").not(this).removeClass("selected");
-        var This = $(this)
 
-        selectId = 0
-        This.toggleClass("selected");
-        if (This.hasClass('selected')) {
-            selectId = This.attr('trid') ? This.attr('trid') : This.find(':checkbox').val()
-        }
-
-        // if (!$(e.target).is(':checkbox')) {
-        // 	This.find(':checkbox').click();
-        // }
-    })
 
 
     $('.submit').click(function () {
@@ -333,26 +310,13 @@ $(document).ready(function () {
     })
     change_checkbox_background()
 
-    /* 选择框 */
-    $(".chosen-select").chosen();
+
 
     $('.table-menu a').mousemove(function (event) {
         $(this).addClass('active')
         $('.table-menu a').not(this).removeClass('active')
     });
 
-
-    $('.spinner1').ace_spinner({
-        value: 0,
-        min: 0,
-        max: 200,
-        step: 10,
-        btn_up_class: 'btn-info',
-        btn_down_class: 'btn-info'
-    })
-        .on('change', function () {
-            //alert(this.value)
-        });
 
     // 下拉菜单悬停
     $('.dropdown-menu-not-hide').click(function (e) {

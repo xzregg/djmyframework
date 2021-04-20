@@ -10,6 +10,7 @@
 # SECURITY WARNING: don't run with debug turned on in production!
 
 import logging
+import os
 
 DEBUG = False
 
@@ -83,4 +84,11 @@ CHANNEL_LAYERS = {
         },
 }
 
-AUTH_LDAP_SERVER_URI = "ldap://ldap.example.com"
+
+SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
+                             ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
+                             user=None, password=None, grpc_options=None,
+                             prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
+
+SETTINGS_LOADER_REDIS = dict(url='redis://:123456@127.0.0.1:6379/5', decode_responses=True, socket_connect_timeout=3,
+                              prefix_key=os.environ.get('DJANGO_ENV', 'dev'))

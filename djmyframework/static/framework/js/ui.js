@@ -586,6 +586,8 @@ $(document).on('focus', '.datetime', function () {
 // daterange  end --
 
 
+
+
 // Wdate
 $(document).on('focus', '.Wdate', function () {
     WdatePicker({
@@ -657,6 +659,38 @@ $(document).on('click', '.ask', function (e) {
     if ($(this).attr('data-original-title') == undefined) {
         $(this).popover()
     }
+})
+
+
+function makeToolTips(ele, tooltipText, time) {
+
+    var tooltipEle = inputTooltip(ele, tooltipText, time)
+    if (tooltipText) {
+        tooltipEle.css({'color': 'red'})
+    } else {
+        tooltipEle.hide()
+    }
+}
+$(document).on('blur', '.input-number', function () {
+    var tooltipText = ''
+    var $this = $(this)
+    var value = $this.val()
+
+    if (isNaN(value) || value.length == 0) {
+        tooltipText = '输入的不是数字 !'
+        //alert(tooltipText)
+        $this.val(value.replace(/[^\d-\.]+/g, ''))
+        //this.focus();
+    }
+
+    value = parseInt(value)
+    if (value > 10000) {
+        tooltipText = parseInt(value / 10000) + ' 万'
+    }
+    makeToolTips(this, tooltipText, 5000)
+
+}).on('blur', '.letter,.input-letter', function () {
+    makeToolTips(this, this.value.replace(/[a-zA-Z-_]+/g, '') != '' ? '输入的不是纯字母!' : '')
 })
 
 

@@ -16,7 +16,7 @@ from framework.connections import connections
 from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilter
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, PaginationSerializer, s
-from framework.views import CurdViewSet, HttpResponse, notauth, render
+from framework.views import CurdViewSet, HttpResponse, notauth, render, render_to_response
 from log_def.models import DictDefine
 
 
@@ -71,15 +71,15 @@ class QuerySet(CurdViewSet):
         return Query.objects.all().prefetch_related(*[]).select_related(*[])
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListQueryRspSerializer)
-    def list(self, request, *args, **kwargs):
+    def list(self, request, ):
         """查询 列表"""
-        return super(QuerySet, self).list(request, *args, **kwargs)
+        return render_to_response('analysis/query/list.html',super().list(request))
 
     @swagger_auto_schema(query_serializer=EditParams, responses=QuerySerializer)
     def edit(self, request, *args, **kwargs):
         """查询 编辑"""
 
-        return super(QuerySet, self).edit(request, *args, **kwargs)
+        return render_to_response('analysis/query/edit.html', super().edit(request))
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=QuerySerializer, responses=QuerySerializer)
     def save(self, request, *args, **kwargs):

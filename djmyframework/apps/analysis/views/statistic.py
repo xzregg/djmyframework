@@ -42,9 +42,9 @@ def statistic_list(request, log_type=0):
         q = q & Q(log_type=log_type)
 
     list_model = Statistic.objects.filter(q)
-    from ..models import Server
+    #from ..models import Server
     server_id = int(request.GET.get('server_id', '0'))
-    list_server = Server.get_server_list()
+   # list_server = Server.get_server_list()
     list_log = LogDefine.objects.using('read').all()
 
     logDefine_list = LogDefine.objects.using('read').all()
@@ -68,8 +68,8 @@ def statistic_list(request, log_type=0):
             item.is_center_log = False
         else:
             item.is_center_log = True
-    import game_manage.views.widgets
-    group_servers_dict = game_manage.views.widgets.get_group_servers_dict(request)
+    #import game_manage.views.widgets
+    #group_servers_dict = game_manage.views.widgets.get_group_servers_dict(request)
     return render(request,'analysis/statistic_list.html', locals())
 
 @Route('analysis/statistic/edit')

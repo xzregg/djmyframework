@@ -114,3 +114,49 @@ textarea, input[type="text"], input[type="password"], input[type="datetime"], in
     z-index:999
 }
 
+
+/*表单*/
+table.form {
+    background: #fff;
+    margin: 20px auto;
+    line-height: 25px;
+    text-align: left;
+    table-layout: fixed;
+}
+
+.form th {
+    text-align: right;
+    font-weight: normal;
+    color: gray;
+    width: 25%;
+}
+
+.form td {
+    padding: 5px 0px 5px 0px;
+}
+
+.form2 td {
+    padding: 5px 0px 5px 0px;
+}
+
+table.form2 {
+    background: #fff;
+    margin: 20px auto;
+    line-height: 25px;
+    text-align: left;
+    table-layout: fixed;
+}
+
+.form2 th {
+    min-width: 100px;
+    text-align: right;
+    font-weight: normal;
+    color: gray;
+}
+
+.CodeMirror {
+    border: 1px solid #eee;
+    height: auto;
+    font-size: 13px;
+    line-height: 16px;
+}

@@ -11,7 +11,8 @@ from ..settings import SUBSCRIBE_MODEL_CHANGE
 
 def group_send(group_name, event_data):
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(group_name, event_data)
+    if channel_layer:
+        async_to_sync(channel_layer.group_send)(group_name, event_data)
 
 
 def model_post_save_signal(sender, instance, created, **kwargs):

@@ -26,7 +26,24 @@ from settings import *
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
 # SESSION_SAVE_EVERY_REQUEST = True
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
+CELERY_BROKER_URL = 'redis://:123456@127.0.0.1:6379/1'
 
+CHANNEL_LAYERS = {
+        "default": {
+                "BACKEND": "channels_redis.core.RedisChannelLayer",
+                "CONFIG" : {
+                        "hosts": ["redis://:123456@127.0.0.1:6379/2"],
+                },
+        },
+}
+
+SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
+                            ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
+                            user=None, password=None, grpc_options=None,
+                            prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
+
+_SETTINGS_LOADER_REDIS = dict(url='redis://:123456@127.0.0.1:6379/5', decode_responses=True, socket_connect_timeout=3,
+                             prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
 STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
 STATIC_ROOT = None
@@ -42,7 +59,7 @@ DATABASES = {
 
 }
 
-DATABASES = {
+_DATABASES = {
         'default': {
 
                 'ENGINE'  : 'django.db.backends.mysql',
@@ -51,7 +68,7 @@ DATABASES = {
                 'USER'    : 'root',
                 'PASSWORD': '123456',
 
-                'HOST'    : '10.19.200.185',
+                'HOST'    : '127.0.0.1',
 
                 'PORT'    : '3306',
 
