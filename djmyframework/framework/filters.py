@@ -106,18 +106,23 @@ class BooleanFilterQ(FilterQ):
             return False
         return True
 
+class OperatorEnum(Enum):
+    @classmethod
+    def get_filter_q_obj(cls, operator_type):
+        return cls(operator_type).other
 
-class EqualOperator(Enum):
+
+class EqualOperator(OperatorEnum):
     Equal = 'exact', _('等于'), FilterQ()
     NotEqual = 'not_exact', _('不等于'), FilterQ(negated=True)
 
 
-class NullOperator(Enum):
+class NullOperator(OperatorEnum):
     NotNull = 'not_null', _('有值'), BooleanFilterQ(lookup_expr='isnull', negated=True)
     IsNull = 'is_null', _('没值'), BooleanFilterQ(lookup_expr='isnull', )
 
 
-class InOperator(Enum):
+class InOperator(OperatorEnum):
     SingleIn = 'single_in', _('单选'), InFilterQ()
     In = 'in', _('多选'), InFilterQ()
     NotIn = 'not_in', _('反选'), InFilterQ(negated=True)
@@ -166,7 +171,7 @@ class NumberOperator(EqualOperator, InOperator):
     Between = 'range', _('区间'), RangeFilterQ()
 
 
-class DateTimeOperator(Enum):
+class DateTimeOperator(OperatorEnum):
     """
     ## 时间类型属性筛选
 
@@ -200,6 +205,11 @@ class ConditionTypeEnum(Enum):
     DateTime = 'date', _('日期时间'), DateTimeOperator
     Choice = 'choice', _('多选'), ChoiceOperator
 
+
+    @classmethod
+    def get_operator_type(cls, condition_type):
+        return cls(condition_type).other
+
     @classmethod
     def get_schema(cls):
         schema_map = {}
@@ -222,12 +232,13 @@ class MyFilterBackend(DjangoFilterBackend):
     DELIMITER = FilterQ.DELIMITER
 
     @staticmethod
-    def guess_condition_type(operator) -> Enum:
+    def guess_condition_filter_q_obj(operator) -> FilterQ:
 
         for condition_type, _ in ConditionTypeEnum.member_list():
-            operator_type = condition_type.other(operator)
+            operator_enum = ConditionTypeEnum.get_operator_type(condition_type)
+            operator_type = operator_enum(operator)
             if operator_type:
-                return operator_type
+                return operator_enum.get_filter_q_obj(operator)
         return None
 
     def get_filter_q(self, request, filterset_fields):
@@ -239,10 +250,9 @@ class MyFilterBackend(DjangoFilterBackend):
                 name, operator = key_array[:2]
                 if name not in filterset_fields:
                     raise RspError(_('%s 未被允许的筛选字段' % name))
-                condition_operator_type = self.guess_condition_type(operator)
-                if condition_operator_type is None:
+                filter_q_obj: FilterQ = self.guess_condition_filter_q_obj(operator)
+                if filter_q_obj is None:
                     raise RspError(_('%s 未定义操作类型' % operator))
-                filter_q_obj: FilterQ = condition_operator_type.other
 
                 value_list = request.query_params.getlist(key)
 
