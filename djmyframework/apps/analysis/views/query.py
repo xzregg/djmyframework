@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from drf_yasg.utils import swagger_auto_schema
 
-
+from ..models.server_connect import ServerConnect
 from framework.connections import connections
 from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilter
 from framework.route import Route
@@ -298,34 +298,33 @@ def query_do(request, query_analysis, built_in=False, list_data_handle=None):
     query_sql = count_sql = ''
     try:
         if not query_analysis.query.is_center_query:
-            if server_id or game_alias:
-                from ..models import Server
-                try:
-                    if server_id.isdigit():
-                        server_model = Server.objects.get(id=server_id)
-                    elif game_alias:
-                        server_model = Server.objects.get(alias=game_alias)
-                        server_id = server_model.id
-                    # 获取从库链接
-                    conn = server_model.mysql_conn()
-                    query_analysis.params.update(
-                            {"server_name": [server_model.name]})  # 传服务器名
-                    query_analysis.params.update(
-                            {"game_alias": [server_model.alias]})  # 传游戏/服务器代号
-                    master_id = server_model.master_server.id
-                    query_analysis.params.update({"master_id":[master_id]})                          #传母服id
-                    query_analysis.params.update({"master_db":[server_model.master_server.db_name]}) #传母服数据库名
-                    query_analysis.params.update({"server_name":[server_model.name]})                #传服务器名
-                except Exception as e:
+            server_conn_id = 0
+            if server_id :
+                server_conn_id = server_id
+            #     from ..models import Server
+            #     try:
+            #         if server_id.isdigit():
+            #             server_model = Server.objects.get(id=server_id)
+            #         elif game_alias:
+            #             server_model = Server.objects.get(alias=game_alias)
+            #             server_id = server_model.id
+            #         # 获取从库链接
+            #         conn = server_model.mysql_conn()
+            #         query_analysis.params.update(
+            #                 {"server_name": [server_model.name]})  # 传服务器名
+            #         query_analysis.params.update(
+            #                 {"game_alias": [server_model.alias]})  # 传游戏/服务器代号
+            #         master_id = server_model.master_server.id
+            #         query_analysis.params.update({"master_id":[master_id]})                          #传母服id
+            #         query_analysis.params.update({"master_db":[server_model.master_server.db_name]}) #传母服数据库名
+            #         query_analysis.params.update({"server_name":[server_model.name]})                #传服务器名
+            #     except Exception as e:
+            #
+            #         err_msg = '数据库链接出错! %s' % str(e)
+            # else:
+            #     err_msg = '没有服务器ID'
 
-                    err_msg = '数据库链接出错! %s' % str(e)
-            else:
-                err_msg = '没有服务器ID'
-        else:
-            if _g('tidb', ''):
-                conn = connections['tidb']
-            else:
-                conn = connections['read']
+        conn = ServerConnect.get_conn(server_conn_id)
 
         is_sdk_manager = 1 if request.user.is_sdk_manager else 0
         is_manager = 1 if request.user.is_manager else 0

@@ -73,7 +73,11 @@ python manage.py migrate
 #### 创建 app
  1.  与 django 命令相同,不过默认使用 framework 下的 app 模板
 ```bash
-python3 manage.py create_app flink_platform
+pip3 install djmyframework
+mkdir xxxProject
+cd xxxProject
+djmyframework_init 
+python3 manage.py create_app xxxApp
 ```
 
 #### 创建增删改查

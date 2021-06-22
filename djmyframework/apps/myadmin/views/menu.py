@@ -61,6 +61,7 @@ class MenuSet(CurdViewSet):
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListMenuRspSerializer)
     @notcheck
     def list(self, request, *args, **kwargs):
+        """菜单管理"""
         return super(MenuSet, self).list(request, *args, **kwargs)
 
     class EditMenuParams(EditParams):
@@ -68,6 +69,7 @@ class MenuSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=EditMenuParams, responses=MenuSerializer)
     def edit(self, request, *args, **kwargs):
+        """菜单编辑"""
         params = self.EditMenuParams(request.query_params).params_data
         model: Menu = self.get_model_instance(self.EditMenuParams)
         if not model.id and params.parent_id:
@@ -77,10 +79,12 @@ class MenuSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=MenuSerializer, responses=MenuSerializer)
     def save(self, request, *args, **kwargs):
+        """菜单保存"""
         return render_to_response('myadmin/menu/list.html', super().save(request))
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
     def delete(self, request, *args, **kwargs):
+        """菜单删除"""
         return super(MenuSet, self).delete(request, *args, **kwargs)
 
     @action_get_post

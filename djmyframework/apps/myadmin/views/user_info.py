@@ -48,6 +48,13 @@ class UserInfoSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListUserInfoRspSerializer)
     def list(self, request, *args, **kwargs):
+        """
+        个人信息 列表
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         return super(UserInfoSet, self).list(request, *args, **kwargs)
 
     class UserInfoEditParmas(EditParams):
@@ -92,10 +99,12 @@ class UserInfoSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=UserInfoSerializer, responses=UserInfoSerializer)
     def save(self, request, *args, **kwargs):
+        """个人信息 保存"""
         return super(UserInfoSet, self).save(request, *args, **kwargs)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
     def delete(self, request, *args, **kwargs):
+        """个人信息 删除"""
         return super(UserInfoSet, self).delete(request, *args, **kwargs)
 
 

@@ -63,6 +63,7 @@ class RoleSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListRoleRspSerializer)
     def list(self, request, *args, **kwargs):
+        """角色列表"""
         return render_to_response("myadmin/role/list.html", super().list(request, *args, **kwargs))
 
     class RoleEditParmas(EditParams):
@@ -71,6 +72,7 @@ class RoleSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=EditParams, responses=RoleSerializer)
     def edit(self, request, *args, **kwargs):
+        """角色编辑"""
         model_instance: Role = self.get_model_instance(EditParams)
         params = self.RoleEditParmas(request.query_params).params_data
         if not model_instance.id:
@@ -86,6 +88,7 @@ class RoleSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=RoleSerializer, responses=RoleSerializer)
     def save(self, request, *args, **kwargs):
+        """角色保存"""
         role = self.get_model_instance(IdSerializer)
 
         if not request.user.is_manager:
@@ -110,6 +113,7 @@ class RoleSet(CurdViewSet):
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
     def delete(self, request, *args, **kwargs):
+        """角色删除"""
         return super(RoleSet, self).delete(request, *args, **kwargs)
 
     class RoleResourceMembersSer(IdSerializer):
@@ -134,6 +138,7 @@ class RoleSet(CurdViewSet):
     @swagger_auto_schema(query_serializer=EditParams, responses=RoleSerializer)
     @action_post()
     def update(self, request):
+        """更新角色信息"""
         model: Role = self.get_model_instance()
 
         serializer, msg = self.save_instance(request, model)

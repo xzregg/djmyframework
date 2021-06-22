@@ -19,7 +19,7 @@ from django.contrib.auth import  authenticate
 DEBUG = True
 
 from django.conf import settings
-from settings import *
+
 
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
@@ -37,7 +37,7 @@ CHANNEL_LAYERS = {
         },
 }
 
-SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
+_SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
                             ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
                             user=None, password=None, grpc_options=None,
                             prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
@@ -108,8 +108,8 @@ DEBUG_TOOLBAR_CONFIG = {
         'JQUERY_URL': '',
 }
 
-REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
-REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
+#REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
+#REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
 logging.warning('This env is dev,DEBUG = True')
 logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 

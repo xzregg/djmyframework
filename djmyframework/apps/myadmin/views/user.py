@@ -51,15 +51,17 @@ class UserSet(CurdViewSet):
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListUserRspSerializer)
     def list(self, request):
+        """用户列表"""
         return render_to_response("myadmin/user/list.html", super().list(request))
 
     @swagger_auto_schema(query_serializer=EditParams, responses=UserSerializer)
     def edit(self, request):
-
+        """用户编辑"""
         return render_to_response("myadmin/user/edit.html",super().edit(request))
 
     @swagger_auto_schema(query_serializer=IdSerializer, request_body=UserSerializer, responses=UserSerializer)
     def save(self, request, *args, **kwargs):
+        """用户保存"""
         user_model: User = self.get_model_instance()
         password = request.data.pop('password', '')
         if password:
@@ -74,6 +76,7 @@ class UserSet(CurdViewSet):
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
     def delete(self, request, *args, **kwargs):
+        """用户删除"""
         return super(UserSet, self).delete(request, *args, **kwargs)
 
     class ChangeStatusSerializer(IdsSerializer):
@@ -82,6 +85,7 @@ class UserSet(CurdViewSet):
     @swagger_auto_schema('post', request_body=ChangeStatusSerializer)
     @action(['post'])
     def change_status(self, request: Request, **kwargs):
+        """改变用户状态"""
         params = self.ChangeStatusSerializer(request.data).o
         if params.id:
             User.objects.filter(id__in=params.id).update(status=params.status)
@@ -125,7 +129,9 @@ class UserSet(CurdViewSet):
     @notcheck
     @action(['post', 'get'])
     def impersonate(self, request, *argv, **kwargs):
-        """切换其他管理员,方便调试"""
+        """切换其他管理员
+        方便调试
+        """
         if request.REQUEST.get('change_previous') and request.session.get('previous_user_id'):
             request.session['user_id'] = request.session['previous_user_id']
             del request.session['previous_user_id']

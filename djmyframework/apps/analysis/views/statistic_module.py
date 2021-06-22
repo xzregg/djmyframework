@@ -7,7 +7,7 @@ import re
 
 import MySQLdb
 from django.db import connections
-from ..models.query import SqlAnalysis
+from ..models.query import SqlBuilder
 
 from ..models.statistic import Statistic
 from framework.utils import convert_to_datetime
@@ -46,13 +46,13 @@ def close_old_connections():
         conn.close_if_unusable_or_obsolete()
 
 
-class StatisticAnalysis(SqlAnalysis):
+class StatisticBuilder(SqlBuilder):
 
     def __init__(self, sm, statistic_model, server_model=None):
         self.statistic = statistic_model
         self.server_model = server_model
         self.sm = sm
-        super(StatisticAnalysis, self).__init__(
+        super(StatisticBuilder, self).__init__(
                 self.statistic.sql, self.sm.params)
         self.prepare_param()
 
@@ -81,7 +81,7 @@ class StatisticAnalysis(SqlAnalysis):
                     'statistic_name', reverse=False)
             for k, v in statistic_names.iteritems():
                 self.query_sql = self.query_sql.replace('<<%s>>' % v, str(k))
-        return super(StatisticAnalysis, self).query_sql_handle()
+        return super(StatisticBuilder, self).query_sql_handle()
 
 
 class StatisticExcute(object):
@@ -199,6 +199,7 @@ class StatisticManager(object):
                 id__in=statistic_ids) if statistic_ids else Statistic.objects.all()
         self.statistics = self.statistics.filter(is_auto_execute=1)
         self.statistic_ids = [str(x) for x in statistic_ids if x]
+        # todo
         from ..models import Server
         self.servers = Server.objects.filter(
                 id__in=server_ids) if server_ids else Server.objects.filter(status__gte=0)
@@ -243,7 +244,7 @@ class StatisticManager(object):
                 query_conn = server_model.mysql_conn(from_read_db=True)
                 for statisti_model in self.server_statistic_objs:
                     try:
-                        statistic_analysis = StatisticAnalysis(
+                        statistic_analysis = StatisticBuilder(
                                 self, statisti_model, server_model)
                         statistic_excute = StatisticExcute(
                                 query_conn, statistic_analysis, self)
@@ -270,7 +271,7 @@ class StatisticManager(object):
                 self.error_server_ids.append(server_model.id)
 
         for ss in self.server_statistic_objs:
-            ssa = StatisticAnalysis(self, ss)
+            ssa = StatisticBuilder(self, ss)
             # 检查mysql链接是否失效
             close_old_connections()
             new_ss = Statistic.objects.get(id=ss.id)
@@ -288,7 +289,7 @@ class StatisticManager(object):
         self.server_count = 0
         for statisti_model in self.center_statistic_objs:
             try:
-                statistic_analysis = StatisticAnalysis(
+                statistic_analysis = StatisticBuilder(
                         self, statisti_model, None)
                 query_conn = get_center_conn()
                 statistic_excute = StatisticExcute(
@@ -304,7 +305,7 @@ class StatisticManager(object):
         for ss in self.center_statistic_objs:
             # 检查mysql链接是否失效
             close_old_connections()
-            ssa = StatisticAnalysis(self, ss)
+            ssa = StatisticBuilder(self, ss)
             new_ss = Statistic.objects.get(id=ss.id)
             new_ss.last_exec_time = datetime.datetime.now()
             new_ss.result_data = '[%s - %s]' % (ssa.sdate_str, ssa.edate_str)

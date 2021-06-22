@@ -27,7 +27,7 @@ class TestSettingOptions(BaseTestCase):
             c = SettingOptions('b', 'alias')
 
         S1 = SettingOptions('s1', 'test setttings1', 'S1', 'group1', [(2, 3)])
-        S2 = SettingOptions('s2', 'test setttings1', 'S2', 'group1', [(2, 3)])
+        S2 = SettingOptions([1, 3, 32], 'test setttings1', 'S2', 'group1', [(2, 3)])
 
         S1.set_value('123')
         S2.set_value([1, 3, 32])

@@ -25,7 +25,8 @@ _logger = logging.getLogger(__file__)
 
 
 class Menu(BaseModel):
-    """菜单模型
+    """
+        菜单模型
     """
 
     parent_id = models.IntegerField(_('父节点id'), default=0)

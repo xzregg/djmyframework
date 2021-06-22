@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 查询类模型
 #
+import copy
 import json
 import re
 import time
@@ -10,43 +11,38 @@ from django.db import models
 
 from framework.models import BaseModel
 from framework.translation import _
-from log_def.models import DictDefine, LogDefine
-from framework.utils import import_func, trace_msg
+from framework.utils import import_func, ObjectDict, trace_msg
 from framework.utils.cache import CacheAttribute
 from framework.utils.myenum import Enum
+from log_def.models import DictDefine, LogDefine
 
 
+class SqlMarkConfig(ObjectDict):
+    mark_name: str
+    name: str
+    multiple: bool
+    single: bool # 是否单选
+    fixed: bool  # 是否定值
+    template: bool # 模板
+    context_func: lambda x: x # 模板上下文
+    order_num:int
 
-class SqlAnalysis(object):
-    '''sql解析
-    @param TAG_FORMAT: 默认的标签外围
-    @param params:  字典 一键一列表 例如reuqest.POST
-    '''
-    TAG_FORMAT = '{{%s}}'
 
-    class MarkConfig(object):
-        mark_name: str
-        name: str
-        multiple: bool
-        single: bool
-        fixed: bool
-        template: bool
-        context_func: lambda x: x
-
+class SqlMarkManager(object):
     mark_map = OrderedDict({
-            "game_alias"      : {"name"        : "game_alias", "multiple": False,
-                                 'template'    : 'sdk_center/widgets/game_alias_select2.html',
-                                 'context_func': 'sdk_center.views.widgets.get_game_alias_dict'},  # 游戏代号
-            "game_aliass"     : {"name"        : "game_alias", "multiple": True,
-                                 'template'    : 'sdk_center/widgets/game_alias_dialog.html',
-                                 'context_func': 'sdk_center.views.widgets.get_game_alias_dict'},  # 多个游戏代号
-
-            "server_id"       : {"name"        : "server_id", "multiple": False,
-                                 'template'    : 'game_manage/widgets/group_server_select.html',
-                                 'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 服务器ID替换
-            "server_ids"      : {"name"        : "server_id", "multiple": True,
-                                 'template'    : 'game_manage/widgets/group_server_dialog.html',
-                                 'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 多个服务器ID替换
+            # "game_alias"      : {"name"        : "game_alias", "multiple": False,
+            #                      'template'    : 'sdk_center/widgets/game_alias_select2.html',
+            #                      'context_func': 'sdk_center.views.widgets.get_game_alias_dict'},  # 游戏代号
+            # "game_aliass"     : {"name"        : "game_alias", "multiple": True,
+            #                      'template'    : 'sdk_center/widgets/game_alias_dialog.html',
+            #                      'context_func': 'sdk_center.views.widgets.get_game_alias_dict'},  # 多个游戏代号
+            #
+            # "server_id"       : {"name"        : "server_id", "multiple": False,
+            #                      'template'    : 'game_manage/widgets/group_server_select.html',
+            #                      'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 服务器ID替换
+            # "server_ids"      : {"name"        : "server_id", "multiple": True,
+            #                      'template'    : 'game_manage/widgets/group_server_dialog.html',
+            #                      'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 多个服务器ID替换
 
             "server_name"     : {"name": "server_name", "multiple": False},  # 服务器名
             "master_id"       : {"name": "master_id", "multiple": False},  # 母服ID
@@ -54,46 +50,59 @@ class SqlAnalysis(object):
             "sdate"           : {"name": "sdate"},  # 开始时间
             "edate"           : {"name": "edate"},  # 结束时间
 
-            "channel"         : {"name"        : "channel", "multiple": False, 'type': 'str',
-                                 'template'    : 'sdk_center/widgets/agent_channel_alias_select.html',
-                                 'context_func': 'sdk_center.views.widgets.get_agent_channels_dict'},  # 渠道标识
-            "channels"        : {"name"        : "channel", "multiple": True, 'type': 'str',
-                                 'template'    : 'sdk_center/widgets/agent_channel_alias_dialog.html',
-                                 'context_func': 'sdk_center.views.widgets.get_agent_channels_dict'},  # 渠道标识列表
+            # "channel"         : {"name"        : "channel", "multiple": False, 'type': 'str',
+            #                      'template'    : 'sdk_center/widgets/agent_channel_alias_select.html',
+            #                      'context_func': 'sdk_center.views.widgets.get_agent_channels_dict'},  # 渠道标识
+            # "channels"        : {"name"        : "channel", "multiple": True, 'type': 'str',
+            #                      'template'    : 'sdk_center/widgets/agent_channel_alias_dialog.html',
+            #                      'context_func': 'sdk_center.views.widgets.get_agent_channels_dict'},  # 渠道标识列表
 
-            "first_channel"   : {"name"        : "channel", "multiple": True, 'type': 'str',
-                                 'template'    : 'sdk_center/widgets/agent_alias.html',
-                                 'context_func': 'sdk_center.views.widgets.get_agent_dict'},  # 渠道标识列表
-            "plan_channel"    : {"name"        : "channel", "multiple": True, 'type': 'str',
-                                 'template'    : 'sdk_center/widgets/plan_agent_channel.html',
-                                 'context_func': 'sdk_center.views.widgets.get_agent_channels_dict'},  # 渠道标识
+            # "first_channel"   : {"name"        : "channel", "multiple": True, 'type': 'str',
+            #                      'template'    : 'sdk_center/widgets/agent_alias.html',
+            #                      'context_func': 'sdk_center.views.widgets.get_agent_dict'},  # 渠道标识列表
+            # "plan_channel"    : {"name"        : "channel", "multiple": True, 'type': 'str',
+            #                      'template'    : 'sdk_center/widgets/plan_agent_channel.html',
+            #                      'context_func': 'sdk_center.views.widgets.get_agent_channels_dict'},  # 渠道标识
 
             "package"         : {"name": "package", "multiple": True, 'type': 'str'},  # 渠道标识
             "media"           : {"name": "media", "multiple": True, 'type': 'str'},  # 媒体账号
 
             "sdk_code"        : {"name": "sdk_code"},  # 渠道代号
 
-            "channel_id"      : {"name"        : "channel_id", "multiple": False,
-                                 'template'    : 'game_manage/widgets/agent_channel_select.html',
-                                 'context_func': 'game_manage.views.widgets.get_agent_channels_dict'},  # 渠道id
-            "channel_ids"     : {"name"        : "channel_id", "multiple": True,
-                                 'template'    : 'game_manage/widgets/agent_channel_dialog.html',
-                                 'context_func': 'game_manage.views.widgets.get_agent_channels_dict'},  # 渠道id
+            # "channel_id"      : {"name"        : "channel_id", "multiple": False,
+            #                      'template'    : 'game_manage/widgets/agent_channel_select.html',
+            #                      'context_func': 'game_manage.views.widgets.get_agent_channels_dict'},  # 渠道id
+            # "channel_ids"     : {"name"        : "channel_id", "multiple": True,
+            #                      'template'    : 'game_manage/widgets/agent_channel_dialog.html',
+            #                      'context_func': 'game_manage.views.widgets.get_agent_channels_dict'},  # 渠道id
 
             "kouliang_rate"   : {"name": "kouliang_rate"},
             "min_kouliang_num": {"name": "min_kouliang_num"},
-            "game_server_id"  : {"name"    : "game_server_id", "multiple": False,
-                                 'template': 'sdk_center/widgets/game_server_alias.html'},  # 区服ID替换
-            "game_server_ids" : {"name"    : "game_server_id", "multiple": True,
-                                 'template': 'sdk_center/widgets/game_server_alias.html'},  # 多个区服ID替换
+            # "game_server_id"  : {"name"    : "game_server_id", "multiple": False,
+            #                      'template': 'sdk_center/widgets/game_server_alias.html'},  # 区服ID替换
+            # "game_server_ids" : {"name"    : "game_server_id", "multiple": True,
+            #                      'template': 'sdk_center/widgets/game_server_alias.html'},  # 多个区服ID替换
             "agent_name"      : {"name": "agent_name"},  # 平台名
             'platform_id'     : {"name": "platform_id", "multiple": False},  # 游戏平台
             'platform_ids'    : {"name": "platform_id", "multiple": True},
-            'user_id'        : {"name": "user_id", "multiple": False},  # 管理员id
-            'admin_id': {"name": "admin_id", "multiple": False},  # 管理员id
+            'user_id'         : {"name": "user_id", "multiple": False},  # 管理员id
+            'admin_id'        : {"name": "admin_id", "multiple": False},  # 管理员id
             'is_root'         : {"name": "is_root", "multiple": False},  # 是否超级管理员
             'is_manager'      : {"name": "is_manager", "multiple": False}  # 是否管理员
     })
+
+    @classmethod
+    def register_mark(cls, sql_mark_config):
+        cls.mark_map[sql_mark_config.mark_name] = sql_mark_config
+
+
+class SqlBuilder(object):
+    '''sql
+    @param TAG_FORMAT: 默认的标签外围
+    @param params:  字典 一键一列表 例如reuqest.POST
+    '''
+    TAG_FORMAT = '{{%s}}'
+
 
     def __init__(self, source_sql, params):
         '''初始化
@@ -104,12 +113,13 @@ class SqlAnalysis(object):
         self.params = params
         self.order_str = ''
         self.limit_str = ''
+        self.mark_map = copy.copy(SqlMarkManager.mark_map)
 
     def query_sql_handle(self, sql=''):
         '''查询sql转换
         '''
         values_list = []
-        for mark_name, config in self.mark_map.items():
+        for mark_name, config in SqlMarkManager.mark_map.items():
             if self.has_mark(mark_name):  # sql存在这个标签
                 param_name = config['name']
                 value = self.get_param_value(param_name, config)
@@ -222,8 +232,7 @@ class SqlAnalysis(object):
         return import_func(self.mark_map[mark_name]['context_func'])
 
 
-
-class QueryAnalysis(SqlAnalysis):
+class QueryAnalysis(SqlBuilder):
 
     def __init__(self, query_model, params):
         self.query = query_model

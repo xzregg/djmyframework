@@ -42,6 +42,7 @@ def statistic_list(request, log_type=0):
         q = q & Q(log_type=log_type)
 
     list_model = Statistic.objects.filter(q)
+    # todo
     #from ..models import Server
     server_id = int(request.GET.get('server_id', '0'))
    # list_server = Server.get_server_list()

@@ -40,8 +40,8 @@ APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
 APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway','dynamic_settings']
-APPS += ['ldap_account']
-APPS += ['svn_admin']
+#APPS += ['ldap_account']
+#APPS += ['svn_admin']
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
 # Quick-start development settings - unsuitable for production
@@ -116,7 +116,7 @@ DRF_DYNAMIC_FIELDS = {'SUPPRESS_CONTEXT_WARNING': True}
 
 
 ############# channels 配置 #############
-CHANNEL_LAYERS = {
+_CHANNEL_LAYERS = {
         "default": {
                 "BACKEND": "channels_redis.core.RedisChannelLayer",
                 "CONFIG" : {
@@ -250,7 +250,7 @@ USE_TZ = False
 ############# CELERY 配置 #############
 # https://docs.celeryproject.org/en/v5.0.5/userguide/configuration.html
 CELERY_TIMEZONE = TIME_ZONE  # 并没有北京时区，与DJANGO TIME_ZONE应该一致
-CELERY_BROKER_URL = 'redis://:123456@127.0.0.1:6379/1'
+_CELERY_BROKER_URL = 'redis://:123456@127.0.0.1:6379/1'
 CELERY_RESULT_BACKEND = 'django-db'
 # CELERY_CACHE_BACKEND = 'django-cache'
 ## 异步任务发送最大重试次数,redis 任务发送错误,重试次数

@@ -26,6 +26,10 @@ class Command(BaseCommand):
                 "--menu", "-m", dest="menu", default='',
                 help="指定 MenuList"
         )
+        parser.add_argument(
+                "--clear", "-clr", dest="clear", action="store_true",default=False,
+                help="清除所有 菜单"
+        )
         parser.add_argument('app_name', nargs='*')
 
     def handle(self, *args, **options):
