@@ -258,8 +258,8 @@ def api_action_judge(*args,**kwargs):
 
 from .utils import DecoratorsPartial
 
-action_get = DecoratorsPartial(api_action_judge, 'get')
-action_post = DecoratorsPartial(api_action_judge, 'post')
+action_get = DecoratorsPartial(api_action_judge, ['get'])
+action_post = DecoratorsPartial(api_action_judge, ['post'])
 action_get_post = DecoratorsPartial(api_action_judge, ['post', 'get'])
 
 api_get = DecoratorsPartial(api_action_judge, 'get')

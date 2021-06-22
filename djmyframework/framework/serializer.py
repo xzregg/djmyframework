@@ -209,7 +209,9 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
         if self.allow_model_fields is not None:
             # 使用 allow_model_fields 限制 django 查询
             allowed = set(self.allow_model_fields)
-            existing = set(self.Meta.model._meta.fields_map.keys())
+            existing = set([f.attname for f in self.Meta.model._meta.fields])
+            #existing = set(self.Meta.model.fields_map.keys())
+            #existing = set(fields.keys())
             for field_name in existing - allowed:
                 fields.pop(field_name, '')
         return fields

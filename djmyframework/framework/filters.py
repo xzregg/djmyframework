@@ -329,7 +329,7 @@ class MyFilterBackend(DjangoFilterBackend):
 
         schema_fields = []
         if filterset_class:
-            if isinstance(model_class,BaseModel):
+            if issubclass(model_class,BaseModel):
                 model_fields_map = model_class.get_fields_map()
 
                 for field_name, field in filterset_class.base_filters.items():
