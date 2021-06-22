@@ -78,6 +78,11 @@ mkdir xxxProject
 cd xxxProject
 djmyframework_init 
 python3 manage.py create_app xxxApp
+python3 manage.py migrate
+python3 manage.py create_root
+python3 manage.py create_role
+python3 manage.py create_menu config.system_menu
+
 ```
 
 #### 创建增删改查
