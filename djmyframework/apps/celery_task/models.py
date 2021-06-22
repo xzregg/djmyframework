@@ -1,3 +1,4 @@
+import timezone_field
 from celery import states, Task
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, SolarSchedule,ClockedSchedule,CrontabSchedule
 from django_celery_results.models import TaskResult
@@ -5,6 +6,7 @@ from django_celery_results.models import TaskResult
 from framework.models import BaseModel, models, BaseModelMixin
 from framework.translation import _
 from framework.utils.cache import CacheAttribute
+
 
 states.PROGRESS = 'PROGRESS'
 

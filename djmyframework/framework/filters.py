@@ -10,17 +10,18 @@ import warnings
 
 import coreapi
 import coreschema
+import timezone_field
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend, filterset, filters
 from rest_framework.filters import OrderingFilter as _OrderingFilter
 from rest_framework.request import Request
 
 from .response import RspError
 from .serializer import s
 from .utils.myenum import Enum
-
+from .models import BaseModel
 
 class OrderingFilter(_OrderingFilter):
     ordering_description = _('排序字段 -xxx 为倒序 如:-id')
@@ -222,6 +223,7 @@ class MyFilterSerializer(s.Serializer):
     pass
 
 
+
 class MyFilterBackend(DjangoFilterBackend):
     """
     # 准确等值
@@ -324,19 +326,25 @@ class MyFilterBackend(DjangoFilterBackend):
 
         filterset_class = self.get_filterset_class(view, queryset)
         model_class = filterset_class.Meta.model
-        model_fields_map = model_class.get_fields_map()
+
         schema_fields = []
         if filterset_class:
-            for field_name, field in filterset_class.base_filters.items():
-                model_field = model_fields_map.get(field_name, models.CharField())
-                schema_fields.append(self.generate_coreschema_from_model_field(field_name, model_field))
-            schema_fields.append(coreapi.Field(
-                    name='fields',
-                    required=False,
-                    location='query',
-                    schema=coreschema.String(
-                            description='需要返回的字段","号隔开:入 fields=id,name,alias,status'
-                    )
-            ))
-            return schema_fields
+            if isinstance(model_class,BaseModel):
+                model_fields_map = model_class.get_fields_map()
+
+                for field_name, field in filterset_class.base_filters.items():
+                    model_field = model_fields_map.get(field_name, models.CharField())
+                    schema_fields.append(self.generate_coreschema_from_model_field(field_name, model_field))
+                schema_fields.append(coreapi.Field(
+                        name='fields',
+                        required=False,
+                        location='query',
+                        schema=coreschema.String(
+                                description='需要返回的字段","号隔开:入 fields=id,name,alias,status'
+                        )
+                ))
+                return schema_fields
         return []
+
+
+filterset.FILTER_FOR_DBFIELD_DEFAULTS[timezone_field.TimeZoneField] = {'filter_class': filters.CharFilter}

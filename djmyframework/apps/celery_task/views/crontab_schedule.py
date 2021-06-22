@@ -18,6 +18,8 @@ class CrontabScheduleSerializer(BaseModelSerializer):
     timezone_alias = s.CharField(source='get_timezone_display',required=False, read_only=True)
     alias = s.SerializerMethodField()
 
+    timezone = s.CharField(required=False)
+
     def get_alias(self, obj):
         return str(obj)
 
@@ -32,6 +34,7 @@ class CrontabScheduleSerializer(BaseModelSerializer):
 class ListCrontabScheduleRspSerializer(PaginationSerializer):
     results = CrontabScheduleSerializer(many=True)
 
+
 @Route('celery_task/crontab_schedule')
 class CrontabScheduleSet(CurdViewSet):
     filter_backends = (MyFilterBackend,OrderingFilter)
@@ -40,9 +43,9 @@ class CrontabScheduleSet(CurdViewSet):
     # 可条件过滤的字段
     filter_fields =  ['id', 'minute', 'hour', 'day_of_week', 'day_of_month', 'month_of_year', 'timezone']
     # 可排序的字段
-    ordering_fields = ['id', 'minute', 'hour', 'day_of_week', 'day_of_month', 'month_of_year', 'timezone']
+    ordering_fields = ['id', 'minute', 'hour', 'day_of_week', 'day_of_month', 'month_of_year','timezone' ]
     # 可以查询字段
-    queryset_fields = ['id', 'minute', 'hour', 'day_of_week', 'day_of_month', 'month_of_year', 'timezone']
+    queryset_fields = ['id', 'minute', 'hour', 'day_of_week', 'day_of_month', 'month_of_year','timezone' ]
 
     model = CrontabSchedule
 

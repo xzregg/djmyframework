@@ -5,6 +5,7 @@ import json
 import re
 from collections import OrderedDict
 
+import timezone_field
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.management.color import no_style
@@ -14,7 +15,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from rest_framework.fields import DictField
+from rest_framework.fields import DictField, CharField
 
 from .utils import json_dumps, ObjectDict, trace_msg
 from .utils.cache import CachedClassAttribute
@@ -564,6 +565,7 @@ class ObjectDictField(models.TextField):
 
 
 serializers.ModelSerializer.serializer_field_mapping[ObjectDictField] = DictField
+serializers.ModelSerializer.serializer_field_mapping[timezone_field.TimeZoneField] = CharField
 
 
 def validate_re(value, pattern='', err_msg=''):

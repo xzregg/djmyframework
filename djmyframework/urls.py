@@ -40,7 +40,7 @@ from django.contrib import admin
 
 urlpatterns = [#url(r'^admin/', admin.site.urls),
                re_path('^[/]?$', import_view(settings.INDEX_VIEW), name='index'),
-               path('docs', include_docs_urls(title='文档')),
+               #path('docs', include_docs_urls(title='文档')),
                re_path(r'^swagger(?P<format>\.json|\.yaml)', notauth(schema_view.without_ui(cache_timeout=0)),
                        name='schema-json'),
                re_path(r'^swagger', notauth(schema_view.with_ui('swagger', cache_timeout=0)),
