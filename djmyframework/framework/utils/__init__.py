@@ -95,6 +95,9 @@ from inspect import isfunction
 
 
 class DecoratorsPartial(object):
+    """
+    语法糖使用装饰器能去掉括号()
+    """
     def __init__(self, decorator_func, *args, **kwargs):
         self.decorator_func = decorator_func
         self.args = args
@@ -106,7 +109,7 @@ class DecoratorsPartial(object):
         else:
             @functools.wraps(self.decorator_func)
             def decorator(func):
-                return self.decorator_func(*args, **kwargs)(func)
+                return self.decorator_func(*(args or self.args), **(kwargs or self.kwargs))(func)
 
             return decorator
 

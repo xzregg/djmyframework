@@ -29,9 +29,14 @@ class TestDecoratorsPartial(TestCase):
         def f2():pass
 
 
+
         @dp('a3')
         def f3():pass
+
+        @dp()
+        def f4(): pass
 
         f1()
         f2()
         f3()
+        f4()

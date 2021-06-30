@@ -8,6 +8,7 @@ from framework.models import BaseModel, JSONField, models
 from framework.translation import _
 from framework.utils import mkdirs
 from framework.utils.myenum import Enum
+from framework.utils import encrypt
 from framework.validators import LetterValidator
 from myadmin.models import User
 from .settings import SVN_AUTH_DB_FILE, SVN_GROUP_DB_FILE, SVN_PASSWORD_DB_FILE, SVN_ROOT
@@ -17,6 +18,11 @@ class SvnUser(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     raw_password = models.CharField(max_length=128, null=False, default='')
 
+    def set_raw_password(self,password_text):
+        self.raw_password = encrypt.encrypt(password_text)
+
+    def get_raw_password(self):
+        return encrypt.decrypt(self.raw_password)
 
 class SvnPath(BaseModel):
     """
@@ -181,7 +187,7 @@ groups-db = {groups_db}
         cls.user_set.clear()
         for svnuser in SvnUser.objects.select_related('user').all():
             user = svnuser.user
-            password_db.set(user_section_name, user.username, svnuser.raw_password)
+            password_db.set(user_section_name, user.username, svnuser.get_raw_password())
             cls.user_set.add(user.username)
         password_db.write(open(SVN_PASSWORD_DB_FILE, "w"))
 
@@ -245,9 +251,9 @@ def user_save_svn(sender, instance, **kwargs):
     if user.status == User.Status.NORMAL:
         if user._password is not None:
             svn_user_model, _ = SvnUser.objects.get_or_create(user=user)
-            svn_user_model.raw_password = user._password
+            svn_user_model.set_raw_password(user._password)
             svn_user_model.save()
-            password_db.set(user_section_name, user.username, svn_user_model.raw_password)
+            password_db.set(user_section_name, user.username, svn_user_model.get_raw_password())
             password_db.write(open(SVN_PASSWORD_DB_FILE, "w"))
     else:
         user_delete_svn(sender, instance)
