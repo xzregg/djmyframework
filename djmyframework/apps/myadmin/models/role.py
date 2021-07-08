@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from framework.models import BaseModel
 from framework.utils.cache import CacheAttribute
 from framework.utils.myenum import Enum
+from ..apps import MyadminConfig
 from .resource import Resource
 
 
@@ -91,6 +92,9 @@ class Role(RoleManagerMixin, BaseModel):
     home_index = models.CharField(_('角色首页'), default='/home', max_length=500)
 
     __resource_ids_cache = None
+
+    class Meta:
+        app_label = MyadminConfig.name
 
     @CacheAttribute
     def type_alias(self):

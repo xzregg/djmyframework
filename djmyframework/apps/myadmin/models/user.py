@@ -20,7 +20,8 @@ from framework.utils.myenum import Enum
 from framework.validators import LetterValidator
 from .resource import Resource, ResourceProxy
 from .role import Role
-
+from ..apps import MyadminConfig
+from framework.utils.log import logger
 
 class UserManagerMixin(object):
     """用户管理者,扩展admin模型的方法
@@ -164,8 +165,8 @@ class UserManagerMixin(object):
         user.status = cls.Status.NORMAL
         user.set_password('123456')
         user.save()
-        print(user.role.all())
-        print('创建相关角色后,请务必删除root账户!')
+
+        logger.info('创建相关角色后,请务必删除root账户!')
         return user
 
 
@@ -201,6 +202,7 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
     session_key = models.CharField(_('会话key'), max_length=40, db_index=True, default='', blank=True, null=False)
 
     class Meta:
+        app_label = MyadminConfig.name
         ordering = ['id']
 
     # # @property
@@ -339,7 +341,7 @@ class UserInfo(BaseModel):
         return self.user.alias
 
     class Meta:
-        pass
+        app_label = MyadminConfig.name
 
 
 class UserOauth(BaseModel):
@@ -354,5 +356,5 @@ class UserOauth(BaseModel):
     other_info = JSONField(verbose_name=_('其他信息'), default='{}')
 
     class Meta:
-        pass
+        app_label = MyadminConfig.name
         # db_table = u'user_oauth'

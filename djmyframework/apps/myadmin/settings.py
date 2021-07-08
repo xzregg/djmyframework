@@ -12,7 +12,7 @@ from framework.translation import _
 
 AUTH_USER_MODEL = 'myadmin.models.user.User'
 
-USE_LDAP_AUTH = SettingOptions(True, _('是否使用LDAP验证'), 'USE_LDAP_AUTH', 'ldap')
+USE_LDAP_AUTH = SettingOptions(False, _('是否使用LDAP验证'), 'USE_LDAP_AUTH', 'ldap')
 
 LDAP_HOST = SettingOptions('ldaps://127.0.0.1:13891', 'LDAP 连接地址', 'LDAP_HOST', 'ldap')
 _LDAP_BASE_DN = 'dc=bigdata,dc=com'

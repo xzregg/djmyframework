@@ -9,8 +9,8 @@ from framework.filters import MyFilterBackend, MyFilterSerializer, OrderingFilte
 from framework.route import Route
 from framework.serializer import BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, PaginationSerializer, s
 from framework.views import action_get_post, CurdViewSet, notcheck, render_to_response, Request
-from myadmin.models import Menu
-from ..models.menu import MenuConfig
+from myadmin.models import Menu, MenuConfig
+
 
 
 class MenuSerializer(BaseModelSerializer):

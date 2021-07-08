@@ -9,6 +9,7 @@ from collections import OrderedDict
 
 from django.db import models
 
+from analysis.apps import AnalysisConfig
 from framework.models import BaseModel
 from framework.translation import _
 from framework.utils import import_func, ObjectDict, trace_msg
@@ -340,6 +341,7 @@ class Query(BaseModel):
     __cache_config = None
 
     class Meta:
+        app_label = AnalysisConfig.name
         ordering = ('id',)
 
     @CacheAttribute

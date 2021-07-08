@@ -20,6 +20,7 @@ from framework.models import BaseModel
 from framework.utils import trace_msg
 from framework.utils.bitmap import BitMap
 from framework.views import Request
+from ..apps import MyadminConfig
 
 
 class AbsResourceBackend(object):
@@ -236,6 +237,7 @@ class Resource(BaseModel):
     has_all_resosurce_mark = '__all__'
 
     class Meta:
+        app_label = MyadminConfig.name
         unique_together = (
                 ('name', 'role_id'),  # 联合唯一
         )

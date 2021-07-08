@@ -123,8 +123,7 @@ class DateEncoder(json.JSONEncoder):
 
 class MyJsonEncoder(JSONEncoder):
     def default(self, obj):
-        if hasattr(obj, '__getstate__'):
-            return obj.__getstate__()
+
         if isinstance(obj, models.Model):
             if hasattr(obj, 'to_dict'):
                 return obj.to_dict()
@@ -132,7 +131,8 @@ class MyJsonEncoder(JSONEncoder):
             return [m.to_dict() if hasattr(m, 'to_dict') else m for m in obj]
         elif isinstance(obj, serializers.Serializer):
             return obj.data
-
+        if hasattr(obj, '__getstate__'):
+            return obj.__getstate__()
         try:
             return super().default(obj)
         except TypeError as e:

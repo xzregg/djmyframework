@@ -9,7 +9,7 @@ from framework.serializer import BaseModelSerializer, DataSerializer, ListIntFie
 from framework.translation import _
 from framework.views import action, action_get, BaseViewSet, JsonResponse, notcheck, ObjectDict, render_to_response, \
     Request
-from ..models import AssociatedTaskResult, states
+from celery_task.models import AssociatedTaskResult, states
 
 
 class CeleryTaskSerializer(BaseModelSerializer):

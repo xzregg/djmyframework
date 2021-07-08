@@ -133,10 +133,10 @@ LOGGING = {
 
         },
 
-        # =========== formatters start =================
+        # =========== formatters start ================= https://docs.python.org/2/library/logging.html
         'formatters'              : {
                 'format01': {
-                        'format' : '%(asctime)s [%(levelname)s] [%(name)s] [pid:%(process)d] [%(filename)s:%(lineno)d] %(message)s',
+                        'format' : '%(asctime)s [%(levelname)s] [%(name)s] [pid:%(process)d] [%(pathname)s:%(lineno)d] %(message)s',
                         'datefmt': '[%Y-%m-%dT%H:%M:%S%z]'  # ISO 8601
                 },
                 'format02': {

@@ -10,6 +10,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from framework.models import BaseModel
+from ..apps import MyadminConfig
 
 
 class OperateLog(BaseModel):
@@ -26,4 +27,5 @@ class OperateLog(BaseModel):
 
 
     class Meta:
+        app_label = MyadminConfig.name
         ordering = ['id']

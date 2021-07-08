@@ -13,6 +13,8 @@ import json
 import time
 
 from django.db import connection, models
+
+from analysis.apps import AnalysisConfig
 from .log import LogDefine
 from framework.utils import datetime_to_str
 from framework.translation import _
@@ -117,6 +119,7 @@ class Statistic(BaseModel):
         return new_json
 
     class Meta:
+        app_label = AnalysisConfig.name
         ordering = ('-last_exec_time',)
 
 
@@ -197,6 +200,7 @@ class Result(models.Model):
         return datetime2.replace(day=datetime1.day).strftime("%Y-%m")
 
     class Meta:
+        app_label = AnalysisConfig.name
         db_table = u'result'
         ordering = ('-id',)
 
@@ -207,4 +211,5 @@ class QueryResult(models.Model):
     statistic = models.ManyToManyField(Statistic)
 
     class Meta:
+        app_label = AnalysisConfig.name
         db_table = u'query_result'

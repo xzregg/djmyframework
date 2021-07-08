@@ -86,6 +86,14 @@ if 'test' in sys.argv:
             'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME'  : ':memory'
+            },
+            'read': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME'  : ':memory'
+            },
+            'write': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME'  : ':memory'
             }
     }
     CHANNEL_LAYERS = {

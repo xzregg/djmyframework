@@ -5,9 +5,4 @@
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
 # @Desc    : 
-from unittest import TestCase
 
-
-class TestMenuSet(TestCase):
-    def test_list(self):
-        self.fail()

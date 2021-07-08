@@ -252,7 +252,7 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
             try:
 
                 # ManyRelatedField 取消写入数据验证, 防止每次都去查询数据库
-                if isinstance(field, ManyRelatedField) and isinstance(field.child_relation, PrimaryKeyRelatedField):
+                if isinstance(field, ManyRelatedField) and isinstance(field.child_relation, PrimaryKeyRelatedField) and primitive_value is not empty:
                     validated_value = [ int(i) for i in primitive_value ]
                 else:
                     validated_value = field.run_validation(primitive_value)

@@ -321,7 +321,7 @@ class MyFilterBackend(DjangoFilterBackend):
         except Exception:
             queryset = view.model.objects.filter(id=-1)
             warnings.warn(
-                    "{} is not compatible with schema generation".format(view.__class__)
+                    "%s is not compatible with schema generation" % view.__class__
             )
 
         filterset_class = self.get_filterset_class(view, queryset)

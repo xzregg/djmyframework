@@ -7,7 +7,7 @@
 # @Desc    :
 
 from unittest import TestCase
-
+from framework.utils.log import logger
 
 class TestSettingOptions(TestCase):
 
@@ -63,10 +63,10 @@ class TestSettingOptions(TestCase):
         a.lower()
         if a:
             print(3)
-        print(type(a))
-        print(isinstance(a, int))
-        print(a.p)
-        print(a.pp())
+        logger.info(type(a))
+        logger.info(isinstance(a, int))
+        logger.info(a.p)
+        logger.info(a.pp())
         self.assertTrue(isinstance(a,str))
         self.assertTrue(isinstance(b, int))
         self.assertTrue(isinstance(d, dict))

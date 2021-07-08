@@ -4,6 +4,8 @@
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
 # @Desc    : 系统 :管理员,权限,角色相关模型
+
+from __future__ import absolute_import
 import functools
 import logging
 import re
@@ -20,7 +22,7 @@ from framework.enums import BoolEnum
 from framework.models import BaseModel
 from framework.utils import ObjectDict
 from framework.utils.single_process import SingleProcessDeco
-
+from ..apps import MyadminConfig
 _logger = logging.getLogger(__file__)
 
 
@@ -43,6 +45,7 @@ class Menu(BaseModel):
     is_log = models.IntegerField(_('记录日志'), default=BoolEnum.No, choices=BoolEnum.member_list())
 
     class Meta:
+        app_label = MyadminConfig.name
         ordering = ['parent_id', 'order']
 
     @classmethod

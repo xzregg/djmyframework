@@ -6,7 +6,7 @@ from django_celery_results.models import TaskResult
 from framework.models import BaseModel, models, BaseModelMixin
 from framework.translation import _
 from framework.utils.cache import CacheAttribute
-
+from .apps import CeleryTaskConfig
 
 states.PROGRESS = 'PROGRESS'
 
@@ -59,6 +59,9 @@ class AssociatedTaskResult(BaseModel):
     a_type_name = models.CharField(max_length=50, verbose_name=_('关联作业类型'), db_index=True)
 
     done_status = [states.SUCCESS, states.FAILURE, states.REJECTED, states.REVOKED, states.IGNORED]
+
+    class Meta:
+        app_label = CeleryTaskConfig.name
 
     @classmethod
     def create(cls, *args, **kwargs):

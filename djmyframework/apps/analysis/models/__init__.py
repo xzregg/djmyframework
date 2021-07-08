@@ -7,7 +7,7 @@
 # @Desc    : 
 
 from django.utils.translation import gettext_lazy as _
-from .query import Query
-from .statistic import Statistic
+#from .query import Query
+#from .statistic import Statistic
 
 
