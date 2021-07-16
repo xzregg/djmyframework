@@ -20,7 +20,7 @@ DEBUG = True
 SECRET_KEY = '%s'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-APPS = ['djmyframework']
+APPS =  ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway','dynamic_settings']
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 
 from djmyframework.settings import *

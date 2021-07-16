@@ -39,7 +39,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
-APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway','dynamic_settings']
+APPS = settings.APPS or ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway','dynamic_settings']
 #APPS += ['ldap_account']
 #APPS += ['svn_admin']
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
