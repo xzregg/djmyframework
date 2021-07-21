@@ -47,3 +47,4 @@ django_user_agents
 python-ldap
 flower==0.9.7
 etcd3
+djorm-ext-pool

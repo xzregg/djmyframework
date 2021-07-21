@@ -80,7 +80,7 @@ INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', '
 
 APPS = sort_set_list(APPS + settings.APPS)
 
-INSTALLED_APPS = [#'djorm_pool',
+INSTALLED_APPS = ['djorm_pool',
                   'framework',
                   'channels',
                   # 'django.contrib.admin',
