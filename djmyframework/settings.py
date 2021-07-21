@@ -39,9 +39,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
-APPS = settings.APPS or ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway','dynamic_settings']
-#APPS += ['ldap_account']
-#APPS += ['svn_admin']
+APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway','dynamic_settings','ldap_account','svn_admin']
+
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
 # Quick-start development settings - unsuitable for production
@@ -276,6 +275,7 @@ MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media/')
 BASE_DIR = settings.BASE_DIR
 SECRET_KEY = settings.SECRET_KEY
 APPS_ROOT = settings.APPS_ROOT
+APPS = settings.APPS
 
 ######### 环境判断 #########
 if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:

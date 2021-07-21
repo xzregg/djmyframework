@@ -96,3 +96,9 @@ python3  manage.py create_curd {app_name}.{Model}
  ```
  python manage.py collectstatic
  ```
+ 
+ #### 启动服务
+   参看 supervisorctl 用法
+ ```
+ mysupervisorctl start
+ ```
