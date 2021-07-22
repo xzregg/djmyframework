@@ -30,7 +30,7 @@ DATABASES = {
 
                 'PORT'    : '3306',
 
-                'OPTIONS' : {'isolation_level': None}
+                'OPTIONS' : {'isolation_level': None, 'charset': 'utf8mb4'}
         },
         'read'   : {
 
@@ -42,7 +42,7 @@ DATABASES = {
                 'HOST'    : '10.19.200.185',
 
                 'PORT'    : '3306',
-                'OPTIONS' : {'isolation_level': None}
+                'OPTIONS' : {'isolation_level': None, 'charset': 'utf8mb4'}
         },
         'write'  : {
 
@@ -52,7 +52,7 @@ DATABASES = {
                 'PASSWORD': '123456',
                 'HOST'    : '10.19.200.185',
                 'PORT'    : '3306',
-                'OPTIONS' : {'isolation_level': None}
+                'OPTIONS' : {'isolation_level': None, 'charset': 'utf8mb4'}
 
         }
 

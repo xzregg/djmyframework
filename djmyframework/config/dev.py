@@ -13,13 +13,10 @@ DEBUG = True
 import logging
 import os
 import sys
-from django.contrib.auth import  authenticate
-
 
 DEBUG = True
 
 from django.conf import settings
-
 
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
@@ -38,23 +35,24 @@ CHANNEL_LAYERS = {
 }
 
 _SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
-                            ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
-                            user=None, password=None, grpc_options=None,
-                            prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
+                             ca_cert=None, cert_key=None, cert_cert=None, timeout=None,
+                             user=None, password=None, grpc_options=None,
+                             prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
 _SETTINGS_LOADER_REDIS = dict(url='redis://:123456@127.0.0.1:6379/5', decode_responses=True, socket_connect_timeout=3,
-                             prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
+                              prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
 STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
 STATIC_ROOT = None
 DATABASES = {
         'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME'  : os.path.join(settings.BASE_DIR, 'sqlite3.db'),
-                'TEST'  : {
+                'ENGINE' : 'django.db.backends.sqlite3',
+                'NAME'   : os.path.join(settings.BASE_DIR, 'sqlite3.db'),
+                'TEST'   : {
                         'NAME': os.path.join(settings.BASE_DIR, 'test.db.sqlite3.db')
 
-                }
+                },
+                'OPTIONS': {'isolation_level': None }
         },
 
 }
@@ -87,11 +85,11 @@ if 'test' in sys.argv:
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME'  : ':memory'
             },
-            'read': {
+            'read'   : {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME'  : ':memory'
             },
-            'write': {
+            'write'  : {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME'  : ':memory'
             }
@@ -105,25 +103,25 @@ if 'test' in sys.argv:
 DATABASES['read'] = DATABASES['default'].copy()
 DATABASES['write'] = DATABASES['default'].copy()
 
-#INSTALLED_APPS += ['debug_toolbar']
+# INSTALLED_APPS += ['debug_toolbar']
 INTERNAL_IPS = [
         '*',
         '127.0.0.1'
 ]
 
-#MIDDLEWARE.insert(len(MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+# MIDDLEWARE.insert(len(MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 DEBUG_TOOLBAR_CONFIG = {
         'JQUERY_URL': '',
 }
 
-#REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
-#REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
+# REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
+# REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
 logging.warning('This env is dev,DEBUG = True')
 logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
-
 # 日志打印 sql
 from . import logging_config
+
 logging_config.LOGGING['loggers']['django.db.backends'] = {
         'handlers' : ['console'],
         'propagate': False,

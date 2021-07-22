@@ -146,10 +146,14 @@ class SettingOptionsManager(SingleInstance):
     settings_options_map = {}
     loader: DefaultsSettingsLoader = None
 
+
     def genrate_options_key(self, options):
         return '%s/%s' % (options.group, options.name)
 
     def get_value(self, name):
+        # 防止 一开始 settings 未初始化
+        if self.loader is None:
+            return
         options: SettingOptions = self.settings_options_map.get(name, None)
         if options is not None:
             name = self.genrate_options_key(options)

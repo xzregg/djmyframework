@@ -8,5 +8,6 @@ global-exclude __pycache__
 global-exclude *.py[co]
 global-exclude *.log
 global-exclude *.db
+global-exclude *.rdb
 global-exclude *.tmp
 global-exclude static/upload

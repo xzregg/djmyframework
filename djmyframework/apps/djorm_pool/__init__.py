@@ -118,7 +118,7 @@ def patch_sqlite3():
 def patch_all():
     patch_mysql()
     patch_postgresql()
-    patch_sqlite3()
+
 
 
 patch_all()
