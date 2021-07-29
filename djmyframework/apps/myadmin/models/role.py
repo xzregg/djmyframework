@@ -83,7 +83,7 @@ class Role(RoleManagerMixin, BaseModel):
     name = models.CharField('标识', max_length=50, unique=True, db_index=True,
                             validators=[RegexValidator(r'^[a-z][\d\w_]+$', _('字母组合,符合^[a-z][\d\w_]+$'))])
 
-    parent = models.ForeignKey(to='self', verbose_name=_("上级"), on_delete=models.DO_NOTHING, null=True)
+    parent = models.ForeignKey(to='self', verbose_name=_("上级"), on_delete=models.SET_NULL, null=True)
     resource = models.ManyToManyField(Resource, verbose_name=_('资源对象'), blank=True)
     type = models.IntegerField(_('类型'), default=1, choices=RoleType.member_list())
     remark = models.TextField(_('描述'), default='', max_length=1000, blank=True)

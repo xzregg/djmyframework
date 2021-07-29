@@ -280,7 +280,7 @@
                     e.preventDefault();
                     this.form.validateFields((err, values) => {
                         if (!err) {
-
+                            values['default_group']= getQueryParamMap()['default_group']
                             $.post('', values, (rsp) => {
                                 if (rsp.code == 0) {
                                     this.$message.success(rsp.msg);

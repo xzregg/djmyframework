@@ -13,12 +13,12 @@ from django.utils.translation import gettext_lazy as _
 
 from framework.route import Route
 from framework.serializer import ParamsSerializer, s
-from .. import settings
 from framework.utils import TIMEFORMAT
 from framework.validators import LetterValidator, PasswordValidator
 from framework.views import api_view, notauth, notcheck, render_to_response, Request, Response, RspError, \
     RspErrorEnum, swagger_auto_schema
-from myadmin.models import User
+from myadmin.models import Role, User
+from .. import settings
 
 
 @notcheck
@@ -212,6 +212,7 @@ class RegisterAdminReqSerializer(ParamsSerializer):
     password1 = s.CharField(label=_('密码'), required=True, validators=[PasswordValidator])
     password2 = s.CharField(label=_('确认密码'), required=True, validators=[PasswordValidator])
     verify = s.CharField(label=_('验证码'), required=True)
+    default_group = s.CharField(label=_('默认组'), required=False)
 
     class Meta:
         model = UserInfo
@@ -249,6 +250,10 @@ def register(request: Request, **kwargs):
         user_info_model.qq = params.qq
         user_info_model.phone = params.phone
         user_info_model.save()
+        if settings.ALLOW_REGISTER_ROLE_CHOICE and params.default_group:
+            role = Role.objects.filter(type=Role.RoleType.GROUP, name=params.default_group).first()
+            if role:
+                user_model.role.add(role)
         User.login_user(request, user_model)
         return Response(msg=_('注册成功'))
     return render_to_response('myadmin/register.html', locals())

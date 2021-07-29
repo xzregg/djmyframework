@@ -12,7 +12,7 @@ from .models import AccessDomain
 
 
 class AccessDomainModelResource(RelaRtionModelResource):
-    label = _('访问域')
+    label = _('LDAP 访问域')
     name = 'access_domain'
     model_class = AccessDomain
     template = RelaRtionModelResource.default_template

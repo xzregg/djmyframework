@@ -12,6 +12,9 @@ from framework.translation import _
 
 AUTH_USER_MODEL = 'myadmin.models.user.User'
 
+ALLOW_REGISTER = SettingOptions(False, _('是否允许注册'), 'ALLOW_REGISTER','System')
+ALLOW_REGISTER_ROLE_CHOICE = SettingOptions(False, _('注册时能否选择角色'), 'ALLOW_REGISTER_CHOICE','System')
+
 USE_LDAP_AUTH = SettingOptions(False, _('是否使用LDAP验证'), 'USE_LDAP_AUTH', 'ldap')
 
 LDAP_HOST = SettingOptions('ldaps://127.0.0.1:13891', 'LDAP 连接地址', 'LDAP_HOST', 'ldap')

@@ -357,6 +357,9 @@
                         return [
                             '<a href="/myadmin/role/edit?id=' + row.id + '" class="btn btn-xs btn-info openDialog">{{ _('编辑') }}</a> ',
                             '<a href="/myadmin/role/edit?id=' + row.id + '&is_copy=1" class="btn btn-default btn-xs openDialog">{{ _('复制') }}</a> ',
+                            {% if settings.ALLOW_REGISTER and settings.ALLOW_REGISTER %}
+                            '<a href="{{ url("myadmin.register") }}?default_group='+ row.name + '" target="_blank" class="btn btn-xs btn-default "> {{ _("注册页面") }}</a>'
+                            {% endif %}
                         ].join('');
                     },
                 },
