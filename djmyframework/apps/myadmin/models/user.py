@@ -225,6 +225,11 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
     def role_alias(self):
         return [r.alias for r in self.get_roles()]
 
+    @property
+    def home_index(self):
+        for role in self.get_roles():
+            return role.home_index
+
     def get_ldap_ssha_encrypt_password(self, password_str):
         return passlib.hash.ldap_salted_sha1.encrypt(password_str)
 
