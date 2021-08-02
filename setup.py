@@ -21,7 +21,7 @@ if sys.argv[-1] == 'publish':
     shutil.rmtree('djmyframework.egg-info')
     sys.exit()
 
-long_description = open('./djmyframework/README.md').read()
+long_description = open('./README.md').read()
 from djmyframework import __version__
 install_requires = [l.strip() for l in open('./requirements.txt').readlines() if l.strip()]
 setuptools.setup(

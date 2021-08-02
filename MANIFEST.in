@@ -1,5 +1,7 @@
 # https://www.osgeo.cn/python-packaging/guides/using-manifest-in.html
 
+include requirements.txt
+include README.md
 graft djmyframework
 global-exclude tmp/*
 global-exclude logs/

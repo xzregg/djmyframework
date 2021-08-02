@@ -78,7 +78,7 @@ def main():
     os.environ.setdefault('INET_HTTP_SERVER_USERNAME', INET_HTTP_SERVER_USERNAME)
     os.environ.setdefault('INET_HTTP_SERVER_PASSWORD', INET_HTTP_SERVER_PASSWORD)
     os.environ.setdefault('PROJECT_ROOT', pwd)
-
+    action = ''
     if len(sys.argv) > 1:
         action = sys.argv[1]
         if len(sys.argv) > 2:

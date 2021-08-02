@@ -34,7 +34,7 @@ pycharm -> project structure -> 设置apps目录为source
  
 ### 新建表结构
 ```bash
-python manage.py migrate 
+python3 manage.py migrate 
 ```
 
 ## 前端使用库
