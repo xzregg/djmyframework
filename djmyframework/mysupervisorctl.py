@@ -30,8 +30,8 @@ default_supervisor_config = dict(
         stdout_events_enabled='false',
         loglevel='warn',
         stopsignal='TERM',
-#        killasgroup='true',
-#        stopasgroup='true'
+        #        killasgroup='true',
+        #        stopasgroup='true'
 )
 
 
@@ -79,6 +79,7 @@ def main():
     os.environ.setdefault('INET_HTTP_SERVER_PASSWORD', INET_HTTP_SERVER_PASSWORD)
     os.environ.setdefault('PROJECT_ROOT', pwd)
     action = ''
+
     if len(sys.argv) > 1:
         action = sys.argv[1]
         if len(sys.argv) > 2:
@@ -99,12 +100,16 @@ def main():
         argv_str = ' '.join(sys.argv[2:])
         cmd = '%s %s %s' % (supervisorctl_cmd, action, argv_str)
 
+    genrate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action == 'update')
+
     is_supervisord_running = os.system(supervisorctl_cmd + ' pid') == 0
     if not is_supervisord_running and action != 'shutdown':
         print('supervisord not running,start now!\n%s' % supervisord_cmd)
-        os.system(supervisord_cmd)
-
-    genrate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action == 'update')
+        nodaemon = ''
+        # -n/--nodaemon -- run in the foreground (same as 'nodaemon=true' in config file)
+        if action == 'nodaemon':
+            nodaemon = '-n'
+        os.system(f'{supervisord_cmd} {nodaemon}')
 
     print(cmd)
     os.system(cmd)
