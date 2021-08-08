@@ -72,7 +72,6 @@ def main():
     from config.daemon_service import DAEMON_SERVICE_MAP, INET_HTTP_SERVER_LISTEN, INET_HTTP_SERVER_PASSWORD, \
         INET_HTTP_SERVER_USERNAME
 
-    supervisord_cmd = 'supervisord -c %s' % supervisor_configfile
     cmd = supervisorctl_cmd = 'supervisorctl -c %s' % (supervisor_configfile)
     os.environ.setdefault('INET_HTTP_SERVER_LISTEN', INET_HTTP_SERVER_LISTEN)
     os.environ.setdefault('INET_HTTP_SERVER_USERNAME', INET_HTTP_SERVER_USERNAME)
@@ -100,18 +99,24 @@ def main():
         argv_str = ' '.join(sys.argv[2:])
         cmd = '%s %s %s' % (supervisorctl_cmd, action, argv_str)
 
-    genrate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action == 'update')
+    genrate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action in ['update', 'nodaemon'])
 
     is_supervisord_running = os.system(supervisorctl_cmd + ' pid') == 0
-    if not is_supervisord_running and action != 'shutdown':
-        print('supervisord not running,start now!\n%s' % supervisord_cmd)
-        nodaemon = ''
-        # -n/--nodaemon -- run in the foreground (same as 'nodaemon=true' in config file)
-        if action == 'nodaemon':
-            nodaemon = '-n'
-        os.system(f'{supervisord_cmd} {nodaemon}')
+    # -n/--nodaemon -- run in the foreground (same as 'nodaemon=true' in config file)
+    if action == 'nodaemon':
+        if not is_supervisord_running:
+            argv = ['supervisord', '-c', supervisor_configfile, '-n']
+            print(f'exec {" ".join(argv)} ')
+            os.execvp('supervisord', argv)
+        return
+    if not is_supervisord_running:
 
-    print(cmd)
+        if action != 'shutdown':
+            supervisord_cmd = 'supervisord -c %s' % supervisor_configfile
+            print('supervisord not running,start now!\n')
+            print(supervisord_cmd)
+            os.system(supervisord_cmd)
+
     os.system(cmd)
 
 
