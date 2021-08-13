@@ -211,7 +211,7 @@ class AccessDomain(BaseNameModel):
         pass
 
 
-# @receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
+#@receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
 def user_save_ldap(sender, instance: User, update_fields=None, **kwargs):
     user: User = instance
 
@@ -279,7 +279,14 @@ def user_add_role_ldap(sender, action, instance: Role, reverse, model: User, pk_
             user_save_ldap(sender, instance)
 
 
-
+def _putEntry(fileName, entry):
+    """fileName is without extension."""
+    tmp = u'%s.%s.tmp' % (fileName, str(uuid.uuid4()))
+    f = open(tmp, 'wb')
+    f.write(entry.toWire())
+    f.close()
+    os.rename(tmp, fileName + u'.ldif')
+    return True
 
 @implementer(interfaces.IConnectedLDAPEntry)
 class ModelTreeEntry(entry.EditableLDAPEntry,
@@ -313,7 +320,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                     data = self.access_domain.create_ldap_access_user().encode()
                 else:
                     username = first_attr_type.value
-                    user = User.objects.filter(role__in=self.access_domain.role.all()).filter(username=username).first()
+                    user = User.get_normal_user_list().filter(role__in=self.access_domain.role.all()).filter(username=username).first()
                     if user:
                         data = self.access_domain.create_user(user).encode()
             elif second_attr_type.attributeType == 'role':
@@ -399,6 +406,8 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                     for user in role.user_set.all():
                         # for user in User.get_normal_user_list().prefetch_related('userinfo_set').filter(
                         #         role__in=self.roles).distinct():
+                        if user.status != User.Status.NORMAL:
+                            continue
                         data = self.access_domain.create_user(user)
                         dn = distinguishedname.DistinguishedName(
                                 to_bytes('cn=%s,ou=user,%s' % (user.username, self.access_domain.basedn)))
