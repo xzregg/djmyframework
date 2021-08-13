@@ -102,22 +102,23 @@ def main():
     genrate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action in ['update', 'nodaemon'])
 
     is_supervisord_running = os.system(supervisorctl_cmd + ' pid') == 0
-    # -n/--nodaemon -- run in the foreground (same as 'nodaemon=true' in config file)
-    if action == 'nodaemon':
-        if not is_supervisord_running:
-            argv = ['supervisord', '-c', supervisor_configfile, '-n']
-            print(f'exec {" ".join(argv)} ')
-            os.execvp('supervisord', argv)
-        return
     if not is_supervisord_running:
-
-        if action != 'shutdown':
+        print('supervisord not running !\nusage: mysupervisorctl [start|nodaemon] ')
+        # -n/--nodaemon -- run in the foreground (same as 'nodaemon=true' in config file)
+        if action == 'nodaemon':
+            if not is_supervisord_running:
+                argv = ['supervisord', '-c', supervisor_configfile, '-n']
+                print(f'exec {" ".join(argv)} ')
+                os.execvp('supervisord', argv)
+            return
+        if action == 'start':
             supervisord_cmd = 'supervisord -c %s' % supervisor_configfile
-            print('supervisord not running,start now!\n')
             print(supervisord_cmd)
             os.system(supervisord_cmd)
-
-    os.system(cmd)
+            return
+        sys.exit(1)
+    else:
+        os.system(cmd)
 
 
 if __name__ == '__main__':
