@@ -211,7 +211,7 @@ class AccessDomain(BaseNameModel):
         pass
 
 
-#@receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
+# @receiver(post_save, sender=User, dispatch_uid="user_save_ldap")
 def user_save_ldap(sender, instance: User, update_fields=None, **kwargs):
     user: User = instance
 
@@ -288,6 +288,7 @@ def _putEntry(fileName, entry):
     os.rename(tmp, fileName + u'.ldif')
     return True
 
+
 @implementer(interfaces.IConnectedLDAPEntry)
 class ModelTreeEntry(entry.EditableLDAPEntry,
                      entryhelpers.DiffTreeMixin,
@@ -313,20 +314,21 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
         second_attr_type = self.get_ldap_attr_type(it[1])
 
         self.access_domain: AccessDomain = AccessDomain.objects.filter(
-                name=dc_name).first()
+            name=dc_name).first()
         if self.access_domain and second_attr_type.attributeType == 'ou':
             if second_attr_type.value == 'user':
                 if first_attr_type.value == dc_name:
                     data = self.access_domain.create_ldap_access_user().encode()
                 else:
                     username = first_attr_type.value
-                    user = User.get_normal_user_list().filter(role__in=self.access_domain.role.all()).filter(username=username).first()
+                    user = User.get_normal_user_list().filter(role__in=self.access_domain.role.all()).filter(
+                        username=username).first()
                     if user:
                         data = self.access_domain.create_user(user).encode()
             elif second_attr_type.attributeType == 'role':
                 role_name = username = first_attr_type.value
                 role = self.access_domain.role.select_related('parent').prefetch_related(
-                        'user_set__userinfo_set').filter(name=role_name).first()
+                    'user_set__userinfo_set').filter(name=role_name).first()
                 if role:
                     data = self.access_domain.create_role(role)
         self.genrate_for_receive_data(data)
@@ -356,7 +358,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
         first_attr_type = self.get_first_attr_type()
 
         self.roles = self.roles or self.access_domain.role.select_related('parent').prefetch_related(
-                'user_set__userinfo_set').all()
+            'user_set__userinfo_set').all()
         if first_attr_type.attributeType == 'ou':
             if first_attr_type.value == 'user':
                 for role in self.roles:
@@ -365,7 +367,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                         #         role__in=self.roles).distinct():
                         data = self.access_domain.create_user(user)
                         dn = distinguishedname.DistinguishedName(
-                                to_bytes('cn=%s,ou=user,%s' % (user.username, self.access_domain.basedn)))
+                            to_bytes('cn=%s,ou=user,%s' % (user.username, self.access_domain.basedn)))
                         user_dn = self.__class__(dn=dn)
                         user_dn.genrate_for_receive_data(data)
                         results.append(user_dn)
@@ -373,7 +375,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                 for role in self.roles:
                     data = self.access_domain.create_role(role)
                     dn = distinguishedname.DistinguishedName(
-                            to_bytes('cn=%s,ou=role,%s' % (role.name, self.access_domain.basedn)))
+                        to_bytes('cn=%s,ou=role,%s' % (role.name, self.access_domain.basedn)))
                     role_dn = self.__class__(dn=dn)
                     role_dn.genrate_for_receive_data(data)
                     results.append(role_dn)
@@ -400,25 +402,26 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
 
         if first_attr_type.attributeType == 'ou':
             self.roles = self.access_domain.role.select_related('parent').prefetch_related(
-                    'user_set__userinfo_set').all()
+                'user_set__userinfo_set').all()
             if first_attr_type.value == 'user':
-                for role in self.roles:
-                    for user in role.user_set.all():
-                        # for user in User.get_normal_user_list().prefetch_related('userinfo_set').filter(
-                        #         role__in=self.roles).distinct():
-                        if user.status != User.Status.NORMAL:
-                            continue
-                        data = self.access_domain.create_user(user)
-                        dn = distinguishedname.DistinguishedName(
-                                to_bytes('cn=%s,ou=user,%s' % (user.username, self.access_domain.basedn)))
-                        user_dn = self.__class__(dn=dn)
-                        user_dn.genrate_for_receive_data(data)
-                        children.append(user_dn)
+                for user in User.get_normal_user_list().prefetch_related('userinfo_set').filter(
+                        role__in=self.roles).distinct():
+                    # for role in self.roles:
+                    #    for user in role.user_set.all():
+
+                    if user.status != User.Status.NORMAL:
+                        continue
+                    data = self.access_domain.create_user(user)
+                    dn = distinguishedname.DistinguishedName(
+                        to_bytes('cn=%s,ou=user,%s' % (user.username, self.access_domain.basedn)))
+                    user_dn = self.__class__(dn=dn)
+                    user_dn.genrate_for_receive_data(data)
+                    children.append(user_dn)
             elif first_attr_type.value == 'role':
                 for role in self.roles:
                     data = self.access_domain.create_role(role)
                     dn = distinguishedname.DistinguishedName(
-                            to_bytes('cn=%s,ou=role,%s' % (role.name, self.access_domain.basedn)))
+                        to_bytes('cn=%s,ou=role,%s' % (role.name, self.access_domain.basedn)))
                     role_dn = self.__class__(dn=dn)
                     role_dn.genrate_for_receive_data(data)
                     children.append(role_dn)
@@ -463,7 +466,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                 raise ldaperrors.LDAPEntryAlreadyExists(c.dn.getText())
 
         dn = distinguishedname.DistinguishedName(
-                listOfRDNs=(rdn,) + self.dn.split())
+            listOfRDNs=(rdn,) + self.dn.split())
         e = entry.BaseLDAPEntry(dn, attributes)
         if not os.path.exists(self.path):
             os.mkdir(self.path)
@@ -486,7 +489,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
             raise LDAPCannotRemoveRootError()
         if self._sync_children():
             raise ldaperrors.LDAPNotAllowedOnNonLeaf(
-                    u'Cannot remove entry with children: %s' % self.dn.getText())
+                u'Cannot remove entry with children: %s' % self.dn.getText())
         assert self.path.endswith(u'.dir')
         entryPath = u'%s.ldif' % self.path[:-len(u'.dir')]
         os.remove(entryPath)
