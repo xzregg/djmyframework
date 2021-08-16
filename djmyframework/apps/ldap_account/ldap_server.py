@@ -38,7 +38,7 @@ def get_db():
     return db
 
 
-@single_process.SingleProcessDeco()
+#@single_process.SingleProcessDeco()
 def run_ldap_server(port=LDAP_ACCOUNT_SERVER_PORT, use_ssl=False):
     os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
     import sys

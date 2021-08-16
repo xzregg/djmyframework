@@ -78,7 +78,7 @@ AUTH_USER_MODEL = 'myadmin.User'
 INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'System',choices=[('/index',_('主页')),('/myadmin/index',_('管理主页'))])
 
 
-APPS = sort_set_list(APPS + settings.APPS)
+APPS = settings.APPS or APPS
 
 INSTALLED_APPS = ['djorm_pool',
                   'framework',
