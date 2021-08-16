@@ -304,11 +304,7 @@ class User(BaseModel, AbstractBaseUser, UserManagerMixin):
     def user_info(self):
         user_info = None
         if self.id:
-            user_infos = self.userinfo_set.all()
-            if len(user_infos) >= 1:
-                user_info = user_infos[0]
-            else:
-                user_info, _ = self.userinfo_set.get_or_create()
+            user_info, _ = self.userinfo_set.get_or_create()
         return user_info
 
     @property

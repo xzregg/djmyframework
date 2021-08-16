@@ -129,6 +129,9 @@ class AccessDomain(BaseNameModel):
         ldap_access_user.username = self.name
         ldap_access_user.alias = self.alias
         ldap_access_user.set_password(self.bindpw)
+        _user_info = UserInfo()
+        _user_info.email = '%s@%s.com' % (self.name, self.name)
+        ldap_access_user.user_info = _user_info
         return ldap_access_user
 
     def remove_ldap_db_path(self):

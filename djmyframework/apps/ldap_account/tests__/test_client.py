@@ -19,10 +19,10 @@ from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
 def onConnect(client):
     # The following arguments may be also specified as unicode strings
     # but it is recommended to use byte strings for ldaptor objects
-    basedn = b"dc=example,dc=com"
-    binddn = b"cn=ldap,ou=people,dc=example,dc=com"
-    bindpw = b"ldap"
-    query = b"(cn=root)"
+    basedn = b"dc=ldap,dc=com"
+    binddn = b"cn=ldap,ou=user,dc=ldap,dc=com"
+    bindpw = b"123456"
+    query = b"(cn=test)"
     try:
         yield client.bind(binddn, bindpw)
     except Exception as ex:
@@ -46,4 +46,6 @@ def main(reactor):
     d.addErrback(onError)
     return d
 
-react(main)
+
+if __name__ == '__main__':
+    react(main)

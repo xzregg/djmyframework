@@ -39,7 +39,7 @@ class BaseLog(models.Model, SqlModelMixin):
     id = models.BigAutoField(primary_key=True)
 
     def __unicode__(self):
-        return '%d_%d_%s'(self.log_type, self.log_user, self.log_time.strftime('%Y-%m-%d'))
+        return '%d_%d_%s' % (self.log_type, self.log_user, self.log_time.strftime('%Y-%m-%d'))
 
     def log_time_str(self):
         return datetime_to_str(self.log_time)
