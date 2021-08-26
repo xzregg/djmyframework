@@ -14,7 +14,6 @@ import base64
 import binascii
 import os
 import re
-from pyDes import *
 
 private_key_tpl = '''-----BEGIN PRIVATE KEY-----
 %s
@@ -24,6 +23,7 @@ private_key_tpl = '''-----BEGIN PRIVATE KEY-----
 public_key_tpl = '''-----BEGIN PUBLIC KEY-----
 %s
 -----END PUBLIC KEY-----'''
+
 
 def ensure_utf8(s):
     if isinstance(s, str):
@@ -148,8 +148,6 @@ def sign_with_rsa(msg, key, method="SHA"):
     return signature
 
 
-
-
 def split_rsa_key(key):
     key = str(key)
     return ''.join([('%s\n' % s) if ((i + 1) % 64 == 0) else s for i, s in enumerate(key)])
@@ -162,32 +160,35 @@ def get_format_pubkey(key):
 
 
 # 将公钥字符串转为m2c的对象
-def get_m2c_pub(pub_string):  
+def get_m2c_pub(pub_string):
     return M2Crypto.RSA.load_pub_key_bio(M2Crypto.BIO.MemoryBuffer(pub_string))
 
 
 # 公钥解密数据
-def decrypt(data, m2c_pub, ilen=128):  
-    _maxlength = ilen 
-    data =data.decode("base64")
-    l_dstr = "" 
+def decrypt(data, m2c_pub, ilen=128):
+    _maxlength = ilen
+    data = data.decode("base64")
+    l_dstr = ""
     while len(data) > 0:
         s = data[:_maxlength]
         l_dstr += m2c_pub.public_decrypt(s, M2Crypto.RSA.pkcs1_padding)
         data = data[_maxlength:]
-    return  l_dstr
+    return l_dstr
 
 
-#公钥签名认证
-def pub_verify(data,sign,m2c_pub):
+# 公钥签名认证
+def pub_verify(data, sign, m2c_pub):
     m = M2Crypto.EVP.MessageDigest('sha1')
     m.update(data)
     digest = m.final()
     sign = sign.decode("base64")
     try:
-        return m2c_pub.verify(digest,sign,algo='sha1') 
+        return m2c_pub.verify(digest, sign, algo='sha1')
     except:
         return False
+
+
+from pyDes import des, CBC, PAD_PKCS5
 
 
 def DesEncrypt(text, Des_Key):
@@ -195,6 +196,7 @@ def DesEncrypt(text, Des_Key):
     k = des(Des_Key, mode=CBC, IV=Des_IV, pad=None, padmode=PAD_PKCS5)
     EncryptStr = k.encrypt(text)
     return base64.b64encode(EncryptStr)  # 转base64编码返回
+
 
 def DesDecrypt(text, Des_Key):
     Des_IV = "12345678"  # 自定IV向量

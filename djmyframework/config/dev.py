@@ -14,22 +14,34 @@ import logging
 import os
 import sys
 
-DEBUG = True
-
 from django.conf import settings
+from decouple import config
+REDIS_URL = config('REDIS_URL', default='redis://:123456@127.0.0.1:6379')
 
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'
 # SESSION_COOKIE_AGE = 60 * 30  # 30分钟
 # SESSION_SAVE_EVERY_REQUEST = True
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
-CELERY_BROKER_URL = 'redis://:123456@127.0.0.1:6379/1'
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"{REDIS_URL}/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+CELERY_BROKER_URL = f"{REDIS_URL}/1"
 
 CHANNEL_LAYERS = {
         "default": {
                 "BACKEND": "channels_redis.core.RedisChannelLayer",
                 "CONFIG" : {
-                        "hosts": ["redis://:123456@127.0.0.1:6379/2"],
+                        "hosts": [f"{REDIS_URL}/3"],
                 },
         },
 }
@@ -39,7 +51,7 @@ _SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
                              user=None, password=None, grpc_options=None,
                              prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
-_SETTINGS_LOADER_REDIS = dict(url='redis://:123456@127.0.0.1:6379/5', decode_responses=True, socket_connect_timeout=3,
+SETTINGS_LOADER_REDIS = dict(url=f"{REDIS_URL}/4", decode_responses=True, socket_connect_timeout=3,
                               prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
 STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
@@ -59,17 +71,12 @@ DATABASES = {
 
 _DATABASES = {
         'default': {
-
                 'ENGINE'  : 'django.db.backends.mysql',
-
                 'NAME'    : 'djmyadmin',
                 'USER'    : 'root',
                 'PASSWORD': '123456',
-
                 'HOST'    : '127.0.0.1',
-
                 'PORT'    : '3306',
-
                 'OPTIONS' : {'isolation_level': None, 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
 
         }
@@ -103,13 +110,13 @@ if 'test' in sys.argv:
 DATABASES['read'] = DATABASES['default'].copy()
 DATABASES['write'] = DATABASES['default'].copy()
 
-# INSTALLED_APPS += ['debug_toolbar']
+settings.INSTALLED_APPS += ['debug_toolbar']
 INTERNAL_IPS = [
         '*',
         '127.0.0.1'
 ]
 
-# MIDDLEWARE.insert(len(MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+settings.MIDDLEWARE.insert(len(settings.MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 DEBUG_TOOLBAR_CONFIG = {
         'JQUERY_URL': '',
 }
@@ -122,7 +129,7 @@ logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 # 日志打印 sql
 from . import logging_config
 
-logging_config.LOGGING['loggers']['django.db.backends'] = {
+logging_config.LOGGING['loggers']['adjango.db.backends'] = {
         'handlers' : ['console'],
         'propagate': False,
         'level'    : 'DEBUG',

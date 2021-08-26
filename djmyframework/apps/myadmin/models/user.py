@@ -30,7 +30,7 @@ class UserManagerMixin(object):
     def __init__(self, *args, **kwargs):
         # self.resource = ResourceProxy(self)
         super(UserManagerMixin, self).__init__(*args, **kwargs)
-        self.__resource_map = {}
+        self.__cache_resource_map = {}
         self.__cache_roles = None
 
     @property
@@ -50,7 +50,7 @@ class UserManagerMixin(object):
 
     @classmethod
     def get_user(cls, user_id):
-        """获取管理员
+        """获取用户
         """
         return cls.objects.filter(id=user_id).prefetch_related('role').first()
 
@@ -123,16 +123,16 @@ class UserManagerMixin(object):
     def set_resource(self, name, query_set):
         """设置资源,平台登录时就设置资源了
         """
-        self.__resource_map[name] = query_set
+        self.__cache_resource_map[name] = query_set
 
     def get_resource(self, name):
         """按资源名获取所属角色相应的资源
         """
-        _r = self.__resource_map.get(name, None)
+        _r = self.__cache_resource_map.get(name, None)
         if _r == None:
             _r = self._get_resource(name)
-        self.__resource_map[name] = _r
-        return self.__resource_map[name]
+        self.__cache_resource_map[name] = _r
+        return self.__cache_resource_map[name]
 
     def _get_resource(self, name):
         return Resource.get_model_resource(name).get_resource_queryset(self)

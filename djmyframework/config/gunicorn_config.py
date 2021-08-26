@@ -24,14 +24,13 @@ accesslog = errorlog
 daemon = False
 workers = multiprocessing.cpu_count() + 1
 
-worker_class = 'sync'
+#worker_class = 'sync'
 threads = workers * 4
-
 # worker_class = 'egg:meinheld#gunicorn_worker'
 
 # use gunicorn asgi
-# worker_class ='uvicorn.workers.UvicornWorker'
-# worker_class ='uvicorn.workers.UvicornH11Worker'
+worker_class ='uvicorn.workers.UvicornWorker'
+
 
 max_requests = 10000
 max_requests_jitter = 100

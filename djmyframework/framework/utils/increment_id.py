@@ -14,7 +14,7 @@ class IncrementId(object):
 
     def __init__(self, key, client=None):
         self.key = key
-        self.client = client or redis.StrictRedis('10.19.200.185', password='123456', socket_timeout=5,
+        self.client = client or redis.StrictRedis('127.0.0.1', password='123456', socket_timeout=5,
                                                   max_connections=5, decode_responses=False)
         self.init_key()
 

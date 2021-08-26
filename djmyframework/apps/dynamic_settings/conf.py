@@ -138,7 +138,7 @@ def get_settings_loader():
         return RedisSettingsLoader(**_SETTINGS_LOADER_REDIS)
     if _SETTINGS_LOADER_ETCD:
         return Etcd3SettingsLoader(**_SETTINGS_LOADER_ETCD)
-    logging.info('use DefaultsSettingsLoader')
+    logging.warning('Use DefaultsSettingsLoader')
     return DefaultsSettingsLoader()
 
 

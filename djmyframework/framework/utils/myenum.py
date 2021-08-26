@@ -28,9 +28,9 @@ class EnumT(object):
         value_type = type(value)
         # assert isinstance(key, (str, int)), '%s not int or str' % key_type
         enum_ele_type = type(
-                'EnumElement',
-                (value_type, EnumElement),
-                {}
+            'EnumElement',
+            (value_type, EnumElement),
+            {}
         )
         obj = enum_ele_type(value)
         obj.value = value
@@ -118,7 +118,6 @@ if __name__ == '__main__':
         return s
 
 
-
     class EqualOperator(Enum):
         Equal = 'exact', _('等于')
         NotEqual = 'not_exact', _('等于')
@@ -143,10 +142,7 @@ if __name__ == '__main__':
         NotRlike = 'not_rlike', _('正则不匹配 匹配判断')
 
 
-
-
     print(CharOperator.member_list())
-
 
 
     class Color(Enum):
@@ -178,21 +174,3 @@ if __name__ == '__main__':
     print(AD_STATUS.member_list())
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == 1
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == AD_STATUS(1)
-    #
-    # print(AD_STATUS, type(AD_STATUS), type(AD_STATUS.CAMPAIGN_STATUS_ENABLE), AD_STATUS.CAMPAIGN_STATUS_ENABLE,
-    #       AD_STATUS.CAMPAIGN_STATUS_ENABLE.name, AD_STATUS(23) == AD_STATUS.CAMPAIGN_STATUS_ENABLE)
-    # print(Color)
-    # import json
-    # print(json.dumps(Color.member_list()))
-    # print(Color.RED, Color.RED.name)
-    # print(Color.RED == 1)
-    # print(Color(1), Color(1) == Color.RED)
-    # print(Rainbow)
-    # print(Rainbow(2), Rainbow(2) == 2, Rainbow(2).name)
-    #
-    # print(Rainbow.member_list())
-    # print(PAGE)
-    # print(dir(Color))
-    # print(Color.__dict__)
-    # print(Rainbow.member_list())
-    # print(Rainbow.RED.other)

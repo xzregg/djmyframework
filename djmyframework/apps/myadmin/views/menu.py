@@ -12,20 +12,19 @@ from framework.views import action_get_post, CurdViewSet, notcheck, render_to_re
 from myadmin.models import Menu, MenuConfig
 
 
-
 class MenuSerializer(BaseModelSerializer):
     # https://www.django-rest-framework.org/api-guide/serializers/
     # https://www.django-rest-framework.org/api-guide/relations/
     label = s.CharField(label=_('已翻译名'), read_only=True)
 
-    # def get_label(self, model: Menu):
-    #     return _(model.alias)
+    def get_label(self, model: Menu):
+        return _(model.alias)
 
-    # def validate_alias(self, value):
-    #     if not self.instance.id:
-    #         if Menu.objects.filter(alias=value).exists():
-    #             raise s.ValidationError('%s 已存在'% value)
-    #     return value
+    def validate_alias(self, value):
+        if not self.instance.id:
+            if Menu.objects.filter(alias=value).exists():
+                raise s.ValidationError('%s 已存在' % value)
+        return value
 
     class Meta:
         model = Menu
@@ -55,8 +54,8 @@ class MenuSet(CurdViewSet):
 
     def get_queryset(self):
         return self.request.user.get_resource('menu').all().order_by('parent_id', 'order', 'id').prefetch_related(
-                *[]).select_related(
-                *[])
+            *[]).select_related(
+            *[])
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer, responses=ListMenuRspSerializer)
     @notcheck
@@ -100,17 +99,14 @@ class MenuSet(CurdViewSet):
         install_app_menu_config_list = MenuConfig.get_install_app_menu_config_list()
 
         created_menu_name_list = set(list(Menu.objects.values_list('name', flat=True)))
-        to_be_added_menu_list = [mc for mc in install_app_menu_config_list if (not mc.name in created_menu_name_list) and mc.name]
+        to_be_added_menu_list = [mc for mc in install_app_menu_config_list if
+                                 (not mc.name in created_menu_name_list) and mc.name]
         msg = ''
         if self.is_post():
-            add_menus = request.data.getlist('menu',[])
+            add_menus = request.data.getlist('menu', [])
             if add_menus:
                 MenuConfig.create_menu_from_config(install_app_menu_config_list, add_menus=add_menus)
             msg = 'Create %s menu OK' % len(add_menus)
 
         return render_to_response('myadmin/menu/update_menu.html', locals(), msg=msg)
 
-    # @swagger_auto_schema(methods=['post'], request_body=MenuSerializer, responses=MenuSerializer)
-    # @action(['post'])
-    # def foo_action(self, request):
-    #     return Response(MenuSerializer().data)

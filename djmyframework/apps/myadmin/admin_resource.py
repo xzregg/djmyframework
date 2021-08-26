@@ -17,6 +17,7 @@ class UserModelResource(RelaRtionModelResource):
     is_inner = True
 
     def get_resource_queryset(self, user_model):
+        """ 这个角色能管理的用户1"""
         return user_model.get_manageable_user()
 
 

@@ -124,7 +124,7 @@ class ModelResource(object):
     def get_resource_queryset(self, user_model):
         """
         获取资源查询
-        :param user_model:
+        :param user_model: User
         :return:
         """
         model_resource_class = self.model_class
@@ -226,8 +226,7 @@ class RelaRtionModelResource(ModelResource):
 class Resource(BaseModel):
     """资源
     """
-    _resource_map: typing.Dict[
-        str, ModelResource] = {}  # {"server":Server,"channel":Channel,"agent":Agent,"server_group":Group}
+    _resource_map: typing.Dict[str, ModelResource] = {}  # {"server":Server,"channel":Channel,"agent":Agent,"server_group":Group}
 
     name = models.CharField(_("资源名"), max_length=20, null=False, help_text=_('资源简称,只允许字母'))
     role_id = models.IntegerField(_('角色id'), null=True)

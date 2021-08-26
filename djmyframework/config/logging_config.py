@@ -24,7 +24,7 @@ def _get_FileHandler_config(dir, filename):
     }
 
 
-def get_TimedRotatingFile_config(dir, filename):
+def get_timed_rotating_file_config(dir, filename):
     '''返回一个以日切割的循环日志配置
     '''
     log_dir_path = os.path.join(get_log_dir(), dir)
@@ -63,11 +63,11 @@ LOGGING = {
                         'class'    : 'logging.StreamHandler',
                         'formatter': 'format01'
                 },
-                'root_handler'     : get_TimedRotatingFile_config('', 'root.log'),
-                'gm_handler'       : get_TimedRotatingFile_config('gm', 'gm.log'),
-                'pay_handler'      : get_TimedRotatingFile_config('pay', 'pay.log'),
-                'card_handler'     : get_TimedRotatingFile_config('card', 'card.log'),
-                'statistic_handler': get_TimedRotatingFile_config('statistic', 'statistic.log'),
+                'root_handler'     : get_timed_rotating_file_config('', 'root.log'),
+                'gm_handler'       : get_timed_rotating_file_config('gm', 'gm.log'),
+                'pay_handler'      : get_timed_rotating_file_config('pay', 'pay.log'),
+                'card_handler'     : get_timed_rotating_file_config('card', 'card.log'),
+                'statistic_handler': get_timed_rotating_file_config('statistic', 'statistic.log'),
         },
         # =========== loggers start =================
         'loggers'                 : {

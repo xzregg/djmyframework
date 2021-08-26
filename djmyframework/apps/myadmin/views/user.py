@@ -97,8 +97,8 @@ class UserSet(CurdViewSet):
         password2 = s.CharField(label=_('确认密码'))
 
     @swagger_auto_schema('post', request_body=ChangePasswordSerializer)
-    @action(['get', 'post'])
     @notcheck
+    @action(['get', 'post'])
     def change_password(self, request, **kwargs):
         """
         修改密码
@@ -132,20 +132,21 @@ class UserSet(CurdViewSet):
         """切换其他管理员
         方便调试
         """
-        from django.contrib.auth import SESSION_KEY
-        if request.REQUEST.get('change_previous') and request.session.get('previous_user_id'):
+        from ..const import PREVIOUS_USER_ID,SESSION_KEY
+        from ..settings import INDEX_URL
+        if request.REQUEST.get('change_previous') and request.session.get(PREVIOUS_USER_ID):
             request.session[SESSION_KEY] = request.session['previous_user_id']
             del request.session['previous_user_id']
-            return HttpResponseRedirect('/myadmin/index')
+            return HttpResponseRedirect(INDEX_URL)
 
         if not request.user.is_root:
-            err_msg = '非管理员'
+            err_msg = _('非管理员')
         else:
-            if request.method == 'POST':
+            if self.is_post():
                 change_user_id = request.POST.get('change_user_id', '')
                 change_user = User.objects.get(id=int(change_user_id))
-                request.session['previous_user_id'] = request.user.id
+                request.session[PREVIOUS_USER_ID] = request.user.id
                 request.session[SESSION_KEY] = change_user.id
-                return HttpResponseRedirect('/myadmin/index')
+                return HttpResponseRedirect(INDEX_URL)
         user_list = User.objects.all()
         return Response(locals())

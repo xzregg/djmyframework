@@ -2,8 +2,15 @@
 # 多进程日志按时间分割
 # 加入文件锁,解决分割文件,日志丢失问题
 
+try:
+    import fcntl
+except:
+    # 不支持windows
+    class fcntl:
+        @staticmethod
+        def flock(*args):
+            return 0
 
-import fcntl
 from logging.handlers import TimedRotatingFileHandler
 import multiprocessing
 import os
@@ -56,7 +63,7 @@ class MultiProcessTimedRotatingFileHandler(TimedRotatingFileHandler):
                          (os.getpid(), self.baseFilename, dfn))
         except Exception:
             logging.error('%s rename %s to %s error' %
-                         (os.getpid(), self.baseFilename, dfn))
+                          (os.getpid(), self.baseFilename, dfn))
         if self.backupCount > 0:
             for s in self.getFilesToDelete():
                 if os.path.isfile(s):
@@ -93,7 +100,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('test')
     fileTimeHandler = MultiProcessTimedRotatingFileHandler('test.log', 'S', 1, 300)
     formatter = logging.Formatter(
-            '%(asctime)spid:%(process)d %(name)s:%(lineno)d %(levelname)s %(message)s', datefmt='[%Y-%m-%d %H:%M:%S]')
+        '%(asctime)spid:%(process)d %(name)s:%(lineno)d %(levelname)s %(message)s', datefmt='[%Y-%m-%d %H:%M:%S]')
     fileTimeHandler.setFormatter(formatter)
     logger.addHandler(fileTimeHandler)
 
