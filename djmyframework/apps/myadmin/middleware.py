@@ -79,28 +79,8 @@ class AuthMiddleware(BaseMiddleware):
                 login_url = settings.LOGIN_URL
                 return HttpResponseRedirect('%s?from_url=%s' % (login_url, request.get_full_path()))
 
-            user_menus = request.user.resource.menu.using('read')
-
-            class UserAllowMenu(dict):
-                def __init__(self, user):
-                    self.user = user
-                    super(UserAllowMenu, self).__init__()
-
-                def __getattr__(self, name):
-                    try:
-                        menu_obj = self.get(name, None)
-                        if not menu_obj and self.user.is_root:
-                            return True
-                        return menu_obj
-                    except KeyError:
-                        raise AttributeError(name)
-
-            _user_menu_map = UserAllowMenu(request.user)
-            for m in user_menus.all():
-                menu_name = m.name
-                _user_menu_map[menu_name] = m
-            request.allow_menu = _user_menu_map
-            request.allow = _user_menu_map
+            the_user.make_allow_map()
+            request.allow = request.allow_menu = the_user.allow_menu
             is_allow = self.check_url_permsssion(request)
 
             if is_notcheck(check_view_func):
@@ -125,7 +105,7 @@ class AuthMiddleware(BaseMiddleware):
         params = request.REQUEST
 
         # 管理员的菜单里查询匹配项目
-        for k, menu in request.allow_menu.items():
+        for menu in request.user.menu_map.get(url_path, []):
             if url_path == menu.url_path and menu.is_match_url_parmas(params):
                 match_menu = menu
                 is_allow = True

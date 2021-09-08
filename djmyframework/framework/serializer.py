@@ -18,11 +18,10 @@ from rest_framework import serializers as s
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty, SkipField
 from rest_framework.metadata import SimpleMetadata
-from rest_framework.relations import ManyRelatedField, RelatedField,PrimaryKeyRelatedField
+from rest_framework.relations import ManyRelatedField, RelatedField, PrimaryKeyRelatedField
 from rest_framework.request import Request
 from rest_framework.settings import api_settings
 from rest_framework.utils.serializer_helpers import ReturnDict
-
 
 from .utils import DATETIMEFORMAT, ObjectDict
 from .utils.cache import CacheAttribute, CachedClassAttribute
@@ -181,6 +180,7 @@ class NullDateTimeField(s.DateTimeField):
 
 
 class RecursiveField(s.Serializer):
+    """递归的字段"""
     def to_representation(self, value):
         serializer = self.parent.parent.__class__(value, context=self.context)
         return serializer.data
@@ -210,8 +210,8 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
             # 使用 allow_model_fields 限制 django 查询
             allowed = set(self.allow_model_fields)
             existing = set([f.attname for f in self.Meta.model._meta.fields])
-            #existing = set(self.Meta.model.fields_map.keys())
-            #existing = set(fields.keys())
+            # existing = set(self.Meta.model.fields_map.keys())
+            # existing = set(fields.keys())
             for field_name in existing - allowed:
                 fields.pop(field_name, '')
         return fields
@@ -235,10 +235,10 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
 
         if not isinstance(data, Mapping):
             message = self.error_messages['invalid'].format(
-                    datatype=type(data).__name__
+                datatype=type(data).__name__
             )
             raise ValidationError({
-                    api_settings.NON_FIELD_ERRORS_KEY: [message]
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
             }, code='invalid')
 
         ret = OrderedDict()
@@ -252,8 +252,9 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
             try:
 
                 # ManyRelatedField 取消写入数据验证, 防止每次都去查询数据库
-                if isinstance(field, ManyRelatedField) and isinstance(field.child_relation, PrimaryKeyRelatedField) and primitive_value is not empty:
-                    validated_value = [ int(i) for i in primitive_value ]
+                if isinstance(field, ManyRelatedField) and isinstance(field.child_relation,
+                                                                      PrimaryKeyRelatedField) and primitive_value is not empty:
+                    validated_value = [int(i) for i in primitive_value]
                 else:
                     validated_value = field.run_validation(primitive_value)
                 if validate_method is not None:

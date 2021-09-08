@@ -2,10 +2,7 @@
 *.md
 Dockerfile
 .gitlab-ci.yml
-start.sh
-migrate.sh
 deploy/.env.example
-deploy/.env.local13
 MP_verify_7usRzjm60qCug3Kk.txt
 .dockerignore
 .gitignore
@@ -13,3 +10,5 @@ venv
 .venv
 *.db
 *.rdb
+logs
+logs/*

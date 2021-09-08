@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # 视图的基本
-#
-# =========================================
+
+
 import functools
 import inspect
 import types
@@ -22,7 +22,6 @@ from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 
-LANGUAGES = settings.LANGUAGES
 from .filters import MyFilterBackend, OrderingFilter
 from .route import Route
 from .models import BaseModel
@@ -30,7 +29,7 @@ from .response import *
 from .serializer import EditParams, IdSerializer, IdsSerializer
 
 render = _render
-
+LANGUAGES = settings.LANGUAGES
 
 def notauth(obj):
     """免登录认证标记
@@ -132,12 +131,12 @@ def model_search(request, model_objects, search=None, order=None, page_size=20, 
                              page_size * (page_num - 1):page_size * page_num]
 
     params = {
-            "results"     : model_list,
-            "page"        : page_num,
-            "page_size"   : page_size,
-            "total_record": total_record,
-            "total_page"  : total_page,
-            "use_time"    : time.time() - _st
+        "results": model_list,
+        "page": page_num,
+        "page_size": page_size,
+        "total_record": total_record,
+        "total_page": total_page,
+        "use_time": time.time() - _st
     }
     return params
 
@@ -153,9 +152,9 @@ def api_view(http_method_names=None, detail=False):
 
     def decorator(func):
         WrappedAPIView: APIView = type(
-                'WrappedAPIView',
-                (APIView,),
-                {'__doc__': func.__doc__}
+            'WrappedAPIView',
+            (APIView,),
+            {'__doc__': func.__doc__}
         )
         WrappedAPIView.__annotations__ = func.__annotations__
         # Note, the above allows us to set the docstring.
@@ -223,7 +222,7 @@ def action(methods=None, detail=False, url_path=None, url_name=None, **kwargs):
     methods = [method.lower() for method in methods]
 
     assert detail is not None, (
-            "@action() missing required argument: 'detail'"
+        "@action() missing required argument: 'detail'"
     )
 
     # name and suffix are mutually exclusive
@@ -247,14 +246,16 @@ def action(methods=None, detail=False, url_path=None, url_name=None, **kwargs):
 
     return decorator
 
-def api_action_judge(*args,**kwargs):
 
+def api_action_judge(*args, **kwargs):
     def decorator(func):
         if inspect.getfullargspec(func).args[0] == 'self':
-            return action(*args,**kwargs)(func)
+            return action(*args, **kwargs)(func)
         else:
             return api_view(*args, **kwargs)(func)
+
     return decorator
+
 
 from .utils import DecoratorsPartial
 
@@ -345,13 +346,13 @@ class ListPageNumberPagination(PageNumberPagination):
 
     def get_paginated_response(self, data):
         data = OrderedDict(
-                count=self.page.paginator.count,
-                next=self.get_next_link(),
-                previous=self.get_previous_link(),
-                page=self.request.query_params.get(self.page_query_param, 1),
-                page_size=self.get_page_size(self.request),
-                results=data,
-                filter=self.request.query_params
+            count=self.page.paginator.count,
+            next=self.get_next_link(),
+            previous=self.get_previous_link(),
+            page=self.request.query_params.get(self.page_query_param, 1),
+            page_size=self.get_page_size(self.request),
+            results=data,
+            filter=self.request.query_params
         )
         return Response(data)
 

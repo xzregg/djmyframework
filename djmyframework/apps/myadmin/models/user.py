@@ -22,18 +22,58 @@ from .resource import Resource, ResourceProxy
 from .role import Role
 from ..apps import MyadminConfig
 from framework.utils.log import logger
+from django.core.cache import cache
+from framework.utils import ObjectDict
+
 
 class UserManagerMixin(object):
     """用户管理者,扩展admin模型的方法
     """
+    _CACHE_ALLOW_MENU_KEY = '_cache_allow_menu'
+    _CACHE_MENU_MAP_KEY = '_cache_menu_map'
 
     def __init__(self, *args, **kwargs):
-        # self.resource = ResourceProxy(self)
         super(UserManagerMixin, self).__init__(*args, **kwargs)
+        #self.resource = ResourceProxy(self)
         self.__cache_resource_map = {}
         self.__cache_roles = None
+        self.allow_menu = None
+        self.menu_map = ObjectDict()
+        self.cache_allow_menu_key, self.cache_menu_map_key = self.get_cache_keys_for_id(self.id)
 
-    @property
+    def check_permission(self, key):
+        return self.allow_menu.get(key, None)
+
+    def get_menus(self):
+        user_menus = self.get_resource('menu').using('read')
+        return user_menus.all()
+
+    @classmethod
+    def get_cache_keys_for_id(cls, id):
+        return [f'{cls._CACHE_ALLOW_MENU_KEY}_{id}', f'{cls._CACHE_MENU_MAP_KEY}_{id}']
+
+    @classmethod
+    def clean_cache(cls, id):
+        cache.delete_many(cls.get_cache_keys_for_id(id))
+
+    def make_allow_map(self):
+        """生成权限"""
+        self.allow_menu = cache.get(self.cache_allow_menu_key, self.allow_menu)
+        self.menu_map = cache.get(self.cache_menu_map_key, self.menu_map)
+        if not self.allow_menu and not self.menu_map:
+            self.allow_menu = ObjectDict()
+            for m in self.get_menus():
+                menu_name = m.name
+                self.allow_menu[menu_name] = m
+                # 兼容旧的用中文权限检查方式
+                self.allow_menu[m.alias] = m
+
+                self.menu_map.setdefault(m.url_path, [])
+                self.menu_map[m.url_path].append(m)
+            cache.set(self.cache_allow_menu_key, self.allow_menu)
+            cache.set(self.cache_menu_map_key, self.menu_map)
+
+    @CacheAttribute
     def resource(self) -> Resource:
         return ResourceProxy(self)
 
@@ -104,8 +144,8 @@ class UserManagerMixin(object):
         """获取自己的下属,除权限集合 如果是管理员这不能获取到
         """
         return User.objects.filter(
-                role__in=self.get_resource('role').exclude(type=Role.RoleType.PERMISSION)).prefetch_related(
-                'role').distinct()
+            role__in=self.get_resource('role').exclude(type=Role.RoleType.PERMISSION)).prefetch_related(
+            'role').distinct()
 
     def get_resource_attrs(self, resource_name, attr_name, input_list=None, allow_none=False):
         input_list = input_list or []
@@ -359,3 +399,17 @@ class UserOauth(BaseModel):
     class Meta:
         app_label = MyadminConfig.name
         # db_table = u'user_oauth'
+
+
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
+
+@receiver(m2m_changed, sender=User.role.through, dispatch_uid="user_add_role")
+def user_add_role_ldap(sender, action, instance, reverse, model: User, pk_set, using, **kwargs):
+    if action in ['post_add', 'post_remove']:
+        if isinstance(instance, User):
+            UserManagerMixin.clean_cache(instance.id)
+        if isinstance(instance, Role):
+            for id in pk_set:
+                UserManagerMixin.clean_cache(id)

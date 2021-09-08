@@ -16,6 +16,7 @@ import sys
 
 from django.conf import settings
 from decouple import config
+
 REDIS_URL = config('REDIS_URL', default='redis://:123456@127.0.0.1:6379')
 
 # session引擎设置
@@ -38,12 +39,12 @@ CACHES = {
 CELERY_BROKER_URL = f"{REDIS_URL}/1"
 
 CHANNEL_LAYERS = {
-        "default": {
-                "BACKEND": "channels_redis.core.RedisChannelLayer",
-                "CONFIG" : {
-                        "hosts": [f"{REDIS_URL}/3"],
-                },
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [f"{REDIS_URL}/3"],
         },
+    },
 }
 
 _SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
@@ -52,34 +53,34 @@ _SETTINGS_LOADER_ETCD = dict(host='localhost', port=2379,
                              prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
 SETTINGS_LOADER_REDIS = dict(url=f"{REDIS_URL}/4", decode_responses=True, socket_connect_timeout=3,
-                              prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
+                             prefix_key=os.environ.get('DJANGO_ENV', 'dev'))
 
 STATICFILES_DIRS = [os.path.join(settings.BASE_DIR, 'static')]
 STATIC_ROOT = None
 DATABASES = {
-        'default': {
-                'ENGINE' : 'django.db.backends.sqlite3',
-                'NAME'   : os.path.join(settings.BASE_DIR, 'sqlite3.db'),
-                'TEST'   : {
-                        'NAME': os.path.join(settings.BASE_DIR, 'test.db.sqlite3.db')
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(settings.BASE_DIR, 'sqlite3.db'),
+        'TEST': {
+            'NAME': os.path.join(settings.BASE_DIR, 'test.db.sqlite3.db')
 
-                },
-                'OPTIONS': {'isolation_level': None }
         },
+        'OPTIONS': {'isolation_level': None}
+    },
 
 }
 
 _DATABASES = {
-        'default': {
-                'ENGINE'  : 'django.db.backends.mysql',
-                'NAME'    : 'djmyadmin',
-                'USER'    : 'root',
-                'PASSWORD': '123456',
-                'HOST'    : '127.0.0.1',
-                'PORT'    : '3306',
-                'OPTIONS' : {'isolation_level': None, 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'djmyadmin',
+        'USER': 'root',
+        'PASSWORD': '123456',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'OPTIONS': {'isolation_level': None, 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
 
-        }
+    }
 
 }
 
@@ -88,23 +89,23 @@ DATABASES['card'] = DATABASES['default'].copy()
 if 'test' in sys.argv:
     # 使用内存数据库加速测试
     DATABASES = {
-            'default': {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME'  : ':memory'
-            },
-            'read'   : {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME'  : ':memory'
-            },
-            'write'  : {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME'  : ':memory'
-            }
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory'
+        },
+        'read': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory'
+        },
+        'write': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory'
+        }
     }
     CHANNEL_LAYERS = {
-            "default": {
-                    "BACKEND": "channels.layers.InMemoryChannelLayer"
-            }
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
     }
 
 DATABASES['read'] = DATABASES['default'].copy()
@@ -112,13 +113,13 @@ DATABASES['write'] = DATABASES['default'].copy()
 
 settings.INSTALLED_APPS += ['debug_toolbar']
 INTERNAL_IPS = [
-        '*',
-        '127.0.0.1'
+    '*',
+    '127.0.0.1'
 ]
 
 settings.MIDDLEWARE.insert(len(settings.MIDDLEWARE) - 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 DEBUG_TOOLBAR_CONFIG = {
-        'JQUERY_URL': '',
+    'JQUERY_URL': '',
 }
 
 # REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
@@ -130,7 +131,7 @@ logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 from . import logging_config
 
 logging_config.LOGGING['loggers']['adjango.db.backends'] = {
-        'handlers' : ['console'],
-        'propagate': False,
-        'level'    : 'DEBUG',
+    'handlers': ['console'],
+    'propagate': False,
+    'level': 'DEBUG',
 }

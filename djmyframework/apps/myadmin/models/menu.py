@@ -23,6 +23,7 @@ from framework.models import BaseModel
 from framework.utils import ObjectDict
 from framework.utils.single_process import SingleProcessDeco
 from ..apps import MyadminConfig
+
 _logger = logging.getLogger(__file__)
 
 
@@ -69,8 +70,8 @@ class Menu(BaseModel):
 
     @classmethod
     def url_decode(cls, url_params):
-        '''URL参数返回一个字典
-        '''
+        """URL参数返回一个字典
+        """
         params = {}
         for o in url_params.split('&'):
             if '=' in o:
@@ -82,14 +83,15 @@ class Menu(BaseModel):
         return params
 
     def get_url_params(self):
-        '''返回url的参数字典
-        '''
+        """返回url的参数字典
+        """
         url_params = self.url.split('?', 2)
         if len(url_params) == 2:
             return Menu.url_decode(url_params[1])
         return {}
 
     def is_match_url_parmas(self, menu_parmas):
+        if not menu_parmas: return True
         return self._is_dict_issubset(self.get_url_params(), menu_parmas)
 
     def _is_dict_issubset(self, dict1, dict2):
@@ -151,7 +153,6 @@ class MenuConfig(ObjectDict):
             decorator = ', '.join(decorators)
 
             if url_name.count('.') >= 1:
-
                 url_name_split = url_name.split('.')
                 method_name = url_name_split[-1]
                 if hasattr(func, 'actions'):
@@ -171,14 +172,12 @@ class MenuConfig(ObjectDict):
                 app_menu_map.setdefault(views_data.app_name, {})
                 app_menu_map[views_data.app_name].setdefault(views_data.module_name, [])
                 app_menu_map[views_data.app_name][views_data.module_name].append(views_data)
-            else:
-                a = 3
 
         return app_menu_map
 
     @classmethod
     def get_install_app_menu_config_list(cls, app_name_list=None):
-
+        """获取 安装的app """
         menu_config_list = []
 
         if not isinstance(app_name_list, (list, tuple)) and app_name_list is not None:
@@ -304,7 +303,7 @@ class MenuConfig(ObjectDict):
 
 
 class UserDefinedMenu(BaseModel):
-    ''' 用户自定义菜单模型 '''
+    """ 用户自定义菜单模型 """
     user_id = models.IntegerField(_('所属管理员ID'))
     defined_menu = models.TextField(_("用户定义的菜单项"), max_length=1000)
     map_menu = models.TextField(_("系统菜单的映射"), max_length=1000)

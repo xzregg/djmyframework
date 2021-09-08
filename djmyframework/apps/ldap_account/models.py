@@ -12,6 +12,7 @@ from framework.utils import mkdirs
 from framework.utils.cache import CacheAttribute
 from framework.utils.myenum import Enum
 from myadmin.models import Role, User, UserInfo
+
 from .settings import DBPATH
 
 from ldaptor.ldiftree import *

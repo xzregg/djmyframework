@@ -42,7 +42,7 @@ RELEASE = '01'
 
 ROOT_URLCONF = 'urls'
 
-LOGIN_URL = SettingOptions('管理后台', _('系统标题'), 'TITLE', 'System', lazy=_)
+LOGIN_URL = SettingOptions('/myadmin/login', _('系统标题'), 'LOGIN_URL', 'System', lazy=_)
 
 
 INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'System',
