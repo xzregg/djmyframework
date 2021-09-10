@@ -12,7 +12,8 @@ import logging
 from collections import OrderedDict as SortedDict
 
 from ..models.query_server import QueryServer
+from ..admin_resource import QueryServerModelResource
 
 
 def get_query_servers(request, group_id=0, get_server_list=False):
-    return QueryServer.objects.all()
+    return request.user.get_resource(QueryServerModelResource.name).all()
