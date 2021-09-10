@@ -21,12 +21,14 @@ from log_def.models import DictDefine, LogDefine
 class SqlMarkConfig(ObjectDict):
     mark_name: str
     name: str
+    alias: str
     multiple: bool
-    single: bool # 是否单选
+    single: bool  # 是否单选
     fixed: bool  # 是否定值
-    template: bool # 模板
-    context_func: lambda x: x # 模板上下文
-    order_num:int
+    template: bool  # 模板
+    context_func: lambda x: x  # 模板上下文
+    order_num: int
+    params_func: lambda x: x
 
 
 class SqlMarkManager(object):
@@ -38,18 +40,19 @@ class SqlMarkManager(object):
             #                      'template'    : 'sdk_center/widgets/game_alias_dialog.html',
             #                      'context_func': 'sdk_center.views.widgets.get_game_alias_dict'},  # 多个游戏代号
             #
-            # "server_id"       : {"name"        : "server_id", "multiple": False,
-            #                      'template'    : 'game_manage/widgets/group_server_select.html',
-            #                      'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 服务器ID替换
+            "server_id"   : {"name"        : "server_id", "multiple": False,
+                             'template'    : 'analysis/widgets/query_server_select.html',
+                             'context_func': 'analysis.views.widgets.get_query_servers'},  # 服务器ID替换
+            # 'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 服务器ID替换
             # "server_ids"      : {"name"        : "server_id", "multiple": True,
             #                      'template'    : 'game_manage/widgets/group_server_dialog.html',
             #                      'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 多个服务器ID替换
 
-            "server_name"     : {"name": "server_name", "multiple": False},  # 服务器名
-            "master_id"       : {"name": "master_id", "multiple": False},  # 母服ID
-            "master_db"       : {"name": "master_db", "multiple": False},  # 母服db名
-            "sdate"           : {"name": "sdate"},  # 开始时间
-            "edate"           : {"name": "edate"},  # 结束时间
+            "server_name" : {"name": "server_name", "multiple": False, "alias": '服务器名'},  # 服务器名
+            "master_id"   : {"name": "master_id", "multiple": False, "alias": '母服ID'},  # 母服ID
+            "master_db"   : {"name": "master_db", "multiple": False, "alias": '母服db名'},  # 母服db名
+            "sdate"       : {"name": "sdate", "alias": '开始时间'},  # 开始时间
+            "edate"       : {"name": "edate", "alias": '结束时间'},  # 结束时间
 
             # "channel"         : {"name"        : "channel", "multiple": False, 'type': 'str',
             #                      'template'    : 'sdk_center/widgets/agent_channel_alias_select.html',
@@ -65,10 +68,10 @@ class SqlMarkManager(object):
             #                      'template'    : 'sdk_center/widgets/plan_agent_channel.html',
             #                      'context_func': 'sdk_center.views.widgets.get_agent_channels_dict'},  # 渠道标识
 
-            "package"         : {"name": "package", "multiple": True, 'type': 'str'},  # 渠道标识
-            "media"           : {"name": "media", "multiple": True, 'type': 'str'},  # 媒体账号
-
-            "sdk_code"        : {"name": "sdk_code"},  # 渠道代号
+            # "package": {"name": "package", "multiple": True, 'type': 'str', "alias": '渠道标识'},  # 渠道标识
+            # "media": {"name": "media", "multiple": True, 'type': 'str', "alias": '渠道标识'},  # 渠道标识
+            #
+            # "sdk_code": {"name": "sdk_code", "alias": '渠道标识'},  # 渠道代号
 
             # "channel_id"      : {"name"        : "channel_id", "multiple": False,
             #                      'template'    : 'game_manage/widgets/agent_channel_select.html',
@@ -77,19 +80,23 @@ class SqlMarkManager(object):
             #                      'template'    : 'game_manage/widgets/agent_channel_dialog.html',
             #                      'context_func': 'game_manage.views.widgets.get_agent_channels_dict'},  # 渠道id
 
-            "kouliang_rate"   : {"name": "kouliang_rate"},
-            "min_kouliang_num": {"name": "min_kouliang_num"},
+            # "kouliang_rate": {"name": "kouliang_rate"},
+            # "min_kouliang_num": {"name": "min_kouliang_num"},
             # "game_server_id"  : {"name"    : "game_server_id", "multiple": False,
             #                      'template': 'sdk_center/widgets/game_server_alias.html'},  # 区服ID替换
             # "game_server_ids" : {"name"    : "game_server_id", "multiple": True,
             #                      'template': 'sdk_center/widgets/game_server_alias.html'},  # 多个区服ID替换
-            "agent_name"      : {"name": "agent_name"},  # 平台名
-            'platform_id'     : {"name": "platform_id", "multiple": False},  # 游戏平台
-            'platform_ids'    : {"name": "platform_id", "multiple": True},
-            'user_id'         : {"name": "user_id", "multiple": False},  # 管理员id
-            'admin_id'        : {"name": "admin_id", "multiple": False},  # 管理员id
-            'is_root'         : {"name": "is_root", "multiple": False},  # 是否超级管理员
-            'is_manager'      : {"name": "is_manager", "multiple": False}  # 是否管理员
+            "agent_name"  : {"name": "agent_name", "alias": '平台名'},  # 平台名
+            'platform_id' : {"name": "platform_id", "multiple": False, "alias": '游戏平id'},  # 游戏平台
+            'platform_ids': {"name": "platform_id", "multiple": True, "alias": '平台IDS'},
+            'user_id'     : {"name"       : "user_id", "multiple": False, "alias": '管理员id',
+                             'params_func': lambda request: [request.user.id]},  # 管理员id
+            'admin_id'    : {"name"       : "admin_id", "multiple": False, "alias": '管理员id',
+                             'params_func': lambda request: [request.user.id]},  # 管理员id
+            'is_root'     : {"name"       : "is_root", "multiple": False, "alias": '是否超级管理员',
+                             'params_func': lambda request: [1 if request.user.is_root else 0]},  # 是否超级管理员
+            'is_manager'  : {"name"       : "is_manager", "multiple": False, "alias": '是否管理员',
+                             'params_func': lambda request: [1 if request.user.is_manager else 0]}  # 是否管理员
     })
 
     @classmethod
@@ -98,17 +105,16 @@ class SqlMarkManager(object):
 
 
 class SqlBuilder(object):
-    '''sql
+    """sql
     @param TAG_FORMAT: 默认的标签外围
     @param params:  字典 一键一列表 例如reuqest.POST
-    '''
+    """
     TAG_FORMAT = '{{%s}}'
 
-
     def __init__(self, source_sql, params):
-        '''初始化
+        """初始化
         @param source_sql 原SQL
-        '''
+        """
         self.sql = source_sql
         self.query_sql = source_sql.strip()
         self.params = params
@@ -117,10 +123,10 @@ class SqlBuilder(object):
         self.mark_map = copy.copy(SqlMarkManager.mark_map)
 
     def query_sql_handle(self, sql=''):
-        '''查询sql转换
-        '''
+        """查询sql转换
+        """
         values_list = []
-        for mark_name, config in SqlMarkManager.mark_map.items():
+        for mark_name, config in self.mark_map.items():
             if self.has_mark(mark_name):  # sql存在这个标签
                 param_name = config['name']
                 value = self.get_param_value(param_name, config)
@@ -147,8 +153,8 @@ class SqlBuilder(object):
         return self.query_sql
 
     def get_param_value(self, param_name, config):
-        '''获取参数值
-        '''
+        """获取参数值
+        """
         values = self.params.get(param_name, []) or ['']
         the_value = str(values[0])
         if the_value != '':  # 参数不为空
@@ -171,14 +177,14 @@ class SqlBuilder(object):
             values = config.get('default_value', '')
         return values
 
-    def convert_input_value(self, values, value_def, type):
-        '''转换输入
-        '''
+    def convert_input_value(self, values, value_def, value_type):
+        """转换输入
+        """
         if isinstance(values, (list, tuple, set)):
             _r = []
             for v in values:
                 value = str(value_def.get(v, value_def.get(str(v), v)))
-                if not value.isdigit() or type == 'str':
+                if not value.isdigit() or value_type == 'str':
                     value = "'%s'" % value
                 _r.append(value)
             return ','.join(_r)
@@ -186,18 +192,18 @@ class SqlBuilder(object):
             return value_def.get(values, values)
 
     def empty_param_handle(self, mark_name, value=' 0=0 '):
-        '''传入参数为空时,把 SQL的条件 例如:log_user={{player_id}} 换换成 0=0
-        '''
+        """传入参数为空时,把 SQL的条件 例如:log_user={{player_id}} 换换成 0=0
+        """
         the_mark = self.make_mark(mark_name)
-        # pattern = re.compile(r'''[\w\.`(+=*]*[\W`]?(not[\s]+)?(like|in|=|=>|<=|>|<|!=)[\W]*%s[^\s]*[\s$]*''' % the_mark,flags=re.I)
-        pattern = re.compile(r'''[\S]*[\W`]?([\s]+not[\s]+)?(like|in|=|=>|<=|>|<|!=)[\W]*%s[^\s]*[\s$]*''' % the_mark,
+        # pattern = re.compile(r"""[\w\.`(+=*]*[\W`]?(not[\s]+)?(like|in|=|=>|<=|>|<|!=)[\W]*%s[^\s]*[\s$]*""" % the_mark,flags=re.I)
+        pattern = re.compile(r"""[\S]*[\W`]?([\s]+not[\s]+)?(like|in|=|=>|<=|>|<|!=)[\W]*%s[^\s]*[\s$]*""" % the_mark,
                              flags=re.I)
         _s = int(time.time())
         self.query_sql = re.sub(pattern, value, self.query_sql)
 
     def set_limit(self, page_size, page_num):
-        '''设置sql limit
-        '''
+        """设置sql limit
+        """
         page_num, page_size = int(page_num), int(page_size)
         self.limit_str = 'limit %s,%s' % ((page_num - 1) * page_size, page_size)
 
@@ -208,8 +214,14 @@ class SqlBuilder(object):
             else:
                 self.order_str = ' ORDER BY %s %s' % (sort_key, sort_type)
 
+    safe_pattern = re.compile(r"""'|"|;|>|<|%|--""", flags=re.I)
+
+    def get_safe_value(self, value):
+        value = re.sub(self.safe_pattern, '', str(value))
+        return value
+
     def replace_mark_to_value(self, mark_name, value):
-        self.query_sql = self.query_sql.replace(self.make_mark(mark_name), str(value))
+        self.query_sql = self.query_sql.replace(self.make_mark(mark_name), self.get_safe_value(value))
 
     def make_mark(self, mark_name):
         return self.TAG_FORMAT % mark_name
@@ -230,21 +242,36 @@ class SqlBuilder(object):
         return mark_conditions
 
     def get_context_func(self, mark_name):
-        return import_func(self.mark_map[mark_name]['context_func'])
+        func = self.mark_map[mark_name].get('context_func', None)
+        if isinstance(func, str):
+            return import_func(func)
+        return func
+
+    def get_param_func(self, mark_name):
+        func = self.mark_map[mark_name].get('params_func', None)
+        if isinstance(func, str):
+            return import_func(func)
+        return func
+
+    def set_mark_parmas(self, request):
+        for k, item in self.mark_map.items():
+            param_func = self.get_param_func(k)
+            if param_func:
+                self.params[k] = param_func(request)
 
 
-class QueryAnalysis(SqlBuilder):
+class QueryCompiler(SqlBuilder):
 
     def __init__(self, query_model, params):
         self.query = query_model
         self.already_get_query_sql = False
         the_sql = self.query.sql or self.query.get_default_sql()
-        super(QueryAnalysis, self).__init__(the_sql, params)
+        super(QueryCompiler, self).__init__(the_sql, params)
         self.mark_map.update(self.query.field_config)
 
     def get_tfoot_sql(self):
-        '''获取tfoot的汇总sql
-        '''
+        """获取tfoot的汇总sql
+        """
         assert self.already_get_query_sql, '只能先使用get_query_sql 获取查询SQL'
         tmp_sql = self.query_sql
         ftoot_sql = self.query.other_sql
@@ -259,11 +286,11 @@ class QueryAnalysis(SqlBuilder):
         self.already_get_query_sql = True
         if self.query.order and not self.order_str:  # 如果没有排序设置默认查询排序
             self.set_order(self.query.order, self.query.order_type_str)
-        return super(QueryAnalysis, self).get_query_sql()
+        return super(QueryCompiler, self).get_query_sql()
 
     def get_statistic(self):
-        '''获取所需的统计
-        '''
+        """获取所需的统计
+        """
 
         statistic_tags = re.findall(r'<<([^\s,]*)>>', self.query.sql)
         statistic_tags.extend(re.findall(r'<<([^\s,]*)>>', self.query.other_sql))
@@ -279,9 +306,9 @@ class QueryAnalysis(SqlBuilder):
         return result
 
     def query_sql_handle(self):
-        '''query_sql_handle 增加获取统计id 使用方法 <<统计名>>
-        '''
-        record = super(QueryAnalysis, self).query_sql_handle()
+        """ 增加获取统计id 使用方法 <<统计名>>
+        """
+        record = super(QueryCompiler, self).query_sql_handle()
         if isinstance(self.query_sql, bytes):
             self.query_sql = self.query_sql.decode('utf8')
         statistic_tags = re.findall(r'<<([^\s,]*)>>', self.query_sql)
@@ -301,12 +328,16 @@ class QueryAnalysis(SqlBuilder):
         return self.query_sql
 
     def has_mark(self, mark_name):
-        return super(QueryAnalysis, self).has_mark(mark_name)
+        return super(QueryCompiler, self).has_mark(mark_name)
 
     def has_conditions(self):
         for k, v in self.query.field_config.items():
             if v.get('search', ''):
                 return True
+
+    def get_conn(self, server_id=0):
+        from .query_server import QueryServer
+        return QueryServer.get_conn(server_id, 'read')
 
 
 class Query(BaseModel):
@@ -330,6 +361,7 @@ class Query(BaseModel):
     other_sql = models.TextField(_('其他SQL'), default='', null=False, blank=True)
     cache_validate = models.IntegerField(default=0, null=True)
 
+    is_paging = models.BooleanField(_('是否分页'), default=False, null=False)
     remark = models.CharField('备注', max_length=1000, blank=True)
     _field_config = models.TextField('查询字段定义', default="", blank=True)
     template_name = models.CharField('模版名', max_length=32, blank=True)
@@ -352,10 +384,10 @@ class Query(BaseModel):
         super(Query, self).save(*args, **kwargs)
 
     def get_default_sql(self):
-        ''' 默认SQL
-        '''
+        """ 默认SQL
+        """
         log_def = self.log_def
-        the_sql = '''SELECT %s FROM %s WHERE log_time  BETWEEN '{{sdate}}' AND '{{edate}}' ''' % (
+        the_sql = """SELECT %s FROM %s WHERE log_time  BETWEEN '{{sdate}}' AND '{{edate}}' """ % (
                 self.select, log_def.table_name)
         if self.where:
             the_sql += ' AND %s' % self.where
@@ -378,8 +410,8 @@ class Query(BaseModel):
 
     @property
     def is_center_query(self):
-        '''是否中央查询
-        '''
+        """是否中央查询
+        """
         try:
             return self.log_def.status == LogDefine.PositionType.CENTER
         except:
@@ -391,8 +423,8 @@ class Query(BaseModel):
 
     @property
     def field_config(self):
-        '''字段定义
-        '''
+        """字段定义
+        """
         try:
             s_d = OrderedDict()
             self.__cache_config = self.__cache_config or OrderedDict(

@@ -55,7 +55,7 @@ class SqlModel(object):
             output = [style.SQL_KEYWORD('REFERENCES') + ' ' +
                       style.SQL_TABLE(qn(rel_to._meta.db_table)) + ' (' +
                       style.SQL_FIELD(qn(rel_to._meta.get_field(
-                          field.rel.field_name).column)) + ')' +
+                              field.rel.field_name).column)) + ')' +
                       cls.connection.ops.deferrable_sql()
                       ]
             pending = False
@@ -122,33 +122,33 @@ class SqlModel(object):
                 # We must specify the index tablespace inline, because we
                 # won't be generating a CREATE INDEX statement for this field.
                 tablespace_sql = connection.ops.tablespace_sql(
-                    tablespace, inline=True)
+                        tablespace, inline=True)
                 if tablespace_sql:
                     field_output.append(tablespace_sql)
             if getattr(f, 'rel', None) and getattr(f, 'db_constraint', None):
                 ref_output, pending = cls.sql_for_inline_foreign_key_references(
-                    model, f, known_models, style)
+                        model, f, known_models, style)
                 if pending:
                     pending_references.setdefault(f.rel.to, []).append(
-                        (model, f))
+                            (model, f))
                 else:
                     field_output.extend(ref_output)
             table_output.append(' '.join(field_output))
         for field_constraints in opts.unique_together:
             table_output.append(style.SQL_KEYWORD('UNIQUE') + ' (%s)' %
                                 ", ".join(
-                                    [style.SQL_FIELD(qn(opts.get_field(f).column))
-                                     for f in field_constraints]))
+                                        [style.SQL_FIELD(qn(opts.get_field(f).column))
+                                         for f in field_constraints]))
 
         full_statement = [style.SQL_KEYWORD('CREATE TABLE') + ' ' +
                           style.SQL_TABLE(qn(opts.db_table)) + ' (']
         for i, line in enumerate(table_output):  # Combine and add commas.
             full_statement.append(
-                '    %s%s' % (line, ',' if i < len(table_output) - 1 else ''))
+                    '    %s%s' % (line, ',' if i < len(table_output) - 1 else ''))
         full_statement.append(')')
         if opts.db_tablespace:
             tablespace_sql = connection.ops.tablespace_sql(
-                opts.db_tablespace)
+                    opts.db_tablespace)
             if tablespace_sql:
                 full_statement.append(tablespace_sql)
         full_statement.append(';')
@@ -210,12 +210,12 @@ class SqlModel(object):
         index_name = "%s_%s" % (model._meta.db_table, self._digest([f.name for f in fields]))
 
         return [
-            style.SQL_KEYWORD("CREATE INDEX") + " " +
-            style.SQL_TABLE(qn(truncate_name(index_name, self.connection.ops.max_name_length()))) + " " +
-            style.SQL_KEYWORD("ON") + " " +
-            style.SQL_TABLE(qn(model._meta.db_table)) + " " +
-            "(%s)" % style.SQL_FIELD(", ".join(field_names)) +
-            "%s;" % tablespace_sql,
+                style.SQL_KEYWORD("CREATE INDEX") + " " +
+                style.SQL_TABLE(qn(truncate_name(index_name, self.connection.ops.max_name_length()))) + " " +
+                style.SQL_KEYWORD("ON") + " " +
+                style.SQL_TABLE(qn(model._meta.db_table)) + " " +
+                "(%s)" % style.SQL_FIELD(", ".join(field_names)) +
+                "%s;" % tablespace_sql,
         ]
 
     @classmethod
@@ -286,7 +286,7 @@ class BaseModelMixin(SqlModelMixin):
             has_save = self.__class__.objects.using(kwargs.get('using')).filter(id=self.id,
                                                                                 _version=self._version,
                                                                                 ).update(
-                **new_data)
+                    **new_data)
             self._version = new_data['_version'] if has_save else self._version
             return has_save
         else:
@@ -350,7 +350,8 @@ class BaseModelMixin(SqlModelMixin):
         d = {}
         for field in self._meta.fields:
             attr = field.name
-            attr_value = getattr(self, attr)
+
+            attr_value = self.__dict__.get(attr)  # getattr(self, attr)
 
             # 特殊处理datetime的数据
             if isinstance(attr_value, datetime.datetime) and is_msgpack:
@@ -361,9 +362,9 @@ class BaseModelMixin(SqlModelMixin):
             elif isinstance(attr_value, BaseModel):
                 d[attr] = attr_value.get_dict(has_m2mfields=has_m2mfields, is_msgpack=is_msgpack)
             elif isinstance(attr_value, (int, str, float)):
-                d[attr] = getattr(self, attr)
+                d[attr] = attr_value
             elif not is_msgpack:
-                d[attr] = field.get_prep_value(getattr(self, attr))
+                d[attr] = field.get_prep_value(attr_value)
 
         if has_m2mfields:
             m2mfields = self.__class__._meta.many_to_many
@@ -484,7 +485,7 @@ class BaseModel(models.Model, BaseModelMixin):
     id = models.BigAutoField(primary_key=True)
     _version = models.IntegerField(_("版本"), default=0, null=False)
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False,db_index=True)
+    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
     update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
 
     class Meta:

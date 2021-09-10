@@ -66,7 +66,7 @@
     <form id="query_form"
           action="/analysis/query/save?{% if data.id %}id={{ data.id }}{% endif %}{% if request.query_params.is_copy %}&is_copy=1{% endif %}"
           method="post">
-        <table class="form edit-container">
+        <table class="form edit-container" style="width: 80%">
             <tr>
                 <th>查询日志：</th>
                 <td>
@@ -153,9 +153,10 @@
 					<label><input type="checkbox"
                                   name="frozen"
                                   {% if c.frozen %}checked="checked"{% endif %}> 冻结</label>
-					</span>
-                                <a href="javascript:;"
+
+                                <a href="javascript:;" style="float:right;color:red;font-weight: bold;"
                                    onclick="if ($('.field-config').length>1) $(this).parent().remove()">X</a>
+                    </span>
                             </div>
                         {% endfor %}
                     </div>
@@ -166,6 +167,12 @@
             <tr>
                 <th>查询条件：</th>
                 <td><input type="text" name="where" size="50" value="{{ data.where }}"/> 例如:字段名=值 支持 and or</td>
+            </tr>
+
+            <tr>
+                <th>是否使用分页：</th>
+                <td><input type="checkbox" class="checkbox" name="is_paging" {% if data.is_paging %} checked {% endif %}
+                           value="1"/></td>
             </tr>
             <tr>
                 <th>排序字段：</th>
@@ -237,37 +244,27 @@
                 <td>
                     <div class="alert alert-info">
                         <p>注意: 中央类查询的时间格式要加两个百分号,即:DATE_FORMAT(log_time,'%%Y-%%m-%%d %%H 点')</p>
-                        <p>任何开放给渠道使用的都需要加上log_channel
-                            in {{ '{{' }}channels{{ '}}' }}</p>
-                        <p>取产品名: db_{{ '{{' }}game_alias{{ '}}' }}</p>
-                        <p>取产品列表: {{ '{{' }}game_aliass{{ '}}' }}</p>
-                        <p>取服务器名: {{ '{{' }}server_name{{ '}}' }}</p>
-
-                        <p>去渠道平台代码
-                            log_sdk_code {{ '{{' }}sdk_code{{ '}}' }}</p>
-
-                        <p>取产品列表: log_name in
-                            ({{ '{{' }}game_aliass{{ '}}' }})</p>
-                        <p>取渠道列表: log_channel in
-                            ({{ '{{' }}channels{{ '}}' }}),
-                            只取一级渠道,使用 {{ '{{' }}first_channel{{ '}}' }}</p>
-
-                        <p>取开始时间: {{ '{{' }}sdate{{ '}}' }}</p>
-                        <p>取结束时间: {{ '{{' }}edate{{ '}}' }}</p>
-
-                        <p>扣量比率: {{ '{{' }}kouliang_rate{{ '}}' }}</p>
-                        <p>超过多少开始扣量: {{ '{{' }}min_kouliang_num{{ '}}' }}</p>
-
-                        <p>取统计id: <
+                        {% for key,item in data.mark_map.items() %}
+                            {% if item.get('multiple') %}
+                                <p>{{ item.alias }}: xx in [{{ '{{' }}{{ key }}{{ '}}' }}]</p>
+                            {% else %}
+                                <p>{{ item.alias }}: xx={{ '{{' }}{{ key }}{{ '}}' }}</p>
+                            {% endif %}
+                        {% endfor %}
+                        <p>取统计id:
+                            <
                             <统计名称>>
                         </p>
+
                         <hr>
-                        字段定义:
-                        排序:此列可以排序,指定的字段名必须与SQL语句的字段名相同,
-                        条件:页面显示条件
-                        多选:多选条件,如果有指定映射字典则下拉多选控件,否则为textarea多选输入
-                        定值(开关):控件为checkbox勾选则传递定值,定值在映射字典填写
-                        单选:控件为radio,必选
+                        <pre>
+字段定义:
+排序:此列可以排序,指定的字段名必须与SQL语句的字段名相同,
+条件:页面显示条件
+多选:多选条件,如果有指定映射字典则下拉多选控件,否则为textarea多选输入
+定值(开关):控件为checkbox勾选则传递定值,定值在映射字典填写
+单选:控件为radio,必选
+</pre>
                     </div>
                 </td>
             </tr>
@@ -489,6 +486,7 @@
 
                 post_data.sql = sql_editor.getValue()
                 post_data.other_sql = other_sql_editor.getValue()
+                post_data.is_paging = post_data.is_paging || '0'
                 clearHelpText()
                 $(ele).attr("disabled", true);
                 $.ajax({

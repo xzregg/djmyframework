@@ -143,7 +143,7 @@
                                 <td>
                                     {% for mark_name,condition_config in mark_conditions.items() %}
                                         {% if condition_config and condition_config.get('template') %}
-                                            {% with context_data=query_analysis.get_context_func(mark_name)(request) %}
+                                            {% with context_data=query_compiler.get_context_func(mark_name)(request) %}
                                                 {% include condition_config['template'] %}
                                             {% endwith %}
                                         {% endif %}

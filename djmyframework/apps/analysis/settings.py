@@ -7,7 +7,7 @@
 # @Desc    : 
 
 from django.utils.translation import gettext_lazy as _
-from .models.query import QueryAnalysis
+from .models.query import QueryCompiler
 
 
 

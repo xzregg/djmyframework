@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content %}	
-<form id="form_{{query_analysis.query.id}}">
+<form id="form_{{query_compiler.query.id}}">
 <div class="col-xs-12 widget-container-span ui-sortable">
         <div class="widget-box transparent">
             <div class="widget-header widget-header-small  header-color-blue">
                 <h6>
-                    {{query_analysis.query.name}}
+                    {{query_compiler.query.name}}
                 </h6>
 
 
@@ -71,7 +71,7 @@
 
 		    		 </ul>
 
-                    <a href="#" id="reload_{{query_analysis.query.id}}" data-action="reload">
+                    <a href="#" id="reload_{{query_compiler.query.id}}" data-action="reload">
                         <i class="icon-refresh"></i>
                     </a>
 
@@ -96,11 +96,11 @@
 
 
 <script type="text/javascript">
-var $SEARCH_FORM_{{query_analysis.query.id}} = $('#form_{{query_analysis.query.id}}')
-var $RELOAD_BTN = $('#reload_{{query_analysis.query.id}}')
+var $SEARCH_FORM_{{query_compiler.query.id}} = $('#form_{{query_compiler.query.id}}')
+var $RELOAD_BTN = $('#reload_{{query_compiler.query.id}}')
 
-function getFormData_{{query_analysis.query.id}}(){
-	var aObjData = $SEARCH_FORM_{{query_analysis.query.id}}.serializeArray()
+function getFormData_{{query_compiler.query.id}}(){
+	var aObjData = $SEARCH_FORM_{{query_compiler.query.id}}.serializeArray()
 	
 	aObjData.push(
 	 		{"name":"edate","value":GetDatetimeStr()}
@@ -127,7 +127,7 @@ ec.opt.legend.borderWidth = 1
 
 var refresh_loop = null
 $RELOAD_BTN.click(function(){
-	var data = getFormData_{{query_analysis.query.id}}()
+	var data = getFormData_{{query_compiler.query.id}}()
 	$.ajax({
 		url: '{{request.get_full_path}}',
 		type: 'POST',

@@ -113,6 +113,8 @@ class Enum(metaclass=EnumMeta):
         return tuple((k, v.name) for k, v in cls)
 
 
+
+
 if __name__ == '__main__':
     def _(s):
         return s

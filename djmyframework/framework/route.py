@@ -16,68 +16,70 @@ from .utils import trace_msg
 class CustomRestRouter(rest_route.DefaultRouter):
     include_format_suffixes = False
     routes = [
-            # List route.
-            rest_route.Route(
-                    url=r'^{prefix}/list$',
-                    mapping={
-                            'get': 'list',
+        # List route.
+        rest_route.Route(
+            url=r'^{prefix}/list$',
+            mapping={
+                'get': 'list',
 
-                    },
-                    name='{basename}.list',
-                    detail=False,
-                    initkwargs={'suffix': 'List'}
-            ),
-            rest_route.Route(
-                    url=r'^{prefix}/save$',
-                    mapping={
-                            'post': 'save'
-                    },
-                    name='{basename}.save',
-                    detail=True,
-                    initkwargs={}
-            ),
-            rest_route.Route(
-                    url=r'^{prefix}/delete$',
-                    mapping={
-                            'post': 'delete'
-                    },
-                    name='{basename}.delete',
-                    detail=False,
-                    initkwargs={}
-            ),
-            rest_route.Route(
-                    url=r'^{prefix}/edit$',
-                    mapping={
-                            'get': 'edit',
-                    },
-                    name='{basename}.edit',
-                    detail=True,
-                    initkwargs={}
-            ),
-            rest_route.Route(
-                    url=r'^{prefix}/metadata$',
-                    mapping={
-                            'get'    : 'metadata',
-                            'options': 'metadata',
-                    },
-                    name='{basename}.metadata',
-                    detail=True,
-                    initkwargs={}
-            ),
-            # Dynamically generated list routes. Generated using
-            # @action(detail=False) decorator on methods of the viewset.
-            rest_route.DynamicRoute(
-                    url=r'^{prefix}/{url_path}$',
-                    name='{basename}.{url_name}',
-                    detail=False,
-                    initkwargs={}
-            )
+            },
+            name='{basename}.list',
+            detail=False,
+            initkwargs={'suffix': 'List'}
+        ),
+        rest_route.Route(
+            url=r'^{prefix}/save$',
+            mapping={
+                'post': 'save'
+            },
+            name='{basename}.save',
+            detail=True,
+            initkwargs={}
+        ),
+        rest_route.Route(
+            url=r'^{prefix}/delete$',
+            mapping={
+                'post': 'delete'
+            },
+            name='{basename}.delete',
+            detail=False,
+            initkwargs={}
+        ),
+        rest_route.Route(
+            url=r'^{prefix}/edit$',
+            mapping={
+                'get': 'edit',
+            },
+            name='{basename}.edit',
+            detail=True,
+            initkwargs={}
+        ),
+        rest_route.Route(
+            url=r'^{prefix}/metadata$',
+            mapping={
+                'get': 'metadata',
+                'options': 'metadata',
+            },
+            name='{basename}.metadata',
+            detail=True,
+            initkwargs={}
+        ),
+        # Dynamically generated list routes. Generated using
+        # @action(detail=False) decorator on methods of the viewset.
+        rest_route.DynamicRoute(
+            url=r'^{prefix}/{url_path}$',
+            name='{basename}.{url_name}',
+            detail=False,
+            initkwargs={}
+        )
     ]
 
 
 rest_router = CustomRestRouter()
 rest_router.include_root_view = False
-VIEWS_DIR = 'views'
+VIEWS_DIR = settings.VIEWS_DIR
+ROUTE_PREFIX = settings.ROUTE_PREFIX
+
 Handlers = set()
 
 
@@ -123,6 +125,7 @@ class Route(object):
         # rest_framework GenericViewSet
         if hasattr(obj, 'get_serializer'):
             prefix = self.re_url or uri
+            prefix = '%s%s' % (ROUTE_PREFIX, prefix.strip('^'))
             basename = prefix.replace('/', '.').strip('^').strip('$')
             rest_router.register(prefix, obj, basename=basename)
             return obj
@@ -137,11 +140,11 @@ class Route(object):
 
         if self.re_url == '':
             self.re_url = '%s' % uri
+        self.re_url = '%s%s' % (ROUTE_PREFIX, self.re_url.strip('^'))
         if not self.re_url.startswith('^'):
             self.re_url = '^%s' % self.re_url
         if not self.re_url.endswith('$'):
             self.re_url = '%s$' % self.re_url
-
 
         _url = re_path(self.re_url, view_func,
                        name=self.name or name,

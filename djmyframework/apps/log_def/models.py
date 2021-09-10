@@ -30,10 +30,10 @@ class BigIntegerAutoField(fields.BigIntegerField):
 
 
 class BaseLog(models.Model, SqlModelMixin):
-    '''日志基本模型
+    """日志基本模型
     '含有空值的列很难进行查询优化，因为它们使得索引、索引的统计信息以及比较运算更加复杂。你应该用0、一个特殊的值或者一个空串代替空值。
 
-    '''
+    """
     # https://blog.jcole.us/2013/05/02/how-does-innodb-behave-without-a-primary-key/
 
     id = models.BigAutoField(primary_key=True)
@@ -88,8 +88,8 @@ class LogDefineMixin(object):
         return sqls
 
     def get_default_config(self):
-        '''默认的日志类配置
-        '''
+        """默认的日志类配置
+        """
         _d = {}
         for f in self.LogModel._meta.fields:
             if f.name.lower() == 'id':
@@ -112,8 +112,8 @@ class LogDefineMixin(object):
 
     @classmethod
     def get_create_table_sqls(cls, is_center=False):
-        '''获取需要创建表的sql
-        '''
+        """获取需要创建表的sql
+        """
         status = cls.Status.CENTER if is_center else cls.Status.NORMAL
         sqls = []
         for t in cls.objects.filter(status=status):
@@ -127,8 +127,8 @@ class LogDefineMixin(object):
 
 
 class LogDefine(BaseModel, LogDefineMixin):
-    '''日志类定义
-    '''
+    """日志类定义
+    """
 
     LogModel = Log
 
@@ -148,9 +148,9 @@ class LogDefine(BaseModel, LogDefineMixin):
 
     #  todo 这里未来兼容sql文件导入和mysqldb执行的sql 处理有点乱, 到时再改
     def get_other_sqls(self, is_sql_file=False):
-        '''获取其他sql
+        """获取其他sql
         @is_sql_file:是否sql文件用的
-        '''
+        """
         sqls = []
         sp = ';'
         the_cut_sp = '\\'
@@ -208,8 +208,8 @@ class LogDefine(BaseModel, LogDefineMixin):
 
 
 class DictBaseType(object):
-    '''基本字典类型
-    '''
+    """基本字典类型
+    """
     NAME = '字典'
     DEFAULT_JSON = '{}'
 
@@ -221,8 +221,8 @@ class DictBaseType(object):
 
 
 class DBDictType(DictBaseType):
-    '''数据表
-    '''
+    """数据表
+    """
     NAME = '数据表'
     DEFAULT_JSON = '{"table_name":"","key_name":"","value_name":""}'
 
@@ -241,8 +241,8 @@ ROOT_PATH = settings.BASE_DIR
 
 
 class FileDicType(DictBaseType):
-    '''从文件内拿json
-    '''
+    """从文件内拿json
+    """
     NAME = '文件'
     DEFAULT_JSON = '{"file_path":"","key_name":"","value_name":""}'
 
@@ -261,8 +261,8 @@ from framework.utils import get_files_from_dir
 
 
 class DirDictType(DictBaseType):
-    '''目录里拿字典
-    '''
+    """目录里拿字典
+    """
     NAME = '目录'
     DEFAULT_JSON = '{"dir_path":"","key_name":"","value_name":""}'
 
@@ -291,8 +291,8 @@ class DirDictType(DictBaseType):
 
 
 class DictDefine(BaseModel):
-    '''字典定义
-    '''
+    """字典定义
+    """
     TYPE_DICT = {0: DictBaseType,
                  1: DBDictType,
                  2: FileDicType,
@@ -349,13 +349,13 @@ class DictDefine(BaseModel):
 
     @staticmethod
     def reverse_dict(_dict):
-        '''反转字典
-        '''
+        """反转字典
+        """
         return dict((v, k) for k, v in _dict.items())
 
     def get_dict(self):
-        '''获取字典
-        '''
+        """获取字典
+        """
         _r = {}
         if self.__cache_dict: return self.__cache_dict
         type_class = self.TYPE_DICT.get(self.type)
@@ -372,7 +372,7 @@ class DictDefine(BaseModel):
 
     @classmethod
     def get_group(cls):
-        '''获取字典的分组
-        '''
+        """获取字典的分组
+        """
         groups = [g for g in cls.objects.using('read').values_list('group', flat=True).distinct() if g]
         return groups

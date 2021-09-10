@@ -9,6 +9,7 @@
 from __future__ import absolute_import
 
 import pymysql
+
 # 使用 pymysql 替代mysqldb
 pymysql.install_as_MySQLdb()
 import sys
@@ -28,10 +29,9 @@ APPS_ROOT = os.path.join(BASE_DIR, 'apps')
 PROJECT_ROOT = BASE_DIR
 
 APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model', 'ws_gateway', 'dynamic_settings']
-#APPS += ['ldap_account', 'svn_admin']
+# APPS += ['ldap_account', 'svn_admin']
 
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
-
 
 from framework.conf import SettingOptions
 
@@ -43,7 +43,6 @@ RELEASE = '01'
 ROOT_URLCONF = 'urls'
 
 LOGIN_URL = SettingOptions('/myadmin/login', _('系统标题'), 'LOGIN_URL', 'System', lazy=_)
-
 
 INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'System',
                            choices=[('/index', _('主页')), ('/myadmin/index', _('管理主页'))])
@@ -58,6 +57,9 @@ ALLOW_REGISTER = SettingOptions(True, _('是否开启账号注册'), 'ALLOW_REGI
 AUTH_USER_MODEL = 'myadmin.User'
 
 APPS = settings.APPS or APPS
+
+VIEWS_DIR = 'views'
+ROUTE_PREFIX = ''
 
 INSTALLED_APPS = ['djorm_pool',
                   'framework',
@@ -251,7 +253,6 @@ STATIC_ROOT = STATIC_DIR
 # MEDIA_ROOT = STATIC_DIR
 MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media/')
 
-
 ## 重新设置变量
 BASE_DIR = settings.BASE_DIR
 SECRET_KEY = settings.SECRET_KEY
@@ -260,11 +261,9 @@ APPS = settings.APPS
 
 from config.logging_config import LOGGING
 
-
 ######## 环境判断 #########
 if os.environ.get('DJANGO_ENV', 'dev') == 'dev' and settings.DEBUG:
     from config.dev import *
 else:
     from config.prod import *
 ##########################
-

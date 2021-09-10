@@ -22,6 +22,7 @@ from framework.utils.cache import CacheAttribute
 from framework.models import BaseModel
 from framework.validators import LetterValidator
 
+
 class Statistic(BaseModel):
     """统计"""
     STATUS_CHOICES = ((0, '结果数量数'), (1, '值求和'), (2, '求平均值'), (3, '求最大值'), (4, '求最小值'),)
@@ -30,8 +31,8 @@ class Statistic(BaseModel):
 
     log_type = models.IntegerField()
 
-    name = models.CharField(_('统计标识'),max_length=200,unique=True)
-    remove_field = models.CharField(_('统计时间维护字段'),max_length=50, null=False, default="")  # 统计时间维护字段
+    name = models.CharField(_('统计标识'), max_length=200, unique=True)
+    remove_field = models.CharField(_('统计时间维护字段'), max_length=50, null=False, default="")  # 统计时间维护字段
 
     is_save_center = models.IntegerField('是否保存到中央库', default=1)
     save_table_name = models.CharField('保存到哪个表', max_length=50, default=DEFAULT_SAVE_TABLE_NAME)
@@ -42,11 +43,16 @@ class Statistic(BaseModel):
     exec_interval = models.IntegerField(default=0)
     last_exec_time = models.DateTimeField(null=True, blank=True)
 
-    is_auto_execute = models.IntegerField(_('自动执行'),default=0)
+    is_auto_execute = models.IntegerField(_('自动执行'), default=0)
 
-    auto_exec_interval = models.IntegerField(_('自动执行间隔'),default=0,blank=True,null=False)  # 自动执行间隔，单位秒天
-    remark = models.CharField(_('备注'),max_length=1000, blank=True)
+    auto_exec_interval = models.IntegerField(_('自动执行间隔'), default=0, blank=True, null=False)  # 自动执行间隔，单位秒天
+    remark = models.CharField(_('备注'), max_length=1000, blank=True)
     result_data = models.CharField(max_length=200, blank=True)
+
+    @classmethod
+    def get_servers(cls, server_ids):
+        from .query_server import QueryServer
+        return QueryServer.objects.filter(id__in=server_ids)
 
     @CacheAttribute
     def log_def(self):
@@ -85,7 +91,7 @@ class Statistic(BaseModel):
                      (now_date - datetime.timedelta(days=current_month_days)).strftime('%Y-%m-%d')]
 
         query_sql = 'select result_time,sum(result) from result where statistic_id=%d and result_time in("%s") group by result_time desc limit 10' % (
-        self.id, '","'.join(list_date))
+            self.id, '","'.join(list_date))
         cursor = connection.cursor()
         cursor.execute(query_sql)
         list_record = cursor.fetchall()
@@ -97,8 +103,6 @@ class Statistic(BaseModel):
         the_value = 0.0
 
         for item_record in list_record:
-            print
-            item_record
             item_date = item_record[0].strftime('%Y-%m-%d')
             tmp = 0
             if float(item_record[1]) != 0:
@@ -164,8 +168,8 @@ class Result(models.Model):
 
         diff = (int(datetime.datetime.strptime(edate, '%Y-%m').strftime('%Y')) - int(
             datetime.datetime.strptime(sdate, '%Y-%m').strftime('%Y'))) * 12 + (
-                           int(datetime.datetime.strptime(edate, '%Y-%m').strftime('%m')) - int(
-                       datetime.datetime.strptime(sdate, '%Y-%m').strftime('%m')))
+                       int(datetime.datetime.strptime(edate, '%Y-%m').strftime('%m')) - int(
+                   datetime.datetime.strptime(sdate, '%Y-%m').strftime('%m')))
 
         temp_date = sdate.split("-")
 

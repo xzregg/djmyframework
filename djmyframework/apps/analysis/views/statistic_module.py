@@ -22,8 +22,8 @@ CENTER_CONN = None
 
 
 def get_center_conn(alias='default'):
-    '''获取中央服的mysql连接
-    '''
+    """获取中央服的mysql连接
+    """
     global CENTER_CONN
     try:
         CENTER_CONN.ping()
@@ -74,8 +74,8 @@ class StatisticBuilder(SqlBuilder):
                     {"game_alias": [self.server_model.alias]})  # 传游戏名
 
     def query_sql_handle(self):
-        '''query_sql_handle 增加获取统计id 使用方法 <<统计名>>
-        '''
+        """query_sql_handle 增加获取统计id 使用方法 <<统计名>>
+        """
         if re.search(r'<<\S*>>', self.query_sql):  # 包含<<统计名>>标签
             statistic_names = DictDefine.get_dict_for_key(
                     'statistic_name', reverse=False)
@@ -85,8 +85,8 @@ class StatisticBuilder(SqlBuilder):
 
 
 class StatisticExcute(object):
-    '''统计执行
-    '''
+    """统计执行
+    """
 
     def __init__(self, query_conn, statistic_analysis, manager):
         self.manager = manager
@@ -156,8 +156,8 @@ class StatisticExcute(object):
         return has_data
 
     def del_old_result(self):
-        '''删除旧数据
-        '''
+        """删除旧数据
+        """
         remove_field = self.statistic_analysis.statistic.remove_field
         if not remove_field:
             remove_field = "log_time"
@@ -200,9 +200,8 @@ class StatisticManager(object):
         self.statistics = self.statistics.filter(is_auto_execute=1)
         self.statistic_ids = [str(x) for x in statistic_ids if x]
         # todo
-        from ..models import Server
-        self.servers = Server.objects.filter(
-                id__in=server_ids) if server_ids else Server.objects.filter(status__gte=0)
+
+        self.servers = Statistic.get_servers(server_ids)
         self.center_statistic_objs = []
         self.server_statistic_objs = []
         self.sdate = convert_to_datetime(sdate)
@@ -232,8 +231,8 @@ class StatisticManager(object):
         return err_msgs, set(err_servers), set(err_statistic + err_center_statistic)
 
     def update_server_statistic(self):
-        '''更新分服的统计
-        '''
+        """更新分服的统计
+        """
         err_servers = []
         err_statistic = []
         err_msgs = []
@@ -282,8 +281,8 @@ class StatisticManager(object):
         return err_msgs, err_servers, err_statistic
 
     def update_center_statistic(self):
-        ''' 更新中央后台的统计
-        '''
+        """ 更新中央后台的统计
+        """
         err_statistic = []
         err_msgs = []
         self.server_count = 0

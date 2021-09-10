@@ -34,8 +34,8 @@
                 <input type="hidden" value="" name="export_server_id">
             {% else %}
                 <div class="hr"></div>
-                {% with group_servers_dict=query_analysis.get_context_func('server_id')(request),name_prefix="export_",not_grouping=True %}
-                    {% include "game_manage/widgets/group_server.html" %}
+                {% with group_servers_dict=query_compiler.get_context_func('server_id')(request),name_prefix="export_",not_grouping=True %}
+                    {% include "analysis/widgets/query_server_select.html" %}
                 {% endwith %}
             {% endif %}
         </div>
