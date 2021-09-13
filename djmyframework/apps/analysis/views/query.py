@@ -228,7 +228,8 @@ def query_view(request, query_name='', query_model=None, is_query_do=False, list
                         template_path)
 
     server_id = request.REQUEST.get('server_id', 0)
-
+    from ..views.widgets import get_query_servers
+    query_servers = get_query_servers(request)
     return render(request, template, locals())
 
 

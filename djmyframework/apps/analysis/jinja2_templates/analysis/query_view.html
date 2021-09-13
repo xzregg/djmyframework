@@ -39,8 +39,7 @@
 
     {% if  request.allow_menu.查询管理 or request.allow_menu.清除缓存 or request.allow_menu.查询_编辑 or request.allow_menu.查询管理 %}
         <div class="bar">
-            {% if  request.allow_menu.查询管理 or request.allow_menu.清除缓存 or request.allow_menu.查询_编辑 or request.allow_menu.查询管理  %}
-
+            {% if  request.allow_menu.查询管理 or request.allow_menu.清除缓存 or request.allow_menu.查询_编辑 or request.allow_menu.查询管理 %}
 
                 <span class="inline  position-relative dropdown-hover">
                     <a href="/analysis/query/list?log_key={{ the_query.log_key }}">查询列表-></a>
@@ -65,6 +64,12 @@
             {{ the_query.name }}
 
             <span class="buttons">
+                {% if not is_center_query %}
+                    {% with context_data=query_servers %}
+                        {% include "analysis/widgets/query_server_select.html" %}
+                    {% endwith %}
+                {% endif %}
+
                 {% if request.allow_menu.清除缓存 %}
                     <a href="/analysis/query/clear/cache" class="openDialog">清除缓存</a>
                 {% endif %}
@@ -87,51 +92,7 @@
         <div class="widget-box condition  collapsed">
 
             <div class="widget-header   header-color-blue">
-    <span>
-                {% include "analysis/widgets/datetime_picker.html" %}
-    </span>
 
-
-                <span id="search-toolbar" class="widget-toolbar no-border">
-
-                    {% if the_query.remark %}
-                        <span class="help-button  tooltip-info" data-rel="popover" data-placement="bottom"
-                              data-content="{{ the_query.remark|linebreaksbr }}" title="帮助" data-original-title="帮助"
-                              data-trigger="click">?</span>
-                        <script type="text/javascript">
-                            $('[data-rel=popover]').popover({container: 'body', html: true, trigger: "click"});
-                        </script>
-                    {% endif %}
-
-                    <div class="btn-group ">
-                        <a id="search_btn" class="btn btn-sm btn-success ">
-                            <i class="icon-search "></i>查询
-                        </a>
-                        {% if request.allow_menu.查询_导出 %}
-                            <a id="export_all_btn" class="btn btn-sm btn-success ">
-                                <i class="cus-table-go"></i>
-                                导出
-                            </a>
-                        {% endif %}
-                        {% if request.allow_menu.查询_导出 %}
-                            <a data-toggle="dropdown" class="btn btn-sm  btn-success dropdown-toggle">
-                                <span class="caret"></span>
-                                <span class="sr-only">Toggle Dropdown</span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a href="javascript:;" id="export_currently_btn">
-                                        <i class="cus-page-excel"></i>
-                                        导出当前
-                                    </a>
-                                </li>
-                            </ul>
-                        {% endif %}
-
-                    </div>
-
-
-                </span>
 
             </div>
 
@@ -141,6 +102,8 @@
                         <table id="conditions-table" class="width-100 table" style="margin-bottom: 0px;">
                             <tr>
                                 <td>
+                                    <span style="margin-left:10px;display: inline-block;">{% include "analysis/widgets/datetime_picker.html" %} </span>
+
                                     {% for mark_name,condition_config in mark_conditions.items() %}
                                         {% if condition_config and condition_config.get('template') %}
                                             {% with context_data=query_compiler.get_context_func(mark_name)(request) %}
@@ -157,7 +120,7 @@
                                             {% if config.multiple and config.dict %}
                                                 <!-- 多条件 select 定值只能选dict内的值-->
 
-                                                <select name="{{ config.name }}" multiple="multiple"
+                                                <select name="{{ config.name }}" multiple="multiple" class="select2"
                                                         {% if config.dict %}chosen_key="{{ config.dict }}"
                                                         {% if config.merge_value %}value_format="__value__(__key__)" {% else %}{% endif %}value_format="__value__" {% endif %}
                                                         data-placeholder="选择{{ name }}.."
@@ -178,35 +141,80 @@
 
                                             {% elif config.single %}
                                                 {% for k,v in config.value.items() %}
-                                                    <label><input name="{{ config.name }}" type="radio" class="ace"
-                                                                  value="{{ k }}"
+                                                    <span class="checkbox-inline">
+                                                    <input name="{{ config.name }}" type="radio" class=""
+                                                           value="{{ k }}"
                                                             {% if k == config.request_value or loop.first %}
-                                                                  checked="checked"{% endif %}><span
-                                                            class="lbl">{{ v }}</span></label>
+                                                           checked="checked"{% endif %}>
+                                                        {{ v }}</span>
                                                 {% endfor %}
                                             {% elif config.fixed %}
                                                 <!-- 单条件 checkbox 开关-->
-                                                <label>
-                                                    <input name="{{ config.name }}"
-                                                           class="ace ace-switch ace-switch-7"
-                                                           value="{{ config.dict }}"
-                                                           {% if config.value %}checked="checked"
-                                                           disabled="true"{% endif %}
-                                                           type="checkbox">
-                                                    <span class="lbl"></span>
-                                                </label>
+
+                                                <input name="{{ config.name }}"
+                                                       class=""
+                                                       value="{{ config.dict }}"
+                                                       {% if config.value %}checked="checked"
+                                                       disabled="true"{% endif %}
+                                                       type="checkbox">
+                                                <span class="lbl"></span>
+
                                             {% else %}
                                                 <!-- 单条件输入框 -->
                                                 <input type="text"
                                                        name="{{ config.name }}"
                                                        class="{% if '时间' in name %}Wdate{% else %}input-small {% endif %}"
                                                        {% if config.dict %}select_key="{{ config.dict }}" {% endif %}
-                                                       value="{% if '时间' in name and config.dict %}{{ sdate }}{% else %}{{ config.value }}{% endif %}">
+                                                       value="
+
+                                                               {% if '时间' in name and config.dict %}{{ sdate }}{% else %}{{ config.value }}{% endif %}">
                                             {% endif %}
                                         {% endif %}
                                     </span>
                                     {% endfor %}
 
+
+                                    <span id="search-toolbar" class="widget-toolbar no-border">
+
+                    {% if the_query.remark %}
+                        <span class="help-button  tooltip-info" data-rel="popover" data-placement="bottom"
+                              data-content="{{ the_query.remark|linebreaksbr }}" title="帮助" data-original-title="帮助"
+                              data-trigger="click">?</span>
+                        <script type="text/javascript">
+                            $('[data-rel=popover]').popover({container: 'body', html: true, trigger: "click"});
+                        </script>
+                    {% endif %}
+
+                                        <div class="btn-group ">
+                        <a id="search_btn" class="btn btn-sm btn-success ">
+                            <i class="icon-search "></i>查询
+                        </a>
+                                            {% if request.allow_menu.查询_导出 %}
+                                                <a id="export_all_btn" class="btn btn-sm btn-success ">
+                                <i class="cus-table-go"></i>
+                                导出
+                            </a>
+                                            {% endif %}
+                                            {% if request.allow_menu.查询_导出 %}
+                                                <a data-toggle="dropdown"
+                                                   class="btn btn-sm  btn-success dropdown-toggle">
+                                <span class="caret"></span>
+                                <span class="sr-only">Toggle Dropdown</span>
+                            </a>
+                                                <ul class="dropdown-menu">
+                                <li>
+                                    <a href="javascript:;" id="export_currently_btn">
+                                        <i class="cus-page-excel"></i>
+                                        导出当前
+                                    </a>
+                                </li>
+                            </ul>
+                                            {% endif %}
+
+                    </div>
+
+
+                </span>
                                 </td>
                             </tr>
 

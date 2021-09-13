@@ -41,8 +41,8 @@ class SqlMarkManager(object):
             #                      'context_func': 'sdk_center.views.widgets.get_game_alias_dict'},  # 多个游戏代号
             #
             "server_id"   : {"name"        : "server_id", "multiple": False,
-                             'template'    : 'analysis/widgets/query_server_select.html',
-                             'context_func': 'analysis.views.widgets.get_query_servers'},  # 服务器ID替换
+                            'template'    : 'analysis/widgets/query_server_select.html',
+                            'context_func': 'analysis.views.widgets.get_query_servers'},  # 服务器ID替换
             # 'context_func': 'game_manage.views.widgets.get_group_servers_dict'},  # 服务器ID替换
             # "server_ids"      : {"name"        : "server_id", "multiple": True,
             #                      'template'    : 'game_manage/widgets/group_server_dialog.html',
@@ -242,13 +242,13 @@ class SqlBuilder(object):
         return mark_conditions
 
     def get_context_func(self, mark_name):
-        func = self.mark_map[mark_name].get('context_func', None)
+        func = self.mark_map.get(mark_name,{}).get('context_func', None)
         if isinstance(func, str):
             return import_func(func)
         return func
 
     def get_param_func(self, mark_name):
-        func = self.mark_map[mark_name].get('params_func', None)
+        func = self.mark_map.get(mark_name,{}).get('params_func', None)
         if isinstance(func, str):
             return import_func(func)
         return func
