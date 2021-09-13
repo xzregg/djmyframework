@@ -259,12 +259,9 @@
 
             "order": [],//默认不排序
             "columnDefs": [
-
-                {% for name,config in field_configs.items() %} {% if config.className %}
-                {"className": "{{config.className}}", "targets": [{{loop.index0 }}]},
-                {% endif %}{% endfor %}
-
-
+                {% for name,config in field_configs.items() %}{% if config.className %}{"className": "{{config.className}}", "targets": [{{loop.index0 }}]},{% endif %}
+                 {% if config.width_num %}{"width": "{{config.width_num}}", "targets": [{{loop.index0 }}]},{% endif %}
+                {% endfor %}
                 {
                     "orderable": false,//不排序的列
                     "targets": [{% for name,config in field_configs.items() %} {% if not config.sort %}{{loop.index0 }}{%if not loop.last%}, {%endif%}{% endif %}{% endfor %}]
@@ -272,9 +269,9 @@
             ],
             //向下兼容
             "aoColumnDefs": [
-                {% for name,config in field_configs.items() %} {% if config.className %}
-                {"className": "{{config.className}}", "targets": [{{loop.index0 }}]},
-                {% endif %}{% endfor %}
+                {% for name,config in field_configs.items() %}{% if config.className %}{"className": "{{config.className}}", "targets": [{{loop.index0 }}]},{% endif %}
+                 {% if config.width_num %}{"width": "{{config.width_num}}", "targets": [{{loop.index0 }}]},{% endif %}
+                {% endfor %}
 
                 {
                     "orderable": false,//不排序的列
