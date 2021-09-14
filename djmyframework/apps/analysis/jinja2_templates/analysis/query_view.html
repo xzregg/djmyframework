@@ -64,11 +64,7 @@
             {{ the_query.name }}
 
             <span class="buttons">
-                {% if not is_center_query %}
-                    {% with context_data=query_servers %}
-                        {% include "analysis/widgets/query_server_select.html" %}
-                    {% endwith %}
-                {% endif %}
+
 
                 {% if request.allow_menu.清除缓存 %}
                     <a href="/analysis/query/clear/cache" class="openDialog">清除缓存</a>
@@ -102,6 +98,12 @@
                         <table id="conditions-table" class="width-100 table" style="margin-bottom: 0px;">
                             <tr>
                                 <td>
+                                    {% if not is_center_query %}
+                                        {% with context_data=query_servers %}
+                                            {% include "analysis/widgets/query_server_select.html" %}
+                                        {% endwith %}
+                                    {% endif %}
+
                                     <span style="margin-left:10px;display: inline-block;">{% include "analysis/widgets/datetime_picker.html" %} </span>
 
                                     {% for mark_name,condition_config in mark_conditions.items() %}
@@ -166,6 +168,7 @@
                                                        class="{% if '时间' in name %}Wdate{% else %}input-small {% endif %}"
                                                        {% if config.dict %}select_key="{{ config.dict }}" {% endif %}
                                                        value="
+
 
                                                                {% if '时间' in name and config.dict %}{{ sdate }}{% else %}{{ config.value }}{% endif %}">
                                             {% endif %}

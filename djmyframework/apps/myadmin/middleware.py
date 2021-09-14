@@ -139,7 +139,7 @@ class AuthMiddleware(BaseMiddleware):
             from .models.operate import OperateLog
             operate_log = OperateLog()
             operate_log.type = log_type
-            operate_log.user_id = request.user.id
+            operate_log.user = request.user
             operate_log.msg = msg
             operate_log.post_params = '%s \n %s' % (json.dumps(request.REQUEST, ensure_ascii=False), request.body)
             operate_log.ip = request.real_ip

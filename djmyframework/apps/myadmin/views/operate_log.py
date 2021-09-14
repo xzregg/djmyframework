@@ -19,7 +19,7 @@ class OperateLogSerializer(BaseModelSerializer):
 
     class Meta:
         model = OperateLog
-        fields =  ['id', 'user_id', 'type', 'ip', 'full_path', 'post_params', 'msg', 'user_agent', 'create_datetime', 'update_datetime'] or '__all__'
+        fields = ['id', 'user_id', 'type', 'ip', 'full_path', 'post_params', 'msg', 'user_agent', 'create_datetime', 'update_datetime','user_alias'] or '__all__'
         #exclude = ['session_key']
         #read_only_fields = []
 
@@ -41,7 +41,8 @@ class OperateLogSet(CurdViewSet):
     model = OperateLog
 
     def get_queryset(self):
-        return OperateLog.objects.all().prefetch_related(*[]).select_related(*[])
+        return OperateLog.objects.all().prefetch_related(*[]).select_related(*['user'])
+
 
     @swagger_auto_schema(query_serializer=MyFilterSerializer,responses=ListOperateLogRspSerializer)
     def list(self, request, *args, **kwargs):

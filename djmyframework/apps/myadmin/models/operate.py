@@ -11,13 +11,14 @@ from django.utils.translation import gettext_lazy as _
 
 from framework.models import BaseModel
 from ..apps import MyadminConfig
+from .user import User
 
 
 class OperateLog(BaseModel):
     """
     操作日志记录
     """
-    user_id = models.IntegerField(_('管理员ID'), db_index=True)
+    user = models.ForeignKey(User, verbose_name=_('管理员ID'), on_delete=models.DO_NOTHING,null=True)
     type = models.CharField(_('类型'), max_length=20, db_index=True)
     ip = models.GenericIPAddressField(_('IP'), max_length=10)
     full_path = models.CharField(_('访问路径'), max_length=200, db_index=True)
@@ -25,7 +26,10 @@ class OperateLog(BaseModel):
     msg = models.TextField(_('其他消息'), default='')
     user_agent = models.CharField(_('User-Agent'), max_length=200)
 
+    @property
+    def user_alias(self):
+        return self.user.alias
 
     class Meta:
         app_label = MyadminConfig.name
-        ordering = ['id']
+        ordering = ['-id']
