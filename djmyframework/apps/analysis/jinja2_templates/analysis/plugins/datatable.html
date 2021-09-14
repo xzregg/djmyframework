@@ -52,7 +52,7 @@
                     "sname": "search",//每页大小原参数名
                     "dname": "search",     //目标参数名
                     "getValueFunc": function (saoData, value) {
-                        return value.value
+                        return value
                     }
                 },
                 {
@@ -66,8 +66,6 @@
                     "sname": "order",//排序index
                     "dname": "sort_index",
                     "getValueFunc": function (saoData, value) {
-
-
                         return value.length == 0 ? -1 : value[0].column
                     }
                 },
@@ -98,6 +96,7 @@
                     var convOjb = convertList[i],
                         newObj = {}
                     var value = This.fnGetKey(saoData, convOjb.sname)
+
                     if (convOjb.getValueFunc) {
                         value = convOjb.getValueFunc(saoData, value)
                     }
@@ -203,7 +202,7 @@
 
         }
 
-        this.page_size = 100
+        this.page_size = 50
         this.page_size_list = [100, 200, 1000]
 
         this.option = {
@@ -223,7 +222,7 @@
 
             //"orderClasses":true,
 
-            "serverSide": false,//服务端模式
+            "serverSide":  {% if query_compiler.query.is_paging %}true{% else %}false{% endif %},//服务端模式
 
             "ajax": This.fnajaxQuery,//自定服务器请求
 
@@ -348,7 +347,7 @@
             beforefunc()
         }
         if (window.odataTable) {
-            // window.odataTable.draw()
+            //window.odataTable.draw()
             window.odataTable.ajax.reload()
         } else {
             //alert($('#query_table').offset().top)

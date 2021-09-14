@@ -300,6 +300,11 @@ def query_do(request, query_compiler: QueryCompiler, built_in=False, list_data_h
         conn = query_compiler.get_conn(server_id)
         # 设置输入参数
         query_compiler.set_mark_parmas(request)
+        # 知道结果的数量情况下,添加_分页,不执行count设置分页
+        if not query_compiler.query.is_paging:
+            total_record = 10000
+            page_size = total_record
+            page_num = 1
         # 设置 limit 限制
         query_compiler.set_limit(page_size, page_num)
         # 替换变量，生成 sql
@@ -317,10 +322,6 @@ def query_do(request, query_compiler: QueryCompiler, built_in=False, list_data_h
 
         count_sql = query_compiler.get_count_sql()
         query_sql = query_compiler.get_query_sql()
-
-        # 知道结果的数量情况下,添加_分页,不执行count设置分页
-        if not query_compiler.query.is_paging:
-            total_record = page_size
 
         # 默认不打印sql
         if settings.DEBUG or request.REQUEST.get('_sql', ''):
@@ -343,6 +344,8 @@ def query_do(request, query_compiler: QueryCompiler, built_in=False, list_data_h
             list_data, result_cache_time = cache_func('display_%s' % query_sql_key, query_display_process, (
                     query_compiler, list_data, page_num, page_size), timeout=cache_time)
             tfoot_sql = query_compiler.get_tfoot_sql()
+            if not query_compiler.query.is_paging:
+                total_record = min(total_record,len(list_data))
 
             if tfoot_sql:
                 tfoot_sql_key = md5('%s_%s' % (tfoot_sql, server_id))
