@@ -35,7 +35,7 @@ class RoleSerializer(BaseModelSerializer):
                   'home_index', 'create_datetime', 'update_datetime', 'user'] \
                  + ['menu', 'role']
         # exclude = ['session_key']
-        # read_only_fields = []
+        read_only_fields = ['create_datetime']
         # write_only_fields=['creater']
 
 
