@@ -31,7 +31,7 @@ def _signal_multiple_handler(sig, frame):
         try:
             handler(sig, frame)
         except Exception as e:
-            print(trace_msg)
+            print(trace_msg())
 
 
 def add_signal_handler(signal_num, handler, is_first=True):

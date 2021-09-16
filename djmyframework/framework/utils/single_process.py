@@ -1,19 +1,20 @@
-#coding:utf-8
+# coding:utf-8
 import fcntl
 import logging
 import os
 from functools import wraps
 
 
-class PidFileError(Exception):pass
+class PidFileError(Exception): pass
+
+
 class PidFile(object):
 
     def __init__(self, path):
         self.path = '.%s' % path
         if not self.path.endswith('.pid'):
-            self.path +='.pid'
+            self.path += '.pid'
         self.pidfile = None
-
 
     def acquire(self):
         self.__enter__()
@@ -27,7 +28,7 @@ class PidFile(object):
             fcntl.flock(self.pidfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:
             fpid = open(self.path, "r").read()
-            raise PidFileError("Process id %s Already running , pid to "%fpid + self.path)
+            raise PidFileError("Process id %s Already running , pid to " % fpid + self.path)
         self.pidfile.seek(0)
         self.pidfile.truncate()
         self.pidfile.write(str(os.getpid()))
@@ -43,9 +44,11 @@ class PidFile(object):
                 raise
         os.remove(self.path)
 
+
 def SingleProcessDeco(path=''):
-    '''保证只有单个进程在执行
-    '''
+    """保证只有单个进程在执行
+    """
+
     def repl(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -55,18 +58,18 @@ def SingleProcessDeco(path=''):
             except PidFileError as e:
                 logging.warning(e)
                 return None
-        return wrapper
-    return repl
 
+        return wrapper
+
+    return repl
 
 
 if __name__ == "__main__":
     @SingleProcessDeco('my.pid')
     def main():
         import time
-        print ('running')
+        print('running')
         time.sleep(1)
+
+
     main()
-
-
-

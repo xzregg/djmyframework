@@ -7,13 +7,7 @@ import logging
 import logging.config
 import time
 
-#from settings import LOGGING
 from .multiprocesslogging import MultiProcessTimedRotatingFileHandler
-
-#logging.config.dictConfig(LOGGING)
-
-
-# 使用django 的logging
 
 
 class Logger(object):
@@ -28,6 +22,7 @@ class Logger(object):
 
 logger = Logger()
 log = logger
+
 
 def TimedRotatingLogger(name):
     log_format = '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s'

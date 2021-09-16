@@ -6,10 +6,39 @@
 # @Contact : xzregg@gmail.com
 # @Desc    : 自定枚举类
 
-
+from __future__ import absolute_import
 from collections import OrderedDict
 from copy import copy
 from functools import lru_cache
+
+
+class CacheAttribute(object):
+    """计算对象属性,并缓存之
+    """
+
+    def __init__(self, method, name=None):
+        self.method = method
+        self.__doc__ = getattr(method, '__doc__')
+        self.name = name or method.__name__
+
+    def __get__(self, inst, cls):
+        if inst is None:
+            return self
+        result = self.method(inst)
+        setattr(inst, self.name, result)
+        return result
+
+
+class CachedClassAttribute(CacheAttribute):
+    """计算类属性,并在类中缓存之
+    """
+
+    def __get__(self, inst, cls):
+        for sub_cls in cls.__subclasses__():
+            # 缓存一次所有的子类属性
+            if not hasattr(sub_cls, self.name):
+                super(CachedClassAttribute, self).__get__(sub_cls, sub_cls)
+        return super(CachedClassAttribute, self).__get__(cls, cls)
 
 
 class EnumElement(object):
@@ -28,9 +57,9 @@ class EnumT(object):
         value_type = type(value)
         # assert isinstance(key, (str, int)), '%s not int or str' % key_type
         enum_ele_type = type(
-            'EnumElement',
-            (value_type, EnumElement),
-            {}
+                'EnumElement',
+                (value_type, EnumElement),
+                {}
         )
         obj = enum_ele_type(value)
         obj.value = value
@@ -108,11 +137,16 @@ class Enum(metaclass=EnumMeta):
         return cls._member_map_.get(key, None)
 
     @classmethod
-    @lru_cache()
-    def member_list(cls):
+    def get_members(cls):
+        return cls.members
+
+    @CachedClassAttribute
+    def members(cls):
         return tuple((k, v.name) for k, v in cls)
 
-
+    @classmethod
+    def member_list(cls):
+        return cls.members
 
 
 if __name__ == '__main__':
@@ -144,18 +178,18 @@ if __name__ == '__main__':
         NotRlike = 'not_rlike', _('正则不匹配 匹配判断')
 
 
-    print(CharOperator.member_list())
-
-
     class Color(Enum):
-        RED = 1, _('红'), {"asd": 3}
-        ORANGE = (2, u'橙')
-        BULE = (3, u'蓝')
+        Red = 1, _('红'), {"asd": 3}
+        Orange = (2, u'橙')
+        Bule = (3, u'蓝')
+        Green = (4, u'绿')
+        Young = (5, u'青')
+        Indigo = (6, u'靛')
+        Purple = (7, u'紫')
 
-
-    class Rainbow(Color):
-        YELLOW = (4, u'黄')
-        GREEN = (5, u'绿')
+        @classmethod
+        def get_rainbow(cls):
+            return (cls.Red, cls.Orange, cls.Green, cls.Young, cls.Indigo, cls.Purple)
 
 
     class PAGE(Enum):
@@ -176,3 +210,4 @@ if __name__ == '__main__':
     print(AD_STATUS.member_list())
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == 1
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == AD_STATUS(1)
+    assert id(AD_STATUS.CAMPAIGN_STATUS_ENABLE) == id(AD_STATUS(1))

@@ -10,10 +10,11 @@ from rest_framework import exceptions, status
 from rest_framework.views import set_rollback
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from settings import DEBUG,LANGUAGE_CODE
+from settings import DEBUG, LANGUAGE_CODE
 from .utils import json_dumps, trace_msg
 from .response import Response, RspData
 from django.http.request import HttpRequest
+
 _log = logging.getLogger('root')
 
 
@@ -36,13 +37,13 @@ class BaseMiddleware(MiddlewareMixin):
         request._start_time = time.time()
         request.language = request.session.get('_language', '') or request.LANGUAGE_CODE or LANGUAGE_CODE
         request.language = request.language.lower()
-        request.is_post = lambda :request.method == 'POST'
-        request.is_get = lambda :request.method == 'GET'
-        request.is_json = lambda :'json' in request.content_type or request.path.endswith('.json') or request.is_ajax() or request.GET.get('format','') == 'json'
+        request.is_post = lambda: request.method == 'POST'
+        request.is_get = lambda: request.method == 'GET'
+        request.is_json = lambda: 'json' in request.content_type or request.path.endswith(
+            '.json') or request.is_ajax() or request.GET.get('format', '') == 'json'
         # 兼容以前功能
         request.REQUEST = copy.copy(request.POST)
         request.REQUEST.update(request.GET)
-
 
     def get_check_view_func(self, request, view_func):
         view_module = sys.modules.get(view_func.__module__, None)
@@ -98,11 +99,11 @@ def exception_handler(exc, context):
     """
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
-    #elif isinstance(exc, PermissionDenied):
+    # elif isinstance(exc, PermissionDenied):
     #    exc = exceptions.PermissionDenied()
 
-    #elif isinstance(exc, ValidationError):
-     #   exc = exceptions.ValidationError(exc.message_dict)
+    # elif isinstance(exc, ValidationError):
+    #   exc = exceptions.ValidationError(exc.message_dict)
 
     if isinstance(exc, exceptions.APIException):
         headers = {}
@@ -118,12 +119,11 @@ def exception_handler(exc, context):
         else:
             exc_status_msg = exc.detail
         # 业务错误,http 都返回200
-        status_code = status.HTTP_200_OK # exc.status_code
+        status_code = status.HTTP_200_OK  # exc.status_code
         set_rollback()
 
         rsp = Response(data, code=getattr(exc, 'code', exc.status_code), msg=exc_status_msg, status=status_code,
                        headers=headers,
                        template_name='api_exception.html')
-
         return rsp
     return None

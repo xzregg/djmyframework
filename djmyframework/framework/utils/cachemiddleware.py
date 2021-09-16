@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 缓存中间键
+# 缓存中间件
 
 
 import hashlib

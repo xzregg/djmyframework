@@ -98,6 +98,7 @@ class DecoratorsPartial(object):
     """
     语法糖使用装饰器能去掉括号()
     """
+
     def __init__(self, decorator_func, *args, **kwargs):
         self.decorator_func = decorator_func
         self.args = args
@@ -196,13 +197,6 @@ def i2sl(num):
         n = n / 36
     a.reverse()
     return ''.join(a)
-
-
-def filter_sql(sql):
-    import re
-    p = re.compile('(update|delete|modify|column|lock|drop|table)', re.I)
-    sql = p.sub('', sql)
-    return sql
 
 
 def str_to_datetime(datetime_str):
@@ -359,8 +353,6 @@ def check_sign(_d, sign_key, sign=''):
     sign = sign[0] if isinstance(sign, list) else sign
     my_sign, sign_str = make_sign(_d, sign_key, is_return_sign_str=True)
     is_pass = my_sign == sign
-    if not is_pass:
-        print((sign_str, sign))
     return is_pass
 
 
