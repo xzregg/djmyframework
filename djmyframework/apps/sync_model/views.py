@@ -45,6 +45,7 @@ def get_old_model_id(backsData, model_id):
         for k, v in SyncModelMap.items():
             if v == model_id:
                 return k
+    return model_id
 
 
 @notauth
