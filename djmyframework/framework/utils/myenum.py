@@ -142,11 +142,12 @@ class Enum(metaclass=EnumMeta):
 
     @CachedClassAttribute
     def members(cls):
-        return tuple((k, v.name) for k, v in cls)
+        return cls.member_list()
 
     @classmethod
+    @lru_cache()
     def member_list(cls):
-        return cls.members
+        return tuple((k, v.name) for k, v in cls)
 
 
 if __name__ == '__main__':
