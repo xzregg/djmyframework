@@ -170,6 +170,7 @@
                                                        value="
 
 
+
                                                                {% if '时间' in name and config.dict %}{{ sdate }}{% else %}{{ config.value }}{% endif %}">
                                             {% endif %}
                                         {% endif %}
@@ -194,17 +195,14 @@
                         </a>
                                             {% if request.allow_menu.查询_导出 %}
                                                 <a id="export_all_btn" class="btn btn-sm btn-success ">
-                                <i class="cus-table-go"></i>
-                                导出
-                            </a>
+                                                 <i class="cus-table-go"></i>导出 </a>
                                             {% endif %}
                                             {% if request.allow_menu.查询_导出 %}
-                                                <a data-toggle="dropdown"
-                                                   class="btn btn-sm  btn-success dropdown-toggle">
+                                                <a data-toggle="dropdown" class="btn btn-sm  btn-success dropdown-toggle">
                                 <span class="caret"></span>
                                 <span class="sr-only">Toggle Dropdown</span>
                             </a>
-                                                <ul class="dropdown-menu">
+                            <ul class="dropdown-menu">
                                 <li>
                                     <a href="javascript:;" id="export_currently_btn">
                                         <i class="cus-page-excel"></i>
