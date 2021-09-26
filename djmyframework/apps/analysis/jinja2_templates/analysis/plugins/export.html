@@ -34,7 +34,7 @@
                 <input type="hidden" value="" name="export_server_id">
             {% else %}
                 <div class="hr"></div>
-                {% with context_data=query_servers %}
+                {% with context_data=query_servers,name_prefix="export_"%}
                     {% include "analysis/widgets/query_server_select.html" %}
                 {% endwith %}
 

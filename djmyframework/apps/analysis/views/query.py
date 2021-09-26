@@ -245,8 +245,8 @@ def query_export_do(request, query_compiler: QueryCompiler):
     q_server_id = request.REQUEST.get('server_id', '')
     page_num = int(_g('page_num', '') or 0) or 1  # 页码
     file_type = request.REQUEST.get('file_type', '')
-    page_size = 200000
-    request.POST.setlist('page_size', [page_size])
+    page_size = 10000
+    request.REQUEST.setlist('page_size', [page_size])
     export_fields = _gl('export_fields')
 
     fields = query_compiler.query.selects
@@ -303,7 +303,7 @@ def query_do(request, query_compiler: QueryCompiler, built_in=False, list_data_h
         # 知道结果的数量情况下,添加_分页,不执行count设置分页
         if not query_compiler.query.is_paging:
             total_record = 10000
-            page_size = total_record
+            page_size = max(page_size,total_record)
             page_num = 1
         # 设置 limit 限制
         query_compiler.set_limit(page_size, page_num)
