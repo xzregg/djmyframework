@@ -193,12 +193,12 @@
                         <a id="search_btn" class="btn btn-sm btn-success ">
                             <i class="icon-search "></i>查询
                         </a>
-                                            {% if request.allow_menu.查询_导出 %}
-                                                <a id="export_all_btn" class="btn btn-sm btn-success ">
-                                                 <i class="cus-table-go"></i>导出 </a>
-                                            {% endif %}
-                                            {% if request.allow_menu.查询_导出 %}
-                                                <a data-toggle="dropdown" class="btn btn-sm  btn-success dropdown-toggle">
+                            {% if request.allow_menu.查询_导出 %}
+                                <a id="export_all_btn" class="btn btn-sm btn-success ">
+                                 <i class="cus-table-go"></i>导出 </a>
+                            {% endif %}
+                            {% if request.allow_menu.查询_导出 %}
+                                <a data-toggle="dropdown" class="btn btn-sm  btn-success dropdown-toggle">
                                 <span class="caret"></span>
                                 <span class="sr-only">Toggle Dropdown</span>
                             </a>
@@ -210,7 +210,7 @@
                                     </a>
                                 </li>
                             </ul>
-                                            {% endif %}
+                            {% endif %}
 
                     </div>
 

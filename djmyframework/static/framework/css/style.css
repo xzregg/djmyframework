@@ -8,7 +8,9 @@
 .select2-container {
     min-width: 100px;
 }
-
+.select2-dropdown{
+    z-index: 999999;
+}
 
 .glyphicon-plus-remove {
     color: red;
