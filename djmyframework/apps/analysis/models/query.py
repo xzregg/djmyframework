@@ -184,6 +184,8 @@ class SqlBuilder(object):
             _r = []
             for v in values:
                 value = str(value_def.get(v, value_def.get(str(v), v)))
+                # 防止 sql 注入
+                value = self.get_safe_value(value)
                 if not value.isdigit() or value_type == 'str':
                     value = "'%s'" % value
                 _r.append(value)
@@ -221,7 +223,7 @@ class SqlBuilder(object):
         return value
 
     def replace_mark_to_value(self, mark_name, value):
-        self.query_sql = self.query_sql.replace(self.make_mark(mark_name), self.get_safe_value(value))
+        self.query_sql = self.query_sql.replace(self.make_mark(mark_name), value)
 
     def make_mark(self, mark_name):
         return self.TAG_FORMAT % mark_name
