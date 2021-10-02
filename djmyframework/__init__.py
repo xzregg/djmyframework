@@ -6,4 +6,4 @@
 # @Contact : xzregg@gmail.com
 # @Desc    : 
 
-__version__ = '0.1.32'
+__version__ = '0.1.34'

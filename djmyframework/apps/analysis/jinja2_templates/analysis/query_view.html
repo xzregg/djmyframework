@@ -167,11 +167,7 @@
                                                        name="{{ config.name }}"
                                                        class="{% if '时间' in name %}Wdate{% else %}input-small {% endif %}"
                                                        {% if config.dict %}select_key="{{ config.dict }}" {% endif %}
-                                                       value="
-
-
-
-                                                               {% if '时间' in name and config.dict %}{{ sdate }}{% else %}{{ config.value }}{% endif %}">
+                                                       value="{% if '时间' in name and config.dict %}{{ sdate }}{% else %}{{ config.value }}{% endif %}">
                                             {% endif %}
                                         {% endif %}
                                     </span>
