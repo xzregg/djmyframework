@@ -60,6 +60,7 @@ APPS = settings.APPS or APPS
 
 VIEWS_DIR = 'views'
 ROUTE_PREFIX = ''
+ROUTE_APP_PREFIX_MAP = {}
 
 INSTALLED_APPS = ['djorm_pool',
                   'framework',

@@ -78,7 +78,8 @@ class CustomRestRouter(rest_route.DefaultRouter):
 rest_router = CustomRestRouter()
 rest_router.include_root_view = False
 VIEWS_DIR = settings.VIEWS_DIR
-ROUTE_PREFIX = settings.ROUTE_PREFIX
+GLOBAL_ROUTE_PREFIX = settings.ROUTE_PREFIX
+ROUTE_APP_PREFIX_MAP = settings.ROUTE_APP_PREFIX_MAP
 
 Handlers = set()
 
@@ -121,11 +122,12 @@ class Route(object):
         setattr(obj, 'route_name', name)
 
         app_name = p_m_f[:p_m_f.find('.')]
-
+        route_prefix = ROUTE_APP_PREFIX_MAP.get(app_name,'')
+        route_prefix = '%s%s' % (GLOBAL_ROUTE_PREFIX,route_prefix)
         # rest_framework GenericViewSet
         if hasattr(obj, 'get_serializer'):
             prefix = self.re_url or uri
-            prefix = '%s%s' % (ROUTE_PREFIX, prefix.strip('^'))
+            prefix = '%s%s' % (route_prefix, prefix.strip('^'))
             basename = prefix.replace('/', '.').strip('^').strip('$')
             rest_router.register(prefix, obj, basename=basename)
             return obj
@@ -140,7 +142,7 @@ class Route(object):
 
         if self.re_url == '':
             self.re_url = '%s' % uri
-        self.re_url = '%s%s' % (ROUTE_PREFIX, self.re_url.strip('^'))
+        self.re_url = '%s%s' % (route_prefix, self.re_url.strip('^'))
         if not self.re_url.startswith('^'):
             self.re_url = '^%s' % self.re_url
         if not self.re_url.endswith('$'):
@@ -183,9 +185,10 @@ def _import_module_from_file():
             importlib.import_module('%s.%s' % (app_name, VIEWS_DIR))
         else:
             for filename, pyfile in _get_pyfile(views_dir_path):
-                view_model_name = filename.replace('__init__', '')[:-3]
-                _p_m = '.'.join([app_name, VIEWS_DIR, view_model_name]).strip('.')
-
+                #view_model_name = filename.replace('__init__', '')[:-3]
+                #_p_m = '.'.join([app_name, VIEWS_DIR, view_model_name]).strip('.')
+                view_model_name = pyfile.replace(app_config.path, '').replace('__init__', '')[:-3].replace(os.path.sep, '.').strip('.')
+                _p_m = '%s.%s' % (app_module_name,view_model_name)
                 try:
 
                     importlib.import_module(_p_m)
