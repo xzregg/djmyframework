@@ -12,16 +12,47 @@ import os
 import random
 import re
 import threading
-import time
 import traceback
 from collections import OrderedDict
 from importlib import import_module as _import_module
 
+import hashlib
+import itertools
+import json
+import logging
+import os
+import random
+import shutil
+import string
+import uuid
+import warnings
+import zipfile
+
+from decimal import Decimal
+
+import redis
+
+import requests
+from django.conf import settings
+from django.core.cache import cache
+from django.core.paginator import Paginator
+from raven.contrib.django.raven_compat.models import client
+from log_request_id import local
+
+from config.constants import CONSOLE_COLOR
+
+from .time import get_current_hours, get_now
 from django.db import models
 from django.db.models.query import QuerySet
 from objectdict import ObjectDict as _ObjectDict
 from rest_framework import serializers
 from rest_framework.utils.encoders import JSONEncoder
+import functools
+
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
 
 SortedDict = OrderedDict
 ObjectDict = _ObjectDict
@@ -43,11 +74,15 @@ class SingleInstance(object):
     _instance = None
     __instance_lock = threading.Lock()
 
-    def __new__(cls, *args, **kw):
+    def __new__(cls, *args, **kwargs):
         with cls.__instance_lock:
             if cls._instance is None:
-                cls._instance = object.__new__(cls, *args, **kw)
+                cls._instance = object.__new__(cls)
             return cls._instance
+
+    @classmethod
+    def get_instance(cls):  # type self
+        return cls._instance
 
 
 def sort_set_list(l):
@@ -305,12 +340,6 @@ def is_valid_datetime(str):
         return False
 
 
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
-
-
 def sshaDigest(passphrase, salt=None):
     """
     Return the salted SHA for `passphrase` which is passed as bytes.
@@ -363,6 +392,408 @@ def profile_time(f, *args, **kwargs):
     use_t = (time.time() - s)
     print('use time : %s' % use_t)
     return r, use_t
+
+
+logger = logging.getLogger('root')
+
+redis_client = redis.Redis.from_url(settings.REDIS_URL)
+
+
+def get_redis_client():
+    return redis_client
+
+
+def get_booking_redis_client():
+    return redis.Redis.from_url(settings.BOOKING_REDIS_URL)
+
+
+def capture_exception():
+    """
+    捕捉异常,丢到sentry
+    """
+    client.captureException()
+
+
+def read_1970_time(str_second, time_format='%Y-%m-%d %H:%M:%S') -> str:
+    """
+    1970 年至今的秒数转时间
+    """
+    import time
+    time_array = time.localtime(float(str_second))
+    return time.strftime(time_format, time_array)
+
+
+def get_request_id():
+    return getattr(local, 'request_id', uuid.uuid4().hex) or uuid.uuid4().hex
+
+
+def random_string(length: int = 32, choice=string.ascii_letters + string.digits) -> str:
+    return ''.join([random.SystemRandom().choice(choice) for _ in range(length)])
+
+
+def string_color(msg, color='pink'):
+    return f'{CONSOLE_COLOR[color]}{msg}{CONSOLE_COLOR["end"]}'
+
+
+def safe_pagination(object_list, page_size=10, page_num=1, max_page_size=100000):
+    """
+    安全地分页
+    :param object_list: type=list
+    :param page_size: 每页返回多少个
+    :param page_num: 需要第几页数据
+    :return: total_count,num_pages,pageContents (总个数,总页数,当前页内容)
+    """
+    page_contents = []
+
+    page_size = min(page_size, max_page_size)
+    pagination = Paginator(object_list, page_size)
+
+    num_pages = pagination.num_pages
+
+    if page_num <= num_pages:
+        page = pagination.page(page_num)
+        page_contents = list(page.object_list)
+
+    total_count = pagination.count
+
+    return total_count, num_pages, page_contents
+
+
+def do_requests(url, method='GET', verify=False, timeout=60, **kwargs):
+    headers = kwargs.pop('headers', {})
+    headers.update({
+            'X-Request-Id': get_request_id()
+    })
+
+    start = get_now()
+    start_time = start.format(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+    # start_time = get_current_hours(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+    error_msg = ''
+    result = {}
+
+    try:
+        result = requests.request(
+                method=method, url=url,
+                timeout=timeout,
+                verify=verify,
+                headers=headers,
+                **kwargs
+        ).json()
+    except Exception as error:
+        client.captureException()
+        error_msg = str(error)
+
+    end = get_now()
+    end_time = end.format(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+
+    try:
+        cost_time = int((end - start).total_seconds() * 1000)
+    except Exception:
+        cost_time = 0
+
+    # end_time = get_current_hours(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+
+    logger.info(limit_field_size(kwargs.get('data')), extra={
+            'response'   : limit_field_size(result),
+            'category'   : 'request',
+            'path'       : url,
+            'method'     : method,
+            'params'     : limit_field_size(kwargs.get("params")),
+            'json'       : limit_field_size(kwargs.get("json")),
+            'headers'    : limit_field_size(headers),
+            'cost_timez' : cost_time,
+            'start_timez': limit_field_size(start_time),
+            'end_timez'  : limit_field_size(end_time),
+            'error_msg'  : limit_field_size(error_msg),
+    })
+
+    return result
+
+
+def deprecation(func):
+    """
+    为了更好地区分报废的接口吧
+    """
+
+    @functools.wraps(func)
+    def warpper(msg='报废提醒', *args, **kwargs):
+        warnings.warn(
+                msg,
+                DeprecationWarning
+        )
+        return func(*args, **kwargs)
+
+    return warpper
+
+
+def limit_field_size(log_content, max_size=10000):
+    """
+    限制一下logger打到elk的长度, 剩下的就截断
+
+    先默认固定长度最大去到10000
+    """
+    return str(log_content)[:max_size]
+
+
+def md5_encrypt(content):
+    """
+    md5加密数据
+    """
+
+    return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+
+def flatten(iterable):
+    """
+    展开可迭代对象
+    """
+    return list(itertools.chain(*iterable))
+
+
+def cent_2_yuan(price):
+    """
+    分变元
+
+    4 -> 0.04
+    :param price: 分
+    """
+    return f'{float(price / 100.0)}'
+
+
+def yuan_2_cent(price):
+    """
+    元变分
+
+    0.04 -> 4
+    :param price: 元
+    """
+    return int(Decimal(str(price)) * 100)
+
+
+def os_mkdir(dir_path):
+    """
+    尝试创建个文件目录
+    :param dir_path:  '/app/temporary'
+    """
+    try:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+    except Exception:
+        pass
+
+
+def is_contain_symbol(keyword):
+    """
+    判断一下是否有特殊字符
+    """
+    return bool(re.search(r"\W", keyword))
+
+
+def clean_old_files(dir_path, days=7):
+    """
+    删除某个目录**天之前的文件
+    :param dir_path:
+    :param days: 多少天前的数据, 默认是7天
+    """
+
+    # 删除过期的, 删除最近7天的数据
+    try:
+        now = time.time()
+        for file in os.listdir(dir_path):
+            old_file_path = os.path.join(dir_path, file)
+            if os.stat(old_file_path).st_mtime < now - days * 86400 and os.path.isfile(old_file_path):
+                os.remove(old_file_path)
+    except Exception:
+        pass
+
+
+def clean_files(file_path):
+    try:
+        if os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+        else:
+            os.remove(file_path)
+    except Exception:
+        pass
+
+
+def make_zip(source_dir, output_filename):
+    """
+    压缩目录
+
+    :return:
+    """
+    with zipfile.ZipFile(output_filename, 'w') as zipf:
+        # pre_len = len(os.path.dirname(source_dir))
+        pre_len = len(source_dir)
+        for parent, dirnames, filenames in os.walk(source_dir):
+            for filename in filenames:
+                pathfile = os.path.join(parent, filename)
+                arcname = pathfile[pre_len:].strip(os.path.sep)  # 相对路径
+                zipf.write(pathfile, arcname, zipfile.ZIP_DEFLATED)
+
+
+def panda_check_nan(value, default_value=''):
+    """
+    panda检查是否为空值
+
+    很难受，panda读出来的值如果为空的话，变成了'nan',这里需要判断一下
+    :param value: panda读取来的值
+    :param default_value: 如果为空是，返回出来默认值
+    :return:
+    """
+
+    return value if value != 'nan' else default_value
+
+
+def save_dict_cache(cache_key, value, cache_time=30 * 60):
+    """
+    存储dict类型到redis
+    """
+    try:
+        cache.set(cache_key, json.dumps(value, ensure_ascii=False), cache_time)
+    except Exception:
+        pass
+
+
+def load_dict_cache(cache_key):
+    """
+    从redis获取dict类型对象
+    """
+    try:
+        result = json.loads(cache.get(cache_key, {}))
+    except Exception:
+        result = {}
+
+    return result
+
+
+def delete_cache(cache_key):
+    """
+    从缓存中删除数据
+    """
+    try:
+        cache.delete(cache_key)
+    except Exception:
+        pass
+
+
+def redis_patch_delete(keys):
+    """
+    批量删除redis keys*的东西
+    :param keys:
+    :return:
+    """
+    for key in redis_client.scan_iter(keys):
+        redis_client.delete(key)
+
+
+def get_client_ip(request):
+    """
+    获取请求的ip
+    """
+    ip = ''
+
+    try:
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+    except Exception:
+        pass
+
+    return ip
+
+
+def copy_file(source_file_path, dest_file_path):
+    """
+    复制文件
+    :param source_file_path: 源文件
+    :param dest_file_path: 目标复制到哪儿
+    """
+    try:
+        if not os.path.exists(dest_file_path):
+            shutil.copy(source_file_path, dest_file_path)
+    except Exception:
+        pass
+
+
+def set_cache(name, value, expire_time=60):
+    try:
+        redis_client.set(name, value, expire_time)
+    except Exception:
+        pass
+
+
+def get_cache(name):
+    try:
+        content = redis_client.get(name)
+        return content.decode()
+    except Exception:
+        return ''
+
+
+def get_client_ip(request=None):
+    """"""
+    ip = ''
+
+    try:
+        # 1. 从local读取
+        ip = getattr(local, 'request_ip', '')
+        if not ip:
+            # 2. 从headers读取我们指定的头部,一般再do_requests会用到
+            ip = request.META.get('HTTP_X_REQUEST_IP')
+        if not ip:
+            # 3. 从nginx转发那里获取
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+        if not ip:
+            # 4. 可能从cdn那里获取ip
+            ip = request.META.get('HTTP_X_REQUEST_IP')
+        if not ip:
+            # 5. 最后没办法就从默认那里拿
+            ip = request.META.get('REMOTE_ADDR')
+    except Exception:
+        pass
+
+    return ip
+
+
+def list2tree(obj_list, pk_key='id', parent_key='parent', children_key='children', allow_parent_null_add2root=True):
+    """
+     列表转树结构
+    @param obj_list: 对象列表
+    @param pk_key: 主键字段名
+    @param parent_key: 父字段名
+    @param children_key: 孩子字段名
+    @param allow_parent_null_add2root: 找不到父节点 是否 添加到根
+    @return: List
+    """
+    obj_map = {}
+    tree_list = []
+    for obj in obj_list:
+
+        setattr(obj, children_key, [])
+        pk = getattr(obj, pk_key, None)
+        if pk:
+            obj_map[pk] = obj
+
+    for obj in obj_list:
+        parent_pk = getattr(obj, parent_key, None)
+        if parent_pk:
+            # parent 是同类则从属性中获取 pk
+            if isinstance(parent_pk, type(obj)):
+                parent_pk = getattr(parent_pk, pk_key)
+            parent_obj = obj_map.get(parent_pk, None)
+            if parent_obj:
+                getattr(parent_obj, children_key).append(obj)
+                continue
+        # 找不到父节点 是否 添加到根
+        if allow_parent_null_add2root:
+            tree_list.append(obj)
+    return tree_list
 
 
 if __name__ == '__main__':

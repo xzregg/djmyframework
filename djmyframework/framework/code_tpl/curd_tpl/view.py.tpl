@@ -3,15 +3,16 @@
 # @Time: ${datetime}
 
 
-from drf_yasg.utils import swagger_auto_schema
 from framework.filters import MyFilterBackend, OrderingFilter, MyFilterSerializer
 from framework.translation import _
 from framework.route import Route
 from framework.serializer import s,BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, ParamsSerializer, PaginationSerializer
-from framework.views import CurdViewSet, ListPageNumberPagination, Response,action,Request
+from framework.views import CurdViewSet, ListPageNumberPagination,action,api_doc
 from framework.views import render_to_response as rt
+from django.db import models
 from ${app_name}.models import ${model_name}
-
+from django.db import transaction
+from framework.shortcut import APIError,Response,api_doc,api_get,api_post
 
 class ${model_name}Serializer(BaseModelSerializer):
     # https://www.django-rest-framework.org/api-guide/serializers/
@@ -41,6 +42,7 @@ class List${model_name}RspSerializer(PaginationSerializer):
 
 @Route('${app_name}/${model_lower_name}')
 class ${model_name}Set(CurdViewSet):
+    """${app_verbose_name} ${model_desc}"""
     filter_backends = (MyFilterBackend,OrderingFilter)
 
     serializer_class = ${model_name}Serializer
@@ -53,31 +55,36 @@ class ${model_name}Set(CurdViewSet):
 
     model = ${model_name}
 
-    def get_queryset(self):
+    def get_queryset(self) -> models.Q:
         return ${model_name}.objects.all().prefetch_related(*${[f.name for f in model_many_to_many]}).select_related(*${[f.name for f in model_foreigns]}).only(*${model_name}Set.queryset_fields)
 
-    @swagger_auto_schema(query_serializer=MyFilterSerializer,responses=List${model_name}RspSerializer)
+    @api_doc(tags=['${app_verbose_name}'], query_serializer=MyFilterSerializer,responses=List${model_name}RspSerializer)
     def list(self, request):
         """${model_desc} 列表"""
         return rt("${app_name}/${model_lower_name}/list.html",super().list(request))
 
-    @swagger_auto_schema(query_serializer=EditParams, responses=${model_name}Serializer)
+    @api_doc(tags=['${app_verbose_name}'], query_serializer=EditParams, responses=${model_name}Serializer)
     def edit(self, request):
         """${model_desc} 编辑"""
         return rt("${app_name}/${model_lower_name}/edit.html",super().edit(request))
 
-    @swagger_auto_schema(query_serializer=IdSerializer,request_body=${model_name}Serializer, responses=${model_name}Serializer)
+    @api_doc(tags=['${app_verbose_name}'], request_body=${model_name}Serializer, responses=${model_name}Serializer)
+    def add(self, request):
+        """${model_desc} 新增"""
+        return super().save(request)
+
+    @api_doc(tags=['${app_verbose_name}'], query_serializer=IdSerializer,request_body=${model_name}Serializer, responses=${model_name}Serializer)
     def save(self, request):
         """${model_desc} 保存"""
         return super().save(request)
 
-    @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
+    @api_doc(tags=['${app_verbose_name}'], request_body=IdsSerializer, responses=IdsSerializer)
     def delete(self, request):
         """${model_desc} 删除"""
         return super().delete(request)
 
 
-    # @swagger_auto_schema(methods=['post'], request_body=${model_name}Serializer, responses=${model_name}Serializer)
-    # @action(['post'])
+    # @api_doc(methods=['post'], request_body=${model_name}Serializer, responses=${model_name}Serializer)
+    # @api_post
     # def foo_action(self, request):
     #     return Response(${model_name}Serializer().data)

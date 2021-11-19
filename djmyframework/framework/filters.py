@@ -21,7 +21,8 @@ from rest_framework.request import Request
 from .response import RspError
 from .serializer import s
 from .utils.myenum import Enum
-from .models import BaseModel
+from .models import BaseModel, BaseModelMixin
+
 
 class OrderingFilter(_OrderingFilter):
     ordering_description = _('排序字段 -xxx 为倒序 如:-id')
@@ -106,6 +107,7 @@ class BooleanFilterQ(FilterQ):
         if values[0] in (False, 'False', 'false', '0'):
             return False
         return True
+
 
 class OperatorEnum(Enum):
     @classmethod
@@ -206,7 +208,6 @@ class ConditionTypeEnum(Enum):
     DateTime = 'date', _('日期时间'), DateTimeOperator
     Choice = 'choice', _('多选'), ChoiceOperator
 
-
     @classmethod
     def get_operator_type(cls, condition_type):
         return cls(condition_type).other
@@ -221,7 +222,6 @@ class ConditionTypeEnum(Enum):
 
 class MyFilterSerializer(s.Serializer):
     pass
-
 
 
 class MyFilterBackend(DjangoFilterBackend):
@@ -243,20 +243,32 @@ class MyFilterBackend(DjangoFilterBackend):
                 return operator_enum.get_filter_q_obj(operator)
         return None
 
-    def get_filter_q(self, request, filterset_fields):
+    def get_filter_dict(self, query_params, filterset_fields=None):
+        filter_q = self.get_filter_q(query_params, filterset_fields=None)
+        filter_dict = {}
+        for q in filter_q.children:
+            if isinstance(q, Q):
+                if q.children:
+                    for k, v in q.children:
+                        filter_dict[k] = v
+            elif isinstance(q, (list, tuple)):
+                filter_dict[q[0]] = q[1]
+        return filter_dict
+
+    def get_filter_q(self, query_params, filterset_fields=None):
         condition_q = Q()
-        relation = request.query_params.get('relation', )
-        for key in request.query_params.keys():
-            key_array = key.split(self.DELIMITER)
+        relation = query_params.get('relation', )
+        for key in query_params.keys():
+            key_array = key.rsplit(self.DELIMITER, 1)
             if len(key_array) >= 2:
                 name, operator = key_array[:2]
-                if name not in filterset_fields:
+                if filterset_fields and name not in filterset_fields:
                     raise RspError(_('%s 未被允许的筛选字段' % name))
                 filter_q_obj: FilterQ = self.guess_condition_filter_q_obj(operator)
                 if filter_q_obj is None:
                     raise RspError(_('%s 未定义操作类型' % operator))
 
-                value_list = request.query_params.getlist(key)
+                value_list = query_params.getlist(key)
 
                 q = filter_q_obj.get_q(name, value_list)
                 if q:
@@ -266,7 +278,7 @@ class MyFilterBackend(DjangoFilterBackend):
 
     def filter_queryset(self, request: Request, queryset, view):
         filterset_fields = getattr(view, 'filter_fields', None)
-        condition_q = self.get_filter_q(request, filterset_fields)
+        condition_q = self.get_filter_q(request.query_params, filterset_fields)
         queryset = queryset.filter(condition_q)
         return queryset
 
@@ -287,7 +299,7 @@ class MyFilterBackend(DjangoFilterBackend):
             operator_enum = ConditionTypeEnum.Char
         return operator_enum
 
-    def generate_coreschema_from_model_field(self, field_name, model_field):
+    def generate_coreschema_from_model_field(self, field_name, model_field, location='query'):
         from .schema import compose_enum_description
         field_cls = coreschema.String
 
@@ -298,19 +310,33 @@ class MyFilterBackend(DjangoFilterBackend):
         field_enum_list = []
 
         for operator, _ in operator_enum.other.member_list():
-            field_enum_list.append(('%s%s%s' % (operator, MyFilterBackend.DELIMITER, operator), operator.name))
+            field_enum_list.append(('%s%s%s' % (field_name, MyFilterBackend.DELIMITER, operator), operator.name))
 
         enum_description = compose_enum_description(field_enum_list)
 
         core_api_field = coreapi.Field(
                 name=field_name,
                 required=False,
-                location='query',
+                location=location,
                 schema=field_cls(
                         description='%s\n%s' % (model_field.help_text or label, enum_description)
                 )
         )
         return core_api_field
+
+    def get_schema_fields_from_model(self, model_class, filter_fields):
+        from drf_yasg.inspectors import CoreAPICompatInspector
+        filterset_class = self.__class__
+        schema_fields = []
+        if filterset_class:
+            if issubclass(model_class, BaseModelMixin):
+                model_fields_map = model_class.get_fields_map()
+
+                for field_name in filter_fields:
+                    model_field = model_fields_map.get(field_name, models.CharField())
+                    schema_fields.append(self.generate_coreschema_from_model_field(field_name, model_field))
+                return schema_fields
+        return []
 
     def get_schema_fields(self, view):
         assert coreapi is not None, 'coreapi must be installed to use `get_schema_fields()`'
@@ -329,7 +355,7 @@ class MyFilterBackend(DjangoFilterBackend):
 
         schema_fields = []
         if filterset_class:
-            if issubclass(model_class,BaseModel):
+            if issubclass(model_class, BaseModelMixin):
                 model_fields_map = model_class.get_fields_map()
 
                 for field_name, field in filterset_class.base_filters.items():

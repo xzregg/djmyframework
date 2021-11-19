@@ -8,7 +8,7 @@ import functools
 import inspect
 import types
 from collections import OrderedDict
-
+import time
 from django.conf import settings
 from django.forms.utils import pretty_name
 from django.http import Http404
@@ -22,15 +22,21 @@ from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 
+from .utils import json_dumps
+from objectdict import ObjectDict
 from .filters import MyFilterBackend, OrderingFilter
 from .route import Route
 from .models import BaseModel
-from .response import *
-from .serializer import EditParams, IdSerializer, IdsSerializer
-
+from .middleware import CustomRequest
+from .response import Response, RspError, RspErrorEnum, RspSerializer, render_to_response, \
+    convert_any_data_to_jsonresponse
+from django.http import HttpResponse
+from .serializer import EditParams, IdSerializer, IdsSerializer, s
+from .request import MyRequest
 render = _render
 LANGUAGES = settings.LANGUAGES
-
+api_doc = swagger_auto_schema
+Request = CustomRequest
 
 def notauth(obj):
     """免登录认证标记
@@ -141,6 +147,31 @@ def model_search(request, model_objects, search=None, order=None, page_size=20, 
     return params
 
 
+class MyApiView(APIView):
+    def initialize_request(self, request, *args, **kwargs):
+        """
+        Returns the initial request object.
+        """
+        from .middleware import CustomRequest
+        parser_context = self.get_parser_context(request)
+
+        return MyRequest(
+                request,
+                parsers=self.get_parsers(),
+                authenticators=self.get_authenticators(),
+                negotiator=self.get_content_negotiator(),
+                parser_context=parser_context
+        )
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        """
+        Returns the final response object.
+        """
+        # 这里强制将返回的 dict ,list 等数据转换 为 rest_framework 的 Response
+        response = convert_any_data_to_jsonresponse(response)
+        return super().finalize_response(request, response, *args, **kwargs)
+
+
 def api_view(http_method_names=None, detail=False):
     """
     Decorator that converts a function-based view into an APIView subclass.
@@ -153,7 +184,7 @@ def api_view(http_method_names=None, detail=False):
     def decorator(func):
         WrappedAPIView: APIView = type(
                 'WrappedAPIView',
-                (APIView,),
+                (MyApiView,),
                 {'__doc__': func.__doc__}
         )
         WrappedAPIView.__annotations__ = func.__annotations__
@@ -172,7 +203,7 @@ def api_view(http_method_names=None, detail=False):
         assert isinstance(http_method_names, (list, tuple)), \
             '@api_view expected a list of strings, received %s' % type(http_method_names).__name__
 
-        allowed_methods = set(http_method_names) | {'options'}
+        allowed_methods = set(http_method_names)  # | {'options'}
         WrappedAPIView.http_method_names = [method.lower() for method in allowed_methods]
 
         def handler(self, *args, **kwargs):
@@ -265,6 +296,7 @@ action_get_post = DecoratorsPartial(api_action_judge, ['post', 'get'])
 
 api_get = DecoratorsPartial(api_action_judge, 'get')
 api_post = DecoratorsPartial(api_action_judge, 'post')
+api_get_post = DecoratorsPartial(api_action_judge, ['post', 'get'])
 
 from django.views.generic import View
 
@@ -357,26 +389,26 @@ class ListPageNumberPagination(PageNumberPagination):
         return Response(data)
 
 
-class BaseViewSet(viewsets.GenericViewSet):
+class BaseViewSet(viewsets.GenericViewSet, MyApiView):
     serializer_class = RspSerializer
     response: Response = None
 
-    def initial(self, request: Request, *args, **kwargs):
-        self.response = Response()
+    def initial(self, request: CustomRequest, *args, **kwargs):
+        self.response = Response(request=request)
 
         return super(BaseViewSet, self).initial(request, *args, **kwargs)
 
     def is_post(self):
-        return self.request.is_post()
+        return self.request.is_post
 
     def is_get(self):
-        return self.request.is_get()
+        return self.request.is_get
 
     def is_ajax(self):
         return self.request.is_ajax()
 
     def is_json(self):
-        return self.request.is_json()
+        return self.request.is_json
 
     @notcheck
     def metadata(self, request, *args, **kwargs):
@@ -398,11 +430,11 @@ class BaseViewSet(viewsets.GenericViewSet):
         return Response(data, template_name='framework/metadata.html')
 
 
-class CurdViewSet(BaseViewSet):
+class CurdViewSet(BaseViewSet, MyApiView):
     pagination_class = ListPageNumberPagination
     filter_backends = (MyFilterBackend, OrderingFilter)
     model: BaseModel
-    request: Request
+    request: CustomRequest
     model_instance = None
 
     queryset_fields = None
@@ -426,7 +458,7 @@ class CurdViewSet(BaseViewSet):
                 raise Http404('No %s matches the given query.' % _queryset.model._meta.object_name)
         return self.model_instance
 
-    def list(self, request: Request):
+    def list(self, request: CustomRequest):
         """
         查询
         """
@@ -442,7 +474,7 @@ class CurdViewSet(BaseViewSet):
         return self.request.query_params.get('is_copy', False)
 
     @swagger_auto_schema(query_serializer=EditParams)
-    def edit(self, request: Request):
+    def edit(self, request: CustomRequest):
         """
         编辑
         """
@@ -471,7 +503,7 @@ class CurdViewSet(BaseViewSet):
             model_instance._prefetched_objects_cache = {}
         return serializer, msg
 
-    def save(self, request: Request, *args, **kwargs):
+    def save(self, request: CustomRequest, *args, **kwargs):
         """
         保存
         """
@@ -479,15 +511,15 @@ class CurdViewSet(BaseViewSet):
         return Response(serializer.data, msg=msg)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
-    def delete(self, request: Request):
+    def delete(self, request: CustomRequest):
         """
         删除
         """
 
         params = IdsSerializer(request.data).params_data
 
-        if params.id:
-            ids = params.id
+        if params.ids:
+            ids = params.ids
             self.get_queryset().filter(id__in=ids).delete()
             return Response(data=params)
 
@@ -505,7 +537,7 @@ class I18n(BaseViewSet):
         language = s.ChoiceField(label=_('语言代码'), choices=LANGUAGES, required=True)
 
     @notcheck
-    @swagger_auto_schema(request_body=SetLanguageSerializer)
+    @swagger_auto_schema(request_body=SetLanguageSerializer, tags=['多语言切换'])
     @action('post')
     def set_language(self, request):
         """

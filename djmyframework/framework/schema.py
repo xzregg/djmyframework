@@ -7,19 +7,21 @@
 # @Desc    :
 import copy
 from collections import OrderedDict
-
+import coreschema
 from drf_yasg import openapi
 from drf_yasg.errors import SwaggerGenerationError
 from drf_yasg.inspectors.field import FieldInspector
 from drf_yasg.inspectors.view import SwaggerAutoSchema
-from drf_yasg.utils import force_serializer_instance, guess_response_status, no_body, param_list_to_odict
+from drf_yasg.utils import force_serializer_instance, guess_response_status, no_body, param_list_to_odict, \
+    swagger_auto_schema, force_real_str
 from rest_framework import serializers, status
 from rest_framework.relations import ManyRelatedField, RelatedField
 
 from .filters import MyFilterSerializer
 from .response import RspError, RspErrorEnum, RspSerializer
+from .serializer import ModelFilterSerializer
 
-api_info = openapi.Info(
+_api_info = openapi.Info(
         title="Myadmin API",
         default_version='v1',
         description="Myadmin description",
@@ -29,9 +31,13 @@ api_info = openapi.Info(
 )
 
 
-
 def compose_enum_description(enum_item_list):
     return '\n'.join([' * `%s` - %s  ' % (k, v) for k, v in enum_item_list])
+
+
+def to_method_title(pathname):
+    return ''.join(
+            [n.title() if i > 1 else n for i, n in enumerate(pathname.replace('_', '/').split('/'))])
 
 
 class CustomChoicesFieldInspector(FieldInspector):
@@ -49,7 +55,6 @@ class CustomChoicesFieldInspector(FieldInspector):
         if choices_attr:
             enum_item_list = list(serializer.choices.items())
 
-
             if not hasattr(result, 'has_add_enum_desc'):
                 choices_text = compose_enum_description(enum_item_list)
                 setattr(result, 'description', '%s\n%s ' % (getattr(result, 'description', ''), choices_text))
@@ -65,6 +70,11 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
 
         super(CustomSwaggerAutoSchema, self).__init__(view, path, method, components, request, overrides,
                                                       operation_keys)
+
+    def get_summary_and_description(self):
+        """描述信息"""
+        summary, description = super().get_summary_and_description()
+        return summary, description
 
     def get_operation(self, operation_keys=None):
         # 只返回有 swagger_auto_schema 装饰器的方法
@@ -106,6 +116,11 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             # operation_id = '/'.join(sort_set_list(operation_keys))
             operation_id = self.path
             # operation_id += ' [%s]' % self.method.lower()
+            summary, description = self.get_summary_and_description()
+            description = force_real_str(description.split(maxsplit=1)[0][:10])
+            if description:
+                # operation_id = '%s-%s' % (self.get_tags()[0], force_real_str(description))
+                operation_id = '%s %s %s' % (force_real_str(description), to_method_title(self.path), self.path)
         return operation_id
 
     def get_view_action(self):
@@ -155,6 +170,57 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             query_serializer = force_serializer_instance(query_serializer)
         return query_serializer
 
+    def coreapi_field_to_parameter(self, field, in_=openapi.IN_QUERY):
+        """Convert an instance of `coreapi.Field` to a swagger :class:`.Parameter` object.
+
+        :param coreapi.Field field:
+        :rtype: openapi.Parameter
+        """
+        location_to_in = {
+                'query': openapi.IN_QUERY,
+                'path' : openapi.IN_PATH,
+                'form' : openapi.IN_FORM,
+                'body' : openapi.IN_FORM,
+        }
+        coreapi_types = {
+                coreschema.Integer: openapi.TYPE_INTEGER,
+                coreschema.Number : openapi.TYPE_NUMBER,
+                coreschema.String : openapi.TYPE_STRING,
+                coreschema.Boolean: openapi.TYPE_BOOLEAN,
+        }
+
+        coreschema_attrs = ['format', 'pattern', 'enum', 'min_length', 'max_length']
+        schema = field.schema
+        return openapi.Parameter(
+                name=field.name,
+                # in_=location_to_in[field.location],
+                in_=in_,
+                required=field.required,
+                description=force_real_str(schema.description) if schema else None,
+                type=coreapi_types.get(type(schema), openapi.TYPE_STRING),
+                **OrderedDict((attr, getattr(schema, attr, None)) for attr in coreschema_attrs)
+        )
+
+    def get_request_body_parameters(self, consumes):
+
+        parameters = super().get_request_body_parameters(consumes)
+        serializer = self.get_request_serializer()
+        return parameters + self.get_myfilter_parameters(serializer, openapi.IN_BODY)
+
+    def get_request_body_schema(self, serializer):
+        schemas = super().get_request_body_schema(serializer)
+        return schemas
+
+    def get_myfilter_parameters(self, serializer, in_=openapi.IN_QUERY):
+        if isinstance(serializer, ModelFilterSerializer):
+            from .filters import MyFilterBackend
+            serializer_parameters_fields = MyFilterBackend().get_schema_fields_from_model(serializer.model_class,
+                                                                                          serializer.filter_fields)
+            serializer_parameters = [self.coreapi_field_to_parameter(field) for field in
+                                     serializer_parameters_fields]
+            return serializer_parameters
+        return []
+
     def get_query_parameters(self):
         """Return the query parameters accepted by this view.
 
@@ -169,10 +235,11 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
 
         serializer_parameters = []
 
-        if query_serializer is not None and not isinstance(query_serializer, MyFilterSerializer):
+        if query_serializer is not None:
+            filter_parameters = self.get_myfilter_parameters(query_serializer, in_=openapi.IN_QUERY)
             serializer_parameters = self.serializer_to_parameters(query_serializer, in_=openapi.IN_QUERY)
             # if serializer_parameters:
-            return serializer_parameters
+            return serializer_parameters + filter_parameters
             if len(set(param_list_to_odict(natural_parameters)) & set(param_list_to_odict(serializer_parameters))) != 0:
                 raise SwaggerGenerationError(
                         "your query_serializer contains fields that conflict with the "
@@ -207,13 +274,14 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         """
 
         if rsp_data_serializer:
-            rep_code_errors:RspErrorEnum = getattr(rsp_data_serializer, 'Errors', None)
+            rep_code_errors: RspErrorEnum = getattr(rsp_data_serializer, 'Errors', None)
             default_declared_fields = RspSerializer._declared_fields
             rep_code_serializer = default_declared_fields['code']
             choices = rep_code_serializer.choices
             # 增加错误代码
             if rep_code_errors and (
-                    issubclass(rep_code_errors, RspErrorEnum) or isinstance(rep_code_errors, RspErrorEnum)):
+                    issubclass(rep_code_errors, RspErrorEnum) or isinstance(rep_code_errors, RspErrorEnum)
+                    or hasattr(rep_code_errors, 'member_list')):
                 rsp_err_code_member_list = rep_code_errors.member_list()
                 choices = copy.copy(rep_code_serializer.choices)
                 choices.update(rsp_err_code_member_list)
@@ -228,11 +296,11 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         default_schema = openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties=OrderedDict(
-                    (
-                        ('code', rsp_code_schema),
-                        ('msg', self.serializer_to_schema(RspSerializer._declared_fields['msg'])),
-                        ('data', self.serializer_to_schema(rsp_data_serializer))
-                )
+                        (
+                                ('code', rsp_code_schema),
+                                ('msg', self.serializer_to_schema(RspSerializer._declared_fields['msg'])),
+                                ('data', self.serializer_to_schema(rsp_data_serializer))
+                        )
                 ),
                 required=['code', 'msg']
         )

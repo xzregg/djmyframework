@@ -22,7 +22,7 @@ from rest_framework.relations import ManyRelatedField, RelatedField, PrimaryKeyR
 from rest_framework.request import Request
 from rest_framework.settings import api_settings
 from rest_framework.utils.serializer_helpers import ReturnDict
-
+from rest_framework_recursive.fields import RecursiveField
 from .utils import DATETIMEFORMAT, ObjectDict
 from .utils.cache import CacheAttribute, CachedClassAttribute
 
@@ -32,7 +32,6 @@ Serializer = s.Serializer
 class WritableSerializerReturnDict(ReturnDict):
     serializer = None
 
-    # __getattr__ = ReturnDict.__getitem__
     def __get_declared_field(self, key):
         declared_field = None
         if self.serializer:
@@ -58,7 +57,10 @@ class WritableSerializerReturnDict(ReturnDict):
     def __setattr__(self, key, value):
         declared_field = self.__get_declared_field(key)
         if declared_field:
-            self[declared_field.field_name] = declared_field.to_internal_value(value)
+            try:
+                self[declared_field.field_name] = declared_field.to_internal_value(value)
+            except:
+                self[declared_field.field_name] = value
             return
         return super().__setattr__(key, value)
 
@@ -72,6 +74,7 @@ class WritableSerializerReturnDict(ReturnDict):
 
 class ParamsSerializer(s.Serializer):
     _init_complete = False
+    __data = None
 
     def __init__(self, data=empty, instance=None, valid_exception=True, *argv, **kwargs):
         if isinstance(data, models.Model):
@@ -98,11 +101,11 @@ class ParamsSerializer(s.Serializer):
                 initial_data[field.field_name] = copy.copy(value)  # 保证 DictField ListDict 类不重复
         return initial_data
 
-    @property
+    @CacheAttribute
     def params_data(self):
         """返回设置的与验证过后的数据"""
-        if hasattr(self, 'initial_data'):
-            self.data.merge(self.initial_data)
+        self.validation()
+        self.data.merge(self.initial_data)
         return self.o
 
     @property
@@ -121,12 +124,13 @@ class ParamsSerializer(s.Serializer):
     def data(self):
         if hasattr(self, 'initial_data'):
             self.is_valid(self.valid_exception)
-        ret_data = super().data
+        ret_data = self.__data or super().data
         return WritableSerializerReturnDict(ret_data, serializer=self)
 
     def validation(self):
-        self.initial_data = self.data
+        """返回验证过的数据"""
         self.is_valid(True)
+        self.__data = self.validated_data
         return self.o
 
     @CachedClassAttribute
@@ -179,18 +183,17 @@ class NullDateTimeField(s.DateTimeField):
         return super(NullDateTimeField, self).to_internal_value(value)
 
 
-class RecursiveField(s.Serializer):
-    """递归的字段"""
-    def to_representation(self, value):
-        serializer = self.parent.parent.__class__(value, context=self.context)
-        return serializer.data
+
+
+
 
 
 class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerializer):
-    create_datetime = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=False,
-                                      allow_null=True, default=datetime.datetime.now)
-    update_datetime = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
-                                      allow_null=True)
+    id = s.IntegerField(label=_('id'), required=False)
+    create_time = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=True,
+                                  allow_null=True, default=datetime.datetime.now)
+    update_time = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
+                                  allow_null=True)
     _version = s.IntegerField(label=_('内置版本号'), read_only=True, required=False)
 
     # base_exclude = []
@@ -235,10 +238,10 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
 
         if not isinstance(data, Mapping):
             message = self.error_messages['invalid'].format(
-                datatype=type(data).__name__
+                    datatype=type(data).__name__
             )
             raise ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: [message]
+                    api_settings.NON_FIELD_ERRORS_KEY: [message]
             }, code='invalid')
 
         ret = OrderedDict()
@@ -254,6 +257,8 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
                 # ManyRelatedField 取消写入数据验证, 防止每次都去查询数据库
                 if isinstance(field, ManyRelatedField) and isinstance(field.child_relation,
                                                                       PrimaryKeyRelatedField) and primitive_value is not empty:
+                    if not isinstance(primitive_value, (list, tuple)):
+                        raise ValidationError()
                     validated_value = [int(i) for i in primitive_value]
                 else:
                     validated_value = field.run_validation(primitive_value)
@@ -274,7 +279,9 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
         return ret
 
 
-class EmptySerializer(DataSerializer): pass
+class EmptySerializer(DataSerializer):
+    """空的序列化"""
+    pass
 
 
 class IdSerializer(ParamsSerializer):
@@ -292,25 +299,30 @@ class ListStrField(s.ListField):
 
 
 class IdsSerializer(ParamsSerializer):
-    id = s.ListField(label='IDS', child=s.IntegerField(allow_null=True, required=False, ), help_text=_('对象ID列表'),
-                     required=False, allow_null=True)
+    ids = s.ListField(label='IDS', child=s.IntegerField(allow_null=True, required=False, ), help_text=_('对象ID列表'),
+                      required=True, allow_null=False)
 
 
 class ParamsPaginationSerializer(ParamsSerializer):
-    page = s.IntegerField(help_text=_("查询的页码"), required=False)
-    page_size = s.IntegerField(help_text=_("显示条目数,默认100"), required=False)
-    fileds = s.CharField(help_text=_("需要查询的字段名,以,号分割"))
-    ordering = s.CharField(help_text=_("排序字段 -xxx 为倒序"))
+    page = s.IntegerField(help_text=_("查询的页码"), required=False, default=1)
+    page_size = s.IntegerField(help_text=_("显示条目数,默认100"), required=False, default=100)
+    # fileds = s.CharField(help_text=_("需要查询的字段名,以,号分割"))
+    # ordering = s.CharField(help_text=_("排序字段 -xxx 为倒序"))
 
 
-class PaginationSerializer(s.Serializer):
+class PaginationSerializer(ParamsSerializer):
     count = s.IntegerField(label=_('总条目数'))
-    next = s.URLField(label=_('下一页地址'), allow_null=True)
-    previous = s.URLField(label=_('上一页地址'), allow_null=True)
+    # next = s.URLField(label=_('下一页地址'), allow_null=True)
+    # previous = s.URLField(label=_('上一页地址'), allow_null=True)
     page = s.IntegerField(label=_('当前页数'))
     page_size = s.IntegerField(label=_('每页显示数量'))
     filter = s.DictField(label=_('查询条件'))
     results = s.ModelSerializer(many=True)
+
+
+class ModelFilterSerializer(ParamsSerializer):
+    model_class = None
+    filter_fields = []
 
 
 class EditParams(IdSerializer):
@@ -323,6 +335,10 @@ class RequestSerializer(Request):
 
 class FilterSerializer(ParamsSerializer):
     pass
+
+
+class CeleryTaskResultSerializer(ParamsSerializer):
+    query_id = s.Serializer(label=_('任务查询ID'), required=False)
 
 
 class RelationModelIdField(RelatedField):

@@ -7,15 +7,33 @@ import time
 from django.http import Http404, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework import exceptions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.views import set_rollback
-
-from rest_framework.exceptions import PermissionDenied, ValidationError
+import typing
 from settings import DEBUG, LANGUAGE_CODE
-from .utils import json_dumps, trace_msg
 from .response import Response, RspData
-from django.http.request import HttpRequest
+from .request import MyRequest
+from .utils import json_dumps, trace_msg
+
+import datetime
+from objectdict import ObjectDict
 
 _log = logging.getLogger('root')
+
+
+class CustomRequest(MyRequest):
+    """只是用作类型提示"""
+    is_debug: bool
+    real_ip: str
+    _start_time: datetime.datetime
+    language: str
+    is_post: bool
+    is_get: bool
+    is_json: bool
+    objdata: ObjectDict
+
+    def __init__(self):
+        raise Exception('不能实例化 只是用来代码提示')
 
 
 def get_real_ip(request):
@@ -37,10 +55,10 @@ class BaseMiddleware(MiddlewareMixin):
         request._start_time = time.time()
         request.language = request.session.get('_language', '') or request.LANGUAGE_CODE or LANGUAGE_CODE
         request.language = request.language.lower()
-        request.is_post = lambda: request.method == 'POST'
-        request.is_get = lambda: request.method == 'GET'
-        request.is_json = lambda: 'json' in request.content_type or request.path.endswith(
-            '.json') or request.is_ajax() or request.GET.get('format', '') == 'json'
+        request.is_post = request.method == 'POST'
+        request.is_get = request.method == 'GET'
+        request.is_json = 'json' in request.content_type or request.path.endswith(
+                '.json') or request.is_ajax() or request.GET.get('format', '') == 'json'
         # 兼容以前功能
         request.REQUEST = copy.copy(request.POST)
         request.REQUEST.update(request.GET)
@@ -89,14 +107,9 @@ class BaseMiddleware(MiddlewareMixin):
 # API 错误处理
 def exception_handler(exc, context):
     """
-    Returns the response that should be used for any given exception.
-
-    By default we handle the REST framework `APIException`, and also
-    Django's built-in `Http404` and `PermissionDenied` exceptions.
-
-    Any unhandled exceptions may return `None`, which will cause a 500 error
-    to be raised.
+    rest_framework api 的报错走这里
     """
+    from .shortcut import RspCodeStatus
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
     # elif isinstance(exc, PermissionDenied):
@@ -121,8 +134,10 @@ def exception_handler(exc, context):
         # 业务错误,http 都返回200
         status_code = status.HTTP_200_OK  # exc.status_code
         set_rollback()
-
-        rsp = Response(data, code=getattr(exc, 'code', exc.status_code), msg=exc_status_msg, status=status_code,
+        code = getattr(exc, 'code', exc.status_code)
+        if isinstance(exc, ValidationError):
+            code, exc_status_msg = (RspCodeStatus.ParamsError, RspCodeStatus.ParamsError.name)
+        rsp = Response(data, code=code, msg=exc_status_msg, status=status_code,
                        headers=headers,
                        template_name='api_exception.html')
         return rsp

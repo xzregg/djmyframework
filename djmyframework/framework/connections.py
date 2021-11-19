@@ -16,8 +16,8 @@ CENTER_CONN = None
 
 
 def get_center_conn(alias='default'):
-    '''获取中央服的mysql连接
-    '''
+    """获取中央服的mysql连接
+    """
     global CENTER_CONN
     try:
         CENTER_CONN.ping()

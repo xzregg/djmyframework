@@ -11,17 +11,29 @@ from django.core.exceptions import ValidationError
 from django.core.management.color import no_style
 from django.core.validators import RegexValidator
 from django.db import close_old_connections, connection, models
+from django.db.models import Model
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.fields import DictField, CharField
 from sqlalchemy import null
+from mptt.models import MPTTModel
+from mptt.fields import TreeForeignKey
 
-from .utils import json_dumps, ObjectDict, trace_msg
+from .utils import json_dumps, ObjectDict, trace_msg, myenum
 from .utils.cache import CachedClassAttribute
 from .utils.log import logger
 from .validators import LetterValidator
+import datetime
+
+from django.db import models
+from django.forms.models import model_to_dict
+
+from decimal import Decimal
+from mptt.models import MPTTModel
+
+from .utils.time import format_date
 
 
 def truncate_name(name, length=None, hash_len=4):
@@ -294,7 +306,7 @@ class BaseModelMixin(SqlModelMixin):
 
     def save(self, *args, **kwargs):
         self.update_datetime = datetime.datetime.now()
-        return super(BaseModel, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     @classmethod
     def create_or_update_for_params(cls, params_dict, ignore_list=()):
@@ -484,9 +496,10 @@ class BaseModelMixin(SqlModelMixin):
 class BaseModel(models.Model, BaseModelMixin):
     id = models.BigAutoField(primary_key=True)
     _version = models.IntegerField(_("版本"), default=0, null=False)
+
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
-    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
+    # create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
+    # update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
 
     class Meta:
         abstract = True
@@ -508,6 +521,9 @@ class JSONField(models.TextField):
 
     def __init__(self, *args, **kwargs):
         super(JSONField, self).__init__(*args, **kwargs)
+
+    def from_db_value(self, value, expression=None, connection=None):
+        return self.to_python(value)
 
     def to_python(self, value):
 
@@ -584,3 +600,71 @@ def get_re_validate(pattern='', err_msg=''):
     :return: partial
     """
     return RegexValidator(validate_re, err_msg)
+
+
+class ModelStatus(myenum.Enum):
+    delete = ('delete', '删除')
+    enable = ('enable', '正常')
+    disable = ('disable', '禁用')
+    expire = ('expire', '过期')
+    unknown = ('unknown', '未知')
+
+
+class AutoModel(BaseModel):
+    status = models.CharField('状态', max_length=10, null=False, choices=ModelStatus.member_list(),
+                              default=ModelStatus.enable)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True, null=True, db_index=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True, null=True)
+
+    def save(self, *args, **kwargs):
+        self.update_time = datetime.datetime.now()
+        super().save(*args, **kwargs)
+
+    def remove(self):
+        self.status = ModelStatus.delete
+
+        self.save()
+
+    def to_json(self):
+        result = {}
+        values = model_to_dict(self)
+
+        for key, value in values.items():
+            if key in ['password']:
+                continue
+            if isinstance(value, (datetime.datetime,)):
+                value = format_date(value)
+            if isinstance(value, (Decimal,)):
+                value = float(value)
+            if key == 'status':
+                # 这是EnumElement，因为子类可能有自己的status，status_ele可能为None
+                status_ele = ModelStatus(value)
+                if status_ele:
+                    status_verbose = status_ele.name
+                else:
+                    status_verbose = '未知状态'
+
+                item = {
+                        key             : value,
+                        'status_verbose': status_verbose,
+                }
+            else:
+                item = {key: value}
+            result.update(item)
+
+        result.update({
+                'create_time': format_date(self.create_time),
+                'update_time': format_date(self.update_time)
+        })
+        return result
+
+    class Meta:
+        abstract = True
+
+
+class TreeModel(MPTTModel):
+    parent = TreeForeignKey('self', verbose_name='上级ID', null=True, on_delete=models.CASCADE, blank=True,
+                            related_name='children')
+
+    class Meta:
+        abstract = True

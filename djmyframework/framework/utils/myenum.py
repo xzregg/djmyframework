@@ -95,11 +95,13 @@ class EnumMeta(type):
         return enum_class
 
     def __str__(cls):
-        return '%s (%s)' % (cls.__name__, ','.join('%s:%s' % (k, v.name) for k, v in cls))
+        # return '%s (%s)' % (cls.__name__, ','.join('%s:%s' % (k, v.name) for k, v in cls))
+        return '%s (%s)' % (cls.__name__, ','.join('%s:%s' % (k, v) for k, v in cls))
 
     def __iter__(cls):
         for k, v in cls._member_map_.items():
-            yield k, v
+            # yield k, v
+            yield k, v.name
 
 
 class Enum(metaclass=EnumMeta):
@@ -147,7 +149,8 @@ class Enum(metaclass=EnumMeta):
     @classmethod
     @lru_cache()
     def member_list(cls):
-        return tuple((k, v.name) for k, v in cls)
+        # return tuple((k, v.name) for k, v in cls)
+        return tuple((k, v) for k, v in cls)
 
 
 if __name__ == '__main__':
@@ -179,19 +182,6 @@ if __name__ == '__main__':
         NotRlike = 'not_rlike', _('正则不匹配 匹配判断')
 
 
-    class Color(Enum):
-        Red = 1, _('红'), {"asd": 3}
-        Orange = (2, u'橙')
-        Bule = (3, u'蓝')
-        Green = (4, u'绿')
-        Young = (5, u'青')
-        Indigo = (6, u'靛')
-        Purple = (7, u'紫')
-
-        @classmethod
-        def get_rainbow(cls):
-            return (cls.Red, cls.Orange, cls.Green, cls.Young, cls.Indigo, cls.Purple)
-
 
     class PAGE(Enum):
         BLACK = (4, u'黑')
@@ -199,16 +189,19 @@ if __name__ == '__main__':
 
 
     class AD_STATUS(Enum):
-        CAMPAIGN_STATUS_ENABLE = (1, u'启用')
-        CAMPAIGN_STATUS_DISABLE = (2, u'暂停')
-
+        CAMPAIGN_STATUS_ENABLE = (1, '启用')
+        CAMPAIGN_STATUS_DISABLE = (2, '暂停')
 
     print(type(AD_STATUS), type(AD_STATUS.CAMPAIGN_STATUS_DISABLE))
 
     for k, v in AD_STATUS:
         print(type(k), type(k.name))
+        print(k, k.name)
+
     print(AD_STATUS, list(AD_STATUS))
     print(AD_STATUS.member_list())
+
+
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == 1
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == AD_STATUS(1)
     assert id(AD_STATUS.CAMPAIGN_STATUS_ENABLE) == id(AD_STATUS(1))

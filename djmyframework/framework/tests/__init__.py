@@ -3,7 +3,12 @@ import json
 
 from django.conf import settings
 from django.test import RequestFactory, TestCase
+import pytest
 
+@pytest.fixture(scope='session')
+def django_db_setup():
+    """使用现有数据库测试"""
+    pass
 class BaseTestCase(TestCase):
 
 

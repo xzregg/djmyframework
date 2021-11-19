@@ -8,9 +8,19 @@ import traceback
 from django.conf import settings
 from django.urls import re_path, reverse
 from rest_framework import routers as rest_route
+from .utils.myenum import Enum
 
 APPS_ROOT = settings.APPS_ROOT
 from .utils import trace_msg
+
+
+class CurdType(Enum):
+    """增删改查的类型"""
+    Add = 'add', '新增'
+    List = 'list', '查询'
+    Edit = 'edit', '编辑'
+    Modify = 'modify', '更改'
+    Delete = 'delete', '删除'
 
 
 class CustomRestRouter(rest_route.DefaultRouter):
@@ -97,12 +107,12 @@ class Route(object):
                 return ins(*args)
         return ins
 
-    def __init__(self, re_url='', name=None, *args, **kwargs):
+    def __init__(self, re_url='', name=None,use_global_prefix=True, *args, **kwargs):
         self.re_url = re_url
         self.args = args
         self.kwargs = kwargs
         self.name = name
-
+        self.use_global_prefix = use_global_prefix
     def __call__(self, obj):
         _m = obj.__module__
         p_m_f = '%s.%s' % (_m, obj.__name__)
@@ -122,13 +132,15 @@ class Route(object):
         setattr(obj, 'route_name', name)
 
         app_name = p_m_f[:p_m_f.find('.')]
-        route_prefix = ROUTE_APP_PREFIX_MAP.get(app_name,'')
-        route_prefix = '%s%s' % (GLOBAL_ROUTE_PREFIX,route_prefix)
+
+        route_prefix = ROUTE_APP_PREFIX_MAP.get(app_name, '')
+        if self.use_global_prefix:
+            route_prefix = '%s%s' % (GLOBAL_ROUTE_PREFIX, route_prefix)
         # rest_framework GenericViewSet
         if hasattr(obj, 'get_serializer'):
             prefix = self.re_url or uri
-            prefix = '%s%s' % (route_prefix, prefix.strip('^'))
             basename = prefix.replace('/', '.').strip('^').strip('$')
+            prefix = '%s%s' % (route_prefix, prefix.strip('^'))
             rest_router.register(prefix, obj, basename=basename)
             return obj
 
@@ -174,9 +186,9 @@ def _import_module_from_file():
     from django.apps import apps
     app_names = settings.APPS
     for app_module_name in app_names:
-        app_name = app_module_name.rsplit('.')[-1]
+        app_name = app_module_name  # .rsplit('.')[-1]
 
-        app_config = apps.app_configs.get(app_name)
+        app_config = apps.app_configs.get(app_module_name)
         if not app_config:
             continue
         views_dir_path = os.path.join(app_config.path, VIEWS_DIR)
@@ -185,10 +197,14 @@ def _import_module_from_file():
             importlib.import_module('%s.%s' % (app_name, VIEWS_DIR))
         else:
             for filename, pyfile in _get_pyfile(views_dir_path):
-                #view_model_name = filename.replace('__init__', '')[:-3]
-                #_p_m = '.'.join([app_name, VIEWS_DIR, view_model_name]).strip('.')
-                view_model_name = pyfile.replace(app_config.path, '').replace('__init__', '')[:-3].replace(os.path.sep, '.').strip('.')
-                _p_m = '%s.%s' % (app_module_name,view_model_name)
+                # view_model_name = filename.replace('__init__', '')[:-3]
+                # _p_m = '.'.join([app_name, VIEWS_DIR, view_model_name]).strip('.')
+
+                view_model_name = pyfile.replace(app_config.path, '').replace('__init__', '')[:-3].replace(os.path.sep,
+                                                                                                           '.').strip(
+                        '.')
+                _p_m = '%s.%s' % (app_module_name, view_model_name)
+
                 try:
 
                     importlib.import_module(_p_m)
