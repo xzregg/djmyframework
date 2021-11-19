@@ -26,62 +26,62 @@ class CurdType(Enum):
 class CustomRestRouter(rest_route.DefaultRouter):
     include_format_suffixes = False
     routes = [
-        # List route.
-        rest_route.Route(
-            url=r'^{prefix}/list$',
-            mapping={
-                'get': 'list',
+            # List route.
+            rest_route.Route(
+                    url=r'^{prefix}/list$',
+                    mapping={
+                            'get': 'list',
 
-            },
-            name='{basename}.list',
-            detail=False,
-            initkwargs={'suffix': 'List'}
-        ),
-        rest_route.Route(
-            url=r'^{prefix}/save$',
-            mapping={
-                'post': 'save'
-            },
-            name='{basename}.save',
-            detail=True,
-            initkwargs={}
-        ),
-        rest_route.Route(
-            url=r'^{prefix}/delete$',
-            mapping={
-                'post': 'delete'
-            },
-            name='{basename}.delete',
-            detail=False,
-            initkwargs={}
-        ),
-        rest_route.Route(
-            url=r'^{prefix}/edit$',
-            mapping={
-                'get': 'edit',
-            },
-            name='{basename}.edit',
-            detail=True,
-            initkwargs={}
-        ),
-        rest_route.Route(
-            url=r'^{prefix}/metadata$',
-            mapping={
-                'get': 'metadata',
-                'options': 'metadata',
-            },
-            name='{basename}.metadata',
-            detail=True,
-            initkwargs={}
-        ),
-        # Dynamically generated list routes. Generated using
-        # @action(detail=False) decorator on methods of the viewset.
-        rest_route.DynamicRoute(
-            url=r'^{prefix}/{url_path}$',
-            name='{basename}.{url_name}',
-            detail=False,
-            initkwargs={}
-        )
+                    },
+                    name='{basename}.list',
+                    detail=False,
+                    initkwargs={'suffix': 'List'}
+            ),
+            rest_route.Route(
+                    url=r'^{prefix}/save$',
+                    mapping={
+                            'post': 'save'
+                    },
+                    name='{basename}.save',
+                    detail=True,
+                    initkwargs={}
+            ),
+            rest_route.Route(
+                    url=r'^{prefix}/delete$',
+                    mapping={
+                            'post': 'delete'
+                    },
+                    name='{basename}.delete',
+                    detail=False,
+                    initkwargs={}
+            ),
+            rest_route.Route(
+                    url=r'^{prefix}/edit$',
+                    mapping={
+                            'get': 'edit',
+                    },
+                    name='{basename}.edit',
+                    detail=True,
+                    initkwargs={}
+            ),
+            rest_route.Route(
+                    url=r'^{prefix}/metadata$',
+                    mapping={
+                            'get'    : 'metadata',
+                            'options': 'metadata',
+                    },
+                    name='{basename}.metadata',
+                    detail=True,
+                    initkwargs={}
+            ),
+            # Dynamically generated list routes. Generated using
+            # @action(detail=False) decorator on methods of the viewset.
+            rest_route.DynamicRoute(
+                    url=r'^{prefix}/{url_path}$',
+                    name='{basename}.{url_name}',
+                    detail=False,
+                    initkwargs={}
+            )
     ]
 
 
@@ -107,12 +107,13 @@ class Route(object):
                 return ins(*args)
         return ins
 
-    def __init__(self, re_url='', name=None,use_global_prefix=True, *args, **kwargs):
+    def __init__(self, re_url='', name=None, use_global_prefix=True, *args, **kwargs):
         self.re_url = re_url
         self.args = args
         self.kwargs = kwargs
         self.name = name
         self.use_global_prefix = use_global_prefix
+
     def __call__(self, obj):
         _m = obj.__module__
         p_m_f = '%s.%s' % (_m, obj.__name__)

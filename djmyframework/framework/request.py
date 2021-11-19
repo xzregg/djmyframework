@@ -15,12 +15,11 @@ from objectdict import ObjectDict
 
 class MyRequest(RestRequest):
 
-
-    @CacheAttribute
-    def data(self):
-        self._full_data = ObjectDict(super().data)
-        self._full_data.update(dict(self.query_params.items()))
-        return self._full_data
+    # @CacheAttribute
+    # def data(self):
+    #     self._full_data = ObjectDict(super().data)
+    #     self._full_data.update(dict(self.query_params.items()))
+    #     return self._full_data
 
     @property
     def POST(self):
@@ -29,7 +28,9 @@ class MyRequest(RestRequest):
             self._load_data_and_files()
         return self._data
 
-    def force_plaintext_errors(self,value):
+    def force_plaintext_errors(self, value):
         """取消 ajax 返回 html"""
         pass
+
+
 Request = MyRequest

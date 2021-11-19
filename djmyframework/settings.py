@@ -33,7 +33,7 @@ APPS = ['myadmin', 'analysis', 'celery_task', 'log_def', 'upload', 'sync_model',
 
 sys.path = sort_set_list([settings.BASE_DIR, settings.APPS_ROOT, PROJECT_ROOT, APPS_ROOT] + sys.path)
 
-from framework.conf import SettingOptions
+from dynamic_settings.conf import SettingOptions
 
 TITLE = SettingOptions('管理后台', _('系统标题'), 'TITLE', 'System', lazy=_)
 

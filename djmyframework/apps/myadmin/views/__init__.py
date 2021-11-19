@@ -101,7 +101,7 @@ def login(request: Request):
     """
     msg = ''
     now = datetime.datetime.now()
-    if request.is_post():
+    if request.is_post:
         try:
 
             params = LoginSerializer(request.data).params_data

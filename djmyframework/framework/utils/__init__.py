@@ -36,12 +36,10 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from raven.contrib.django.raven_compat.models import client
+
 from log_request_id import local
 
-from config.constants import CONSOLE_COLOR
-
-from .time import get_current_hours, get_now
+import time
 from django.db import models
 from django.db.models.query import QuerySet
 from objectdict import ObjectDict as _ObjectDict
@@ -394,26 +392,6 @@ def profile_time(f, *args, **kwargs):
     return r, use_t
 
 
-logger = logging.getLogger('root')
-
-redis_client = redis.Redis.from_url(settings.REDIS_URL)
-
-
-def get_redis_client():
-    return redis_client
-
-
-def get_booking_redis_client():
-    return redis.Redis.from_url(settings.BOOKING_REDIS_URL)
-
-
-def capture_exception():
-    """
-    捕捉异常,丢到sentry
-    """
-    client.captureException()
-
-
 def read_1970_time(str_second, time_format='%Y-%m-%d %H:%M:%S') -> str:
     """
     1970 年至今的秒数转时间
@@ -429,10 +407,6 @@ def get_request_id():
 
 def random_string(length: int = 32, choice=string.ascii_letters + string.digits) -> str:
     return ''.join([random.SystemRandom().choice(choice) for _ in range(length)])
-
-
-def string_color(msg, color='pink'):
-    return f'{CONSOLE_COLOR[color]}{msg}{CONSOLE_COLOR["end"]}'
 
 
 def safe_pagination(object_list, page_size=10, page_num=1, max_page_size=100000):
@@ -457,73 +431,6 @@ def safe_pagination(object_list, page_size=10, page_num=1, max_page_size=100000)
     total_count = pagination.count
 
     return total_count, num_pages, page_contents
-
-
-def do_requests(url, method='GET', verify=False, timeout=60, **kwargs):
-    headers = kwargs.pop('headers', {})
-    headers.update({
-            'X-Request-Id': get_request_id()
-    })
-
-    start = get_now()
-    start_time = start.format(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
-    # start_time = get_current_hours(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
-    error_msg = ''
-    result = {}
-
-    try:
-        result = requests.request(
-                method=method, url=url,
-                timeout=timeout,
-                verify=verify,
-                headers=headers,
-                **kwargs
-        ).json()
-    except Exception as error:
-        client.captureException()
-        error_msg = str(error)
-
-    end = get_now()
-    end_time = end.format(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
-
-    try:
-        cost_time = int((end - start).total_seconds() * 1000)
-    except Exception:
-        cost_time = 0
-
-    # end_time = get_current_hours(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
-
-    logger.info(limit_field_size(kwargs.get('data')), extra={
-            'response'   : limit_field_size(result),
-            'category'   : 'request',
-            'path'       : url,
-            'method'     : method,
-            'params'     : limit_field_size(kwargs.get("params")),
-            'json'       : limit_field_size(kwargs.get("json")),
-            'headers'    : limit_field_size(headers),
-            'cost_timez' : cost_time,
-            'start_timez': limit_field_size(start_time),
-            'end_timez'  : limit_field_size(end_time),
-            'error_msg'  : limit_field_size(error_msg),
-    })
-
-    return result
-
-
-def deprecation(func):
-    """
-    为了更好地区分报废的接口吧
-    """
-
-    @functools.wraps(func)
-    def warpper(msg='报废提醒', *args, **kwargs):
-        warnings.warn(
-                msg,
-                DeprecationWarning
-        )
-        return func(*args, **kwargs)
-
-    return warpper
 
 
 def limit_field_size(log_content, max_size=10000):
@@ -678,16 +585,6 @@ def delete_cache(cache_key):
         pass
 
 
-def redis_patch_delete(keys):
-    """
-    批量删除redis keys*的东西
-    :param keys:
-    :return:
-    """
-    for key in redis_client.scan_iter(keys):
-        redis_client.delete(key)
-
-
 def get_client_ip(request):
     """
     获取请求的ip
@@ -717,21 +614,6 @@ def copy_file(source_file_path, dest_file_path):
             shutil.copy(source_file_path, dest_file_path)
     except Exception:
         pass
-
-
-def set_cache(name, value, expire_time=60):
-    try:
-        redis_client.set(name, value, expire_time)
-    except Exception:
-        pass
-
-
-def get_cache(name):
-    try:
-        content = redis_client.get(name)
-        return content.decode()
-    except Exception:
-        return ''
 
 
 def get_client_ip(request=None):

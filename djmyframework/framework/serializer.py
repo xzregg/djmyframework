@@ -190,9 +190,9 @@ class NullDateTimeField(s.DateTimeField):
 
 class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerializer):
     id = s.IntegerField(label=_('id'), required=False)
-    create_time = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=True,
+    create_datetime = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=True,
                                   allow_null=True, default=datetime.datetime.now)
-    update_time = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
+    update_datetime = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
                                   allow_null=True)
     _version = s.IntegerField(label=_('内置版本号'), read_only=True, required=False)
 

@@ -117,7 +117,8 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             operation_id = self.path
             # operation_id += ' [%s]' % self.method.lower()
             summary, description = self.get_summary_and_description()
-            description = force_real_str(description.split(maxsplit=1)[0][:10])
+            description_split = description.split(maxsplit=1)
+            description = force_real_str(description_split[0][:10]) if description_split else ''
             if description:
                 # operation_id = '%s-%s' % (self.get_tags()[0], force_real_str(description))
                 operation_id = '%s %s %s' % (force_real_str(description), to_method_title(self.path), self.path)

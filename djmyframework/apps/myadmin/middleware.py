@@ -74,7 +74,7 @@ class AuthMiddleware(BaseMiddleware):
             the_user = User.objects.filter(id=user_id, status__in=(User.Status.NORMAL, User.Status.NotActive)).first()
             request.user = request.admin = the_user
             if not request.user:
-                if request.is_ajax() or request.is_json():
+                if request.is_ajax() or request.is_json:
                     return Response(request=request, code=-1, msg=_('请重新登录'))
                 login_url = settings.LOGIN_URL
                 return HttpResponseRedirect('%s?from_url=%s' % (login_url, request.get_full_path()))
