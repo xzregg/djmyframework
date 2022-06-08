@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import datetime
 import hashlib
 import json
@@ -11,7 +12,9 @@ from django.core.exceptions import ValidationError
 from django.core.management.color import no_style
 from django.core.validators import RegexValidator
 from django.db import close_old_connections, connection, models
-from django.db.models import Model
+from django.db.models import Model, Sum, Count, Avg, Subquery, QuerySet, ManyToManyField
+from django.db.models.signals import post_init
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
@@ -21,17 +24,19 @@ from sqlalchemy import null
 from mptt.models import MPTTModel
 from mptt.fields import TreeForeignKey
 
-from .utils import json_dumps, ObjectDict, trace_msg, myenum
+from .utils import json_dumps, ObjectDict, trace_msg, myenum, MyJsonEncoder
 from .utils.cache import CachedClassAttribute
 from .utils.log import logger
 from .validators import LetterValidator
 import datetime
-
+from django.db.models import JSONField as DjJSONField
 from django.db import models
 from django.forms.models import model_to_dict
 
 from decimal import Decimal
 from mptt.models import MPTTModel
+
+from .utils.time import format_date
 
 
 def truncate_name(name, length=None, hash_len=4):
@@ -282,30 +287,6 @@ class BaseModelMixin(SqlModelMixin):
     def is_related_field(self, field):
         return isinstance(field, (models.ForeignKey, models.ManyToManyField, models.OneToOneRel))
 
-    def optimistic_save(self, *args, **kwargs):
-        """
-        乐观锁 保存
-        :return:
-        """
-        if self.id:
-            new_data = {f.name: getattr(self, f.name) for f in self.get_fields(has_private=True) if
-                        not self.is_related_field(f)}
-            del new_data['id']
-            new_data['_version'] += 1
-            new_data['update_datetime'] = datetime.datetime.now()
-            has_save = self.__class__.objects.using(kwargs.get('using')).filter(id=self.id,
-                                                                                _version=self._version,
-                                                                                ).update(
-                    **new_data)
-            self._version = new_data['_version'] if has_save else self._version
-            return has_save
-        else:
-            return self.save(*args, **kwargs)
-
-    def save(self, *args, **kwargs):
-        self.update_datetime = datetime.datetime.now()
-        return super().save(*args, **kwargs)
-
     @classmethod
     def create_or_update_for_params(cls, params_dict, ignore_list=()):
         err_msg = ''
@@ -336,15 +317,21 @@ class BaseModelMixin(SqlModelMixin):
     def is_attr_instance(self, attr, cla):
         return isinstance(getattr(self, attr), cla)
 
-    def set_attrs_for_dict(self, dict_data):
+    def set_attrs_for_dict(self, dict_data, use_default=False):
         for f in self.get_fields(has_private=True):
-            if isinstance(f, (models.ForeignKey, models.ManyToManyField, models.OneToOneRel)):
+            if isinstance(f, (models.ManyToManyField,)) or f.attname == 'id':
                 continue
-            data = dict_data.get(f.name, f.default)
-            if not data is models.fields.NOT_PROVIDED:
-                if not f.null and data is None:
+            field_name = f.name
+            data = dict_data.get(f.name, models.fields.Empty)
+            if data is not models.fields.Empty:
+                if isinstance(f, (models.ForeignKey, models.OneToOneRel)):
+                    if not isinstance(data, (models.Model, int)):
+                        continue
+                if f.default is not models.fields.NOT_PROVIDED and use_default:
                     data = f.default
-                self.set_attr(f.name, data, null=True)
+                if not f.null and data is None:
+                    continue
+                self.set_attr(field_name, data, null=True)
 
     def set_attr(self, name, value, value_handler=None, null=False):
         """设置模型的属性
@@ -366,8 +353,8 @@ class BaseModelMixin(SqlModelMixin):
             # 特殊处理datetime的数据
             if isinstance(attr_value, datetime.datetime) and is_msgpack:
                 d[attr] = attr_value.strftime('%Y-%m-%d %H:%M:%S')
-            elif isinstance(attr_value, datetime.date):
-                d[attr] = attr_value.strftime('%Y-%m-%d') and is_msgpack
+            elif isinstance(attr_value, datetime.date) and is_msgpack:
+                d[attr] = attr_value.strftime('%Y-%m-%d')
             # 递归生成BaseModel类的dict
             elif isinstance(attr_value, BaseModel):
                 d[attr] = attr_value.get_dict(has_m2mfields=has_m2mfields, is_msgpack=is_msgpack)
@@ -487,8 +474,22 @@ class BaseModelMixin(SqlModelMixin):
         return field_dict
 
     @classmethod
-    def prefetch_related_all(cls):
+    def prefetch_related_all(cls) -> QuerySet:
         return cls.objects.prefetch_related(*[f.attname for f in cls._meta.many_to_many])
+
+    @classmethod
+    def get_related_objects(cls) -> QuerySet:
+        """获取模型所有关联字段"""
+        return cls.prefetch_related_all().select_related(
+                *[f.attname for f in cls.get_fields() if isinstance(f, (models.ForeignKey, models.OneToOneRel))])
+
+    def copy(self):
+        copy_obj = copy.copy(self)
+        copy_obj.id = None
+        return copy_obj
+
+
+class OptimisticLockException(Exception): pass
 
 
 class BaseModel(models.Model, BaseModelMixin):
@@ -498,6 +499,64 @@ class BaseModel(models.Model, BaseModelMixin):
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
     create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
     update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
+
+    _is_init = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._update_fields = set()
+        self._is_init = True
+
+    def _get_update_fileds(self):
+        return self._update_fields
+
+    def optimistic_save(self, *args, raise_exception=True, **kwargs):
+        """
+        乐观锁 保存
+        :return:
+        """
+        if self.id:
+            new_data = {field_name: getattr(self, field_name) for field_name in self._get_update_fileds()}
+            # new_data = {f.name: getattr(self, f.name) for f in self.get_fields(has_private=True) if  not self.is_related_field(f)}
+
+            new_data['_version'] = self._version + 1
+            new_data['update_time'] = datetime.datetime.now()
+            has_save = self.__class__.objects.using(kwargs.get('using')).filter(id=self.id,
+                                                                                _version=self._version,
+                                                                                ).update(**new_data)
+            if has_save:
+                self._version = new_data['_version']
+            elif raise_exception:
+                raise OptimisticLockException(f'{self} {self.id} {self._version} Optimistic Save Error')
+            return has_save
+        else:
+            return self.save(*args, **kwargs)
+
+    @CachedClassAttribute
+    def concrete_fields_map(cls):
+        fields_map = OrderedDict([(field.name, field) for field in cls._meta.concrete_fields if
+                                  not field.primary_key])
+        # 外键 attrname 也算进去
+        for key in list(fields_map.keys()):
+            fields_map[fields_map[key].attname] = fields_map[key]
+        return fields_map
+
+    def __getattribute__(self, attrname):
+        if super().__getattribute__('_is_init') and attrname in super().__getattribute__('concrete_fields_map'):
+            super().__getattribute__('_update_fields').add(attrname)
+        return super().__getattribute__(attrname)
+
+    def __setattr__(self, attrname, value):
+        if self._is_init and attrname in self.concrete_fields_map:
+            self._update_fields.add(attrname)
+        return super().__setattr__(attrname, value)
+
+    def save(self, *args, **kwargs):
+        """只更新有改的字段"""
+        update_fields = kwargs.pop('update_fields', None)
+        if self.id and not kwargs.get('force_insert'):
+            update_fields = update_fields or self._get_update_fileds()
+        return super().save(*args, update_fields=update_fields, **kwargs)
 
     class Meta:
         abstract = True
@@ -514,11 +573,29 @@ class BaseNameModel(BaseModel):
         abstract = True
 
 
-class JSONField(models.TextField):
+class JSONField(DjJSONField):
+    def __init__(self, verbose_name=None, name=None, encoder=None, decoder=None, **kwargs):
+        super().__init__(verbose_name, name, **kwargs)
+        self.encoder = self.encoder or MyJsonEncoder
+
+    def _check_default(self):
+        return []
+
+    def get_default(self):
+        default = super().get_default()
+        return copy.deepcopy(default)
+
+
+class _JSONField(models.TextField):
+    """旧的不用,用 django 3 的"""
     description = "Json"
 
     def __init__(self, *args, **kwargs):
-        super(JSONField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+    def get_default(self):
+        default = super().get_default()
+        return copy.deepcopy(default)
 
     def from_db_value(self, value, expression=None, connection=None):
         return self.to_python(value)
@@ -600,17 +677,44 @@ def get_re_validate(pattern='', err_msg=''):
     return RegexValidator(validate_re, err_msg)
 
 
-class ModelStatus(myenum.Enum):
-    delete = ('delete', '删除')
-    enable = ('enable', '正常')
-    disable = ('disable', '禁用')
-    expire = ('expire', '过期')
-    unknown = ('unknown', '未知')
-
+@receiver(post_init)
+def model_init(sender, instance, **kwargs):
+    """所有模型初始化的时候,复制一份初始化数据
+    """
+    if instance.pk:
+        pre_init_data = ObjectDict(instance.__dict__)
+    else:
+        pre_init_data = ObjectDict()
+    instance.pre_init_data = pre_init_data
 
 class TreeModel(MPTTModel):
+    """MPTT模型实例方法:
+    https://www.cnblogs.com/wuzdandz/p/10595416.html
+    https://django-mptt.readthedocs.io/en/latest/
+    get_ancestors(ascending=False, include_self=False)  # 返回一个包含所有当前实例祖宗的queryset
+    get_children()  # 返回包换当前实例的直接孩子的queryset(即下一级所有的子节点)，按树序排列
+    get_descendants(include_self=False)  # 返回当前实例的所有子节点，按树序排列
+    get_descendant_count()  # 返回当前实例所有子节点的数量
+    get_family()  # 返回从当前实例开始的所有家庭成员节点，用树型结构
+    get_next_sibling()  # 返回当前实例的下一个树型同级节点的实例
+    get_previous_sibling()  # 返回当前实例的上一个树型同级节点的实例
+    get_root()  ＃ 获取当前实例的根节点实例
+    get_siblings(include_self=False)  # 获取所有同级兄弟节点的实例的queryset
+    insert_at(target, position='first-child', save=False)  # 插入作为目标节点的第一个子节点(如果save=True)
+    is_child_node()  # 是否是子节点
+    is_leaf_node()  # 是否是叶节点
+    is_root_node()  # 是否是根节点
+    move_to(target, position='first-child')  # 移动到某个节点的第一个子节点位置，target为空将会被移到根节点，此时不需要position位置参数
+    position位置参数:
+    'first-child', 'last-child','left', 'right'
+    """
+
     parent = TreeForeignKey('self', verbose_name='上级ID', null=True, on_delete=models.CASCADE, blank=True,
-                            related_name='children')
+                            related_name='children', db_constraint=False)
+
+    @property
+    def has_children(self):
+        return not self.is_leaf_node() and len(self.children.all()) > 0
 
     class Meta:
         abstract = True

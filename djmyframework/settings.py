@@ -15,7 +15,7 @@ pymysql.install_as_MySQLdb()
 import sys
 import os
 import jinja2
-
+import daphne.server
 from django.utils.translation import gettext_lazy as _
 from objectdict import sort_set_list
 from django.conf import settings
@@ -65,7 +65,7 @@ ROUTE_APP_PREFIX_MAP = {}
 INSTALLED_APPS = ['djorm_pool',
                   'framework',
                   'channels',
-                  # 'django.contrib.admin',
+                  #'django.contrib.admin',
                   'django.contrib.auth',
                   'django.contrib.contenttypes',
                   'django.contrib.sessions',

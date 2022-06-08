@@ -47,6 +47,10 @@ class EnumElement(object):
         self.name = name
         self.other = other
 
+    def __reduce__(self):
+        """pickle 序列化用的"""
+        return (self.value.__class__, (self.value,))
+
 
 class EnumT(object):
     """
@@ -73,6 +77,9 @@ class EnumT(object):
         return 'Enum(%s,%s)' % (self, self.name)
 
 
+EmptyEnumElement = EnumT('', '', None)
+
+
 class EnumMeta(type):
 
     def __new__(metacls, cls_name, bases, classdict):
@@ -95,12 +102,10 @@ class EnumMeta(type):
         return enum_class
 
     def __str__(cls):
-        # return '%s (%s)' % (cls.__name__, ','.join('%s:%s' % (k, v.name) for k, v in cls))
         return '%s (%s)' % (cls.__name__, ','.join('%s:%s' % (k, v) for k, v in cls))
 
     def __iter__(cls):
         for k, v in cls._member_map_.items():
-            # yield k, v
             yield k, v.name
 
 
@@ -136,7 +141,7 @@ class Enum(metaclass=EnumMeta):
     _member_map_ = OrderedDict()
 
     def __new__(cls, key):
-        return cls._member_map_.get(key, None)
+        return cls._member_map_.get(key, EmptyEnumElement)
 
     @classmethod
     def get_members(cls):
@@ -146,11 +151,26 @@ class Enum(metaclass=EnumMeta):
     def members(cls):
         return cls.member_list()
 
+    @CachedClassAttribute
+    def choices(cls):
+        return cls.member_list()
+
     @classmethod
     @lru_cache()
     def member_list(cls):
         # return tuple((k, v.name) for k, v in cls)
         return tuple((k, v) for k, v in cls)
+
+    @classmethod
+    @lru_cache()
+    def to_dict(cls):
+        # return tuple((k, v.name) for k, v in cls)
+        return dict([(k, v) for k, v in cls])
+
+    @classmethod
+    @lru_cache()
+    def to_list(cls):
+        return [k for k, v in cls]
 
 
 if __name__ == '__main__':
@@ -182,7 +202,6 @@ if __name__ == '__main__':
         NotRlike = 'not_rlike', _('正则不匹配 匹配判断')
 
 
-
     class PAGE(Enum):
         BLACK = (4, u'黑')
         WHITE = (6, u'白')
@@ -192,6 +211,7 @@ if __name__ == '__main__':
         CAMPAIGN_STATUS_ENABLE = (1, '启用')
         CAMPAIGN_STATUS_DISABLE = (2, '暂停')
 
+
     print(type(AD_STATUS), type(AD_STATUS.CAMPAIGN_STATUS_DISABLE))
 
     for k, v in AD_STATUS:
@@ -200,7 +220,6 @@ if __name__ == '__main__':
 
     print(AD_STATUS, list(AD_STATUS))
     print(AD_STATUS.member_list())
-
 
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == 1
     assert AD_STATUS.CAMPAIGN_STATUS_ENABLE == AD_STATUS(1)

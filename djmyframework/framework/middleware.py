@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
 import copy
+import json
 import logging
 import sys
 import time
 
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, QueryDict
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework import exceptions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import set_rollback
 import typing
+
 from settings import DEBUG, LANGUAGE_CODE
 from .response import Response, RspData
 from .request import MyRequest
-from .utils import json_dumps, trace_msg
+from .utils import json_dumps, trace_msg, get_client_ip, capture_exception
 
 import datetime
 from objectdict import ObjectDict
+
+from .utils.user_agent import RequestUserAgent
 
 _log = logging.getLogger('root')
 
@@ -31,6 +35,7 @@ class CustomRequest(MyRequest):
     is_get: bool
     is_json: bool
     objdata: ObjectDict
+    user_agent: RequestUserAgent
 
     def __init__(self):
         raise Exception('不能实例化 只是用来代码提示')
@@ -39,8 +44,11 @@ class CustomRequest(MyRequest):
 def get_real_ip(request):
     """获取真实ip
     """
-    return request.META.get('HTTP_REMOTE_ADDR2', '') or request.META.get('HTTP_X_FORWARDED_FOR',
-                                                                         '') or request.META.get('REMOTE_ADDR')
+    real_ip = getattr(request, 'real_ip', None)
+    if not real_ip:
+        real_ip = get_client_ip(request).split(',')[0]
+    request.real_ip = real_ip
+    return request.real_ip
 
 
 class BaseMiddleware(MiddlewareMixin):
@@ -59,6 +67,29 @@ class BaseMiddleware(MiddlewareMixin):
         request.is_get = request.method == 'GET'
         request.is_json = 'json' in request.content_type or request.path.endswith(
                 '.json') or request.is_ajax() or request.GET.get('format', '') == 'json'
+        request.user_agent = RequestUserAgent(request)
+        try:
+            # 将 body 数据放到 post 里
+            if request.is_json and request.body:
+                # request.META还不一定有content_type
+                data = json.loads(request.body)
+                if data:
+                    q_data = QueryDict('', mutable=True)
+                    for key, value in data.items():
+                        if isinstance(value, list):
+                            for x in value:
+                                q_data.update({key: x})
+                        else:
+                            q_data.update({key: value})
+
+                    if request.method == 'GET':
+                        request.GET = q_data
+
+                    if request.method == 'POST':
+                        request.POST = q_data
+        except Exception:
+            capture_exception()
+
         # 兼容以前功能
         request.REQUEST = copy.copy(request.POST)
         request.REQUEST.update(request.GET)
@@ -77,7 +108,6 @@ class BaseMiddleware(MiddlewareMixin):
             return check_view_func
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-
         pass
 
     def process_response(self, request, response):
@@ -97,7 +127,7 @@ class BaseMiddleware(MiddlewareMixin):
         """出错处理
         """
         msg = trace_msg()
-        _log.warning(msg)
+        _log.error(msg)
         if request.is_ajax():
             rsp = RspData(code=status.HTTP_500_INTERNAL_SERVER_ERROR, msg=msg)
             return HttpResponse(json_dumps(rsp), status=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -5,6 +5,7 @@ import sys
 import os
 import jinja2
 
+
 ############ REST_FRAMEWORK设置 ########
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
@@ -15,7 +16,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'EXCEPTION_HANDLER': 'framework.middleware.exception_handler',
-    'DEFAULT_AUTHENTICATION_CLASSES': ('framework.authentication.MySessionAuthentication',)
+    'DEFAULT_AUTHENTICATION_CLASSES': ('framework.authentication.MySessionAuthentication',),
+    'UNAUTHENTICATED_USER': None
 }
 DRF_DYNAMIC_FIELDS = {'SUPPRESS_CONTEXT_WARNING': True}
 
@@ -60,7 +62,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
+                #'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'framework.context_processors.context_settings'
             ],
@@ -76,7 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
+                #'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
         },

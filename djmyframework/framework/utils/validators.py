@@ -1,13 +1,7 @@
 #!/usr/bin/env python  
 # -*- coding:utf-8 _*-
-""" 
-@author:xzr 
-@file: validators.py 
-@time: 2019/02/19
-@contact: xzregg@gmail.com
-"""
-import re
 
+import re
 
 def isString(x):
     """是否字符"""

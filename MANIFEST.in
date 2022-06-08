@@ -3,6 +3,7 @@
 include requirements.txt
 include README.md
 graft djmyframework
+global-exclude framework_bak
 global-exclude tmp/*
 global-exclude logs/
 global-exclude test*

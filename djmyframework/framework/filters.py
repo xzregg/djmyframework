@@ -244,7 +244,7 @@ class MyFilterBackend(DjangoFilterBackend):
         return None
 
     def get_filter_dict(self, query_params, filterset_fields=None):
-        filter_q = self.get_filter_q(query_params, filterset_fields=None)
+        filter_q = self.get_filter_q(query_params, filterset_fields=filterset_fields)
         filter_dict = {}
         for q in filter_q.children:
             if isinstance(q, Q):
@@ -260,20 +260,25 @@ class MyFilterBackend(DjangoFilterBackend):
         relation = query_params.get('relation', )
         for key in query_params.keys():
             key_array = key.rsplit(self.DELIMITER, 1)
-            if len(key_array) >= 2:
+            if filterset_fields and key in filterset_fields:
+                # 没带后缀的默认都用 使用全等值 exact
+                name, operator = key, 'exact'
+            elif len(key_array) >= 2:
                 name, operator = key_array[:2]
                 if filterset_fields and name not in filterset_fields:
                     raise RspError(_('%s 未被允许的筛选字段' % name))
-                filter_q_obj: FilterQ = self.guess_condition_filter_q_obj(operator)
-                if filter_q_obj is None:
-                    raise RspError(_('%s 未定义操作类型' % operator))
+            else:
+                continue
+            filter_q_obj: FilterQ = self.guess_condition_filter_q_obj(operator)
+            if filter_q_obj is None:
+                raise RspError(_('%s 未定义操作类型' % operator))
 
-                value_list = query_params.getlist(key)
+            value_list = query_params.getlist(key)
 
-                q = filter_q_obj.get_q(name, value_list)
-                if q:
-                    conn_type = RelationEnum(relation) or RelationEnum.And
-                    condition_q.add(q, conn_type)
+            q = filter_q_obj.get_q(name, value_list)
+            if q:
+                conn_type = RelationEnum(relation) or RelationEnum.And
+                condition_q.add(q, conn_type)
         return condition_q
 
     def filter_queryset(self, request: Request, queryset, view):

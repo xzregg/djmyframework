@@ -2,6 +2,7 @@
 # 一堆工具
 import base64
 import calendar
+import contextlib
 import datetime
 import hashlib
 import importlib
@@ -15,6 +16,8 @@ import threading
 import traceback
 from collections import OrderedDict
 from importlib import import_module as _import_module
+
+from requests import Timeout
 
 import hashlib
 import itertools
@@ -36,10 +39,10 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.core.paginator import Paginator
-
+from raven.contrib.django.raven_compat.models import client
 from log_request_id import local
 
-import time
+from .time import get_current_hours, get_now
 from django.db import models
 from django.db.models.query import QuerySet
 from objectdict import ObjectDict as _ObjectDict
@@ -57,8 +60,12 @@ ObjectDict = _ObjectDict
 
 TIMEFORMAT = '%H:%M:%S'
 DATEFORMAT = '%Y-%m-%d'
-DATETIMEFORMAT = '%Y-%m-%d %H:%M:%S'
+DATETIMEFORMAT: str = '%Y-%m-%d %H:%M:%S'
 CONVERT_FORMAT = {"datetime": DATETIMEFORMAT, "date": DATEFORMAT, "time": TIMEFORMAT}
+
+logger = logging.getLogger('root')
+
+
 
 
 def find_djapp_name(app_root_path):
@@ -392,6 +399,16 @@ def profile_time(f, *args, **kwargs):
     return r, use_t
 
 
+def capture_exception():
+    """
+    捕捉异常,丢到sentry
+    """
+    logger = logging.getLogger('error')
+    err_msg = traceback.format_exc()
+    logger.error(err_msg)
+    client.captureException()
+
+
 def read_1970_time(str_second, time_format='%Y-%m-%d %H:%M:%S') -> str:
     """
     1970 年至今的秒数转时间
@@ -402,11 +419,18 @@ def read_1970_time(str_second, time_format='%Y-%m-%d %H:%M:%S') -> str:
 
 
 def get_request_id():
-    return getattr(local, 'request_id', uuid.uuid4().hex) or uuid.uuid4().hex
+    request_id = getattr(local, 'request_id', uuid.uuid4().hex) or uuid.uuid4().hex
+    local.request_id = request_id
+    return request_id
 
 
 def random_string(length: int = 32, choice=string.ascii_letters + string.digits) -> str:
     return ''.join([random.SystemRandom().choice(choice) for _ in range(length)])
+
+
+def string_color(msg, color='pink'):
+    from config.constants import CONSOLE_COLOR
+    return f'{CONSOLE_COLOR[color]}{msg}{CONSOLE_COLOR["end"]}'
 
 
 def safe_pagination(object_list, page_size=10, page_num=1, max_page_size=100000):
@@ -417,20 +441,108 @@ def safe_pagination(object_list, page_size=10, page_num=1, max_page_size=100000)
     :param page_num: 需要第几页数据
     :return: total_count,num_pages,pageContents (总个数,总页数,当前页内容)
     """
-    page_contents = []
+    page_contents = QuerySet()
 
     page_size = min(page_size, max_page_size)
     pagination = Paginator(object_list, page_size)
 
     num_pages = pagination.num_pages
-
+    page_num = page_num or 1
     if page_num <= num_pages:
         page = pagination.page(page_num)
-        page_contents = list(page.object_list)
+        page_contents = page.object_list
+    else:
+        # 超出页码的设置，或者捕获EmptyPage
+        # 上面的空QuerySet()，会在序列化时候AttributeError: 'NoneType' object has no attribute '_meta'
+        page_contents = []
 
     total_count = pagination.count
 
     return total_count, num_pages, page_contents
+
+
+def do_requests(url, method='GET', verify=False, timeout=60, **kwargs):
+    headers = kwargs.pop('headers', {})
+    raw_data = kwargs.pop('raw_data', {})
+    encoding = kwargs.pop('encoding', '')  # 返回结果是否进行编码
+    parse_json = kwargs.pop('parse_json', True)  # 返回结果是否json解析
+
+    headers.update({
+            'X-Request-Id': get_request_id(),
+            'X-Request-IP': get_client_ip(),
+    })
+
+    start = get_now()
+    start_time = start.format(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+    # start_time = get_current_hours(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+    error_msg = ''
+    result = {}
+
+    try:
+        result = requests.request(
+                method=method, url=url,
+                timeout=timeout,
+                verify=verify,
+                headers=headers,
+                **kwargs
+        )
+        if encoding:
+            result.encoding = encoding
+        if parse_json:
+            result = result.json()
+        else:
+            result = result.text
+    except Timeout:
+        client.captureException()
+        error_msg = str("time_out")
+        result = {"request_time_out": "error"}
+    except Exception as error:
+        client.captureException()
+        error_msg = str(error)
+
+    end = get_now()
+    end_time = end.format(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+
+    try:
+        cost_time = int((end - start).total_seconds() * 1000)
+    except Exception:
+        cost_time = 0
+
+    # end_time = get_current_hours(fmt='YYYY-MM-DD HH:mm:ss:SSSS,X')
+
+    logger.info(limit_field_size(kwargs.get('data') or kwargs.get("json")), extra={
+            'response'   : limit_field_size(result),
+            'category'   : 'request',
+            'path'       : url,
+            'method'     : method,
+            'params'     : limit_field_size(kwargs.get("params")),
+            'json'       : limit_field_size(kwargs.get("json")),
+            'headers'    : limit_field_size(headers),
+            'cost_timez' : cost_time,
+            'raw_data'   : limit_field_size(raw_data),
+            'start_timez': limit_field_size(start_time),
+            'end_timez'  : limit_field_size(end_time),
+            'error_msg'  : limit_field_size(error_msg),
+            'request_ip' : limit_field_size(get_client_ip()),
+    })
+
+    return result
+
+
+def deprecation(func):
+    """
+    为了更好地区分报废的接口吧
+    """
+
+    @functools.wraps(func)
+    def warpper(msg='报废提醒', *args, **kwargs):
+        warnings.warn(
+                msg,
+                DeprecationWarning
+        )
+        return func(*args, **kwargs)
+
+    return warpper
 
 
 def limit_field_size(log_content, max_size=10000):
@@ -439,6 +551,8 @@ def limit_field_size(log_content, max_size=10000):
 
     先默认固定长度最大去到10000
     """
+    if isinstance(log_content, (dict, list, tuple)):
+        log_content = json_dumps(log_content)
     return str(log_content)[:max_size]
 
 
@@ -446,8 +560,16 @@ def md5_encrypt(content):
     """
     md5加密数据
     """
-
     return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+
+def sha1_encrypt(content):
+    """
+    sha1 加密
+    @param content:
+    @return:
+    """
+    return hashlib.sha1(content.encode('utf-8')).hexdigest()
 
 
 def flatten(iterable):
@@ -464,7 +586,12 @@ def cent_2_yuan(price):
     4 -> 0.04
     :param price: 分
     """
+    if not price:
+        return f'{0}'
     return f'{float(price / 100.0)}'
+
+
+c2y = cent_2_yuan
 
 
 def yuan_2_cent(price):
@@ -475,6 +602,9 @@ def yuan_2_cent(price):
     :param price: 元
     """
     return int(Decimal(str(price)) * 100)
+
+
+y2c = yuan_2_cent
 
 
 def os_mkdir(dir_path):
@@ -550,7 +680,7 @@ def panda_check_nan(value, default_value=''):
     :return:
     """
 
-    return value if value != 'nan' else default_value
+    return value if str(value) != 'nan' else default_value
 
 
 def save_dict_cache(cache_key, value, cache_time=30 * 60):
@@ -585,18 +715,36 @@ def delete_cache(cache_key):
         pass
 
 
-def get_client_ip(request):
+
+
+
+def get_client_ip(request=None):
     """
     获取请求的ip
     """
+    """
+       获取请求的ip的几种玩法
+       """
     ip = ''
 
     try:
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
+        # 1. 从local读取
+        ip = getattr(local, 'request_ip', '')
+        if request:
+            if not ip:
+                # 2. 从headers读取我们指定的头部,一般再do_requests会用到
+                ip = request.META.get('HTTP_X_REQUEST_IP')
+            if not ip:
+                # 3. 从nginx转发那里获取
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                if x_forwarded_for:
+                    ip = x_forwarded_for.split(',')[0]
+            if not ip:
+                # 4. 可能从cdn那里获取ip
+                ip = request.META.get('HTTP_X_REQUEST_IP')
+            if not ip:
+                # 5. 最后没办法就从默认那里拿
+                ip = request.META.get('REMOTE_ADDR')
     except Exception:
         pass
 
@@ -623,22 +771,23 @@ def get_client_ip(request=None):
     try:
         # 1. 从local读取
         ip = getattr(local, 'request_ip', '')
-        if not ip:
-            # 2. 从headers读取我们指定的头部,一般再do_requests会用到
-            ip = request.META.get('HTTP_X_REQUEST_IP')
-        if not ip:
-            # 3. 从nginx转发那里获取
-            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-            if x_forwarded_for:
-                ip = x_forwarded_for.split(',')[0]
-        if not ip:
-            # 4. 可能从cdn那里获取ip
-            ip = request.META.get('HTTP_X_REQUEST_IP')
-        if not ip:
-            # 5. 最后没办法就从默认那里拿
-            ip = request.META.get('REMOTE_ADDR')
+        if request:
+            if not ip:
+                # 2. 从headers读取我们指定的头部,一般再do_requests会用到
+                ip = request.META.get('HTTP_X_REQUEST_IP')
+            if not ip:
+                # 3. 从nginx转发那里获取
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                if x_forwarded_for:
+                    ip = x_forwarded_for.split(',')[0]
+            if not ip:
+                # 4. 可能从cdn那里获取ip
+                ip = request.META.get('HTTP_X_REQUEST_IP')
+            if not ip:
+                # 5. 最后没办法就从默认那里拿
+                ip = request.META.get('REMOTE_ADDR')
     except Exception:
-        pass
+        traceback.print_exc()
 
     return ip
 
@@ -672,10 +821,21 @@ def list2tree(obj_list, pk_key='id', parent_key='parent', children_key='children
             if parent_obj:
                 getattr(parent_obj, children_key).append(obj)
                 continue
-        # 找不到父节点 是否 添加到根
-        if allow_parent_null_add2root:
+        # 找不到父节点 是否 添加到根, 父节点是 None 就是根了
+        if allow_parent_null_add2root or (parent_pk is None):
             tree_list.append(obj)
     return tree_list
+
+
+class Dict2Obj(dict):
+    def __init__(self, *args, **kwargs):
+        super(Dict2Obj, self).__init__(*args, **kwargs)
+
+    def __getattr__(self, key):
+        value = self.get(key)
+        if isinstance(value, dict):
+            value = Dict2Obj(value)
+        return value
 
 
 if __name__ == '__main__':

@@ -11,14 +11,20 @@ from rest_framework.request import Request as RestRequest
 from rest_framework.request import Empty
 from .utils.cache import CacheAttribute
 from objectdict import ObjectDict
+from django.http.request import HttpRequest
 
 
 class MyRequest(RestRequest):
 
     # @CacheAttribute
     # def data(self):
-    #     self._full_data = ObjectDict(super().data)
+    #     data = super().data
+    #     self._full_data = ObjectDict(data)
     #     self._full_data.update(dict(self.query_params.items()))
+    #     for key in self._full_data.keys():
+    #         v = self._full_data.get(key)
+    #         if len(v) == 1:
+    #             self._full_data[key] = v[0]
     #     return self._full_data
 
     @property
@@ -34,3 +40,9 @@ class MyRequest(RestRequest):
 
 
 Request = MyRequest
+
+
+def find_request(*args) -> HttpRequest:
+    for request in args:
+        if isinstance(request, (RestRequest, Request, HttpRequest)):
+            return request

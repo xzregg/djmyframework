@@ -1,2 +1,1 @@
-from framework.shortcut import Response,APIError,CommonError
-
+from framework.shortcut import Response, APIError, CommonError

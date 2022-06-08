@@ -9,6 +9,7 @@ import logging
 import re
 from functools import lru_cache
 
+from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
@@ -42,7 +43,7 @@ class RspData(RspStruct):
         self.code = code
         self.msg = msg
         self.data = data
-        self._t = int(time.time()*1000)
+        self._t = int(time.time() * 1000)
 
 
 class RspSerializer(DataSerializer):
@@ -54,10 +55,12 @@ class RspSerializer(DataSerializer):
 class Response(RestResponse):
 
     def __init__(self, data=RspStruct.data, template_name='', code=RspStruct.code, msg=RspStruct.msg, request=None,
-                 *args, **kwargs):
+                 extra=None, *args, **kwargs):
         self.template_name = template_name
         self.request: MyRequest = request
         self.context = RspData(data=data, code=code, msg=msg)
+        if extra and isinstance(extra, dict):
+            self.context.update(extra)
         self.set_data(data)
 
         super(Response, self).__init__(self.context, template_name=template_name, *args, **kwargs)
@@ -73,6 +76,8 @@ class Response(RestResponse):
         if isinstance(data, s.BaseSerializer):
             data = data.data
         self.context.data = data
+        if settings.DEBUG:
+            self.context['queries'] = len(connection.queries)
 
     def set_code(self, code):
         self.context.code = code
@@ -130,6 +135,10 @@ class Response(RestResponse):
 
 
 class JsonResponse(Response):
+    def __init__(self, *args, **kwrags):
+        super().__init__(*args, **kwrags)
+        self['Content-Type'] = 'application/json'
+
     @property
     def rendered_content(self):
         setattr(self, 'accepted_renderer', JSONRenderer())
@@ -176,13 +185,22 @@ def render_to_response(template_name, context=None, **kwargs):
 
 
 def convert_any_data_to_jsonresponse(response):
-    """将不同类型的数据转为 JsonResponse"""
+    """将不同类型的数据转为 JsonResponse
+            '''
+        response:
+            {'code':'1', 'msg':'error message'} dict形式,转换成JsonResponse
+            ({'code':0}, {'msg':'debug_info'})  tuple形式,[0]转换成JsonResponse,[1]加入debug_info
+                                                都要求是dict
+            'httpresponse'                      str形式,转换成HttpResponse
+        '''
+    """
     if type(response) == tuple:
         response = response[0]
     elif type(response) in [str]:
         response = HttpResponse(response)
     elif isinstance(response, dict) and response.get('code', None) is not None:
-        response = JsonResponse(**response).render()
+        data = response.pop('data', None)
+        response = JsonResponse(data=data, extra=response).render()
     elif type(response) in [list]:
         response = JsonResponse(response).render()
     return response

@@ -10,6 +10,9 @@
 import base64
 from Crypto.Cipher import AES
 import gzip
+from base64 import b64encode, b64decode
+from urllib.parse import quote
+from framework.encryption.des.des import des_encrypt
 
 '''
 采用AES对称加密算法
@@ -58,6 +61,27 @@ def decrypt(encrypt_text, key=KEY):
     # 执行解密密并转码返回str
     decrypted_text = str(aes.decrypt(base64_decrypted), encoding='utf-8').replace('\0', '')
     return decrypted_text
+
+
+def get_dynamic_data(raw_data):
+    """
+    微信跳转到农行APP进行快e通支付，返回的是一个链接。这个函数为了获取dynamicData参数
+
+    https://wx.abchina.com/webank/main-view/openTagForId?id=oNFcmoITJ9Q%3D&dynamicData=xxx
+
+    跳转掌银url的动态参数部分，若链接为固定，则此参数不传，若动态则必填。具体加密规则：字符串进行des cbc加密，密钥为:bankabc1，偏移量:abchina1，
+    加密之后进行base64转码，再调用JavaScript encodeURIComponent()进行编码，
+    得到的结果即为dynamicData的值，举例：原串为tokenID=16038668758730826969,结果为wwAZS%2FhB0hJ1QEeNOku5C%2Ba0UfRB7azVHW7WM1Jz2Po%3D
+
+    https://wx.abchina.com/webank/main-view/openTagForId?id=oNFcmoITJ9Q%3D&dynamicData=wwAZS%2FhB0hJ1QEeNOku5C%2Ba0UfRB7azVHW7WM1Jz2Po%3D
+    """
+    key = b64encode('bankabc1'.encode())
+    iv = 'abchina1'.encode()
+
+    encrypted_data = des_encrypt(key, raw_data, iv)
+    encrypted_data = quote(encrypted_data, safe='')
+
+    return encrypted_data
 
 
 if __name__ == '__main__':

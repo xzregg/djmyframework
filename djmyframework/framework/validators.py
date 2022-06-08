@@ -12,8 +12,9 @@ from django.core.validators import RegexValidator
 from .translation import _
 
 # 字母组合
-LetterValidator = RegexValidator(r'^[a-z][\d\w_]+$', _('字母组合,符合^[a-z][\d\w_]+$'))
+LetterValidator = RegexValidator(r'[\d\w_]+$', _('字母组合,符合^[a-z][\d\w_]+$'))
 
+NumberValidator = RegexValidator(r'[\d]+$', _('纯数字组合'))
 # Apk package Name
 PageckageNameValidator = RegexValidator(r'^[a-z0-9\.]+$', _('包名,符合xx.xx.xx'))
 

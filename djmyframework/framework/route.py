@@ -9,6 +9,7 @@ from django.conf import settings
 from django.urls import re_path, reverse
 from rest_framework import routers as rest_route
 from .utils.myenum import Enum
+from .translation import _
 
 APPS_ROOT = settings.APPS_ROOT
 from .utils import trace_msg
@@ -16,12 +17,11 @@ from .utils import trace_msg
 
 class CurdType(Enum):
     """增删改查的类型"""
-    Add = 'add', '新增'
-    List = 'list', '查询'
-    Edit = 'edit', '编辑'
-    Modify = 'modify', '更改'
-    Delete = 'delete', '删除'
-
+    Add = 'add', _('新增')
+    List = 'list', _('查询')
+    Edit = 'edit', _('编辑')
+    Modify = 'modify', _('编辑')
+    Delete = 'delete', _('删除')
 
 class CustomRestRouter(rest_route.DefaultRouter):
     include_format_suffixes = False

@@ -91,8 +91,9 @@ class Menu(BaseModel):
         return {}
 
     def is_match_url_parmas(self, menu_parmas):
-        if not menu_parmas: return True
-        return self._is_dict_issubset(self.get_url_params(), menu_parmas)
+        url_params = self.get_url_params()
+        if not menu_parmas or not url_params: return True
+        return self._is_dict_issubset(url_params, menu_parmas)
 
     def _is_dict_issubset(self, dict1, dict2):
         set1 = set(dict1.items())

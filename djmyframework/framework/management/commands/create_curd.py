@@ -90,10 +90,12 @@ class ModelTemplateCreater(object):
     def create_files(self):
         if self.is_force or self.options.get('view', False):
             self.create_model_v_file()
+            self.create_model_services_file()
+            self.create_model_serializer_file()
         if self.options.get('tpl', False) or self.is_force or self.options.get('edit', False):
-            self.create_edit_t_file()
+           self.create_edit_t_file()
         if self.options.get('tpl', False) or self.is_force or self.options.get('list', False):
-            self.create_list_t_file()
+           self.create_list_t_file()
 
     def _create_base_file(self, template_file, target_file):
         mylookup = TemplateLookup(directories=[self.template_dir], input_encoding='utf-8', output_encoding='utf-8')
@@ -178,7 +180,7 @@ class Command(BaseCommand):
             model_class = type(
                     model_class.__name__,
                     (model_class, BaseModelMixin),
-                    {'__module__': model_class.__module__, '__doc__': model_class.__name__}
+                    {'__module__': model_class.__module__, '__doc__': model_class.__doc__}
             )
         if not model_class:
             self.stderr.write('%s 模型载入失败' % model_name)
@@ -230,7 +232,7 @@ class Command(BaseCommand):
         parmas['model_foreigns'] = [f for f in _fields if isinstance(f, ForeignKey)]
         parmas['model_choices_fields'] = [f for f in _fields if f.choices]
         parmas['model_desc'] = model_class.__doc__.strip().split('\n')[0] or model_name
-
+        print((model_class,model_class.__doc__))
         parmas['fields_name_list'] = [f.name for f in fields]
         parmas['all_fields_name_list'] = parmas['fields_name_list'] + ['%s_alias' % f.name for f in
                                                                        parmas['model_choices_fields']]

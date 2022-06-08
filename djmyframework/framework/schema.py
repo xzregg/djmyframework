@@ -6,6 +6,8 @@
 # @Contact : xzregg@gmail.com
 # @Desc    :
 import copy
+import logging
+import traceback
 from collections import OrderedDict
 import coreschema
 from drf_yasg import openapi
@@ -16,10 +18,11 @@ from drf_yasg.utils import force_serializer_instance, guess_response_status, no_
     swagger_auto_schema, force_real_str
 from rest_framework import serializers, status
 from rest_framework.relations import ManyRelatedField, RelatedField
-
+from django.urls import resolve
 from .filters import MyFilterSerializer
 from .response import RspError, RspErrorEnum, RspSerializer
 from .serializer import ModelFilterSerializer
+from .utils.myenum import Enum
 
 _api_info = openapi.Info(
         title="Myadmin API",
@@ -32,7 +35,7 @@ _api_info = openapi.Info(
 
 
 def compose_enum_description(enum_item_list):
-    return '\n'.join([' * `%s` - %s  ' % (k, v) for k, v in enum_item_list])
+    return '\n'.join([' * `%s` : "%s"  ' % (k, v) for k, v in enum_item_list])
 
 
 def to_method_title(pathname):
@@ -67,16 +70,39 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def __init__(self, view, path, method, components, request, overrides, operation_keys=None):
         overrides['field_inspectors'] = [CustomChoicesFieldInspector]
         # overrides['filter_inspectors'] = [CustomChoicesFieldInspector]
-
         super(CustomSwaggerAutoSchema, self).__init__(view, path, method, components, request, overrides,
                                                       operation_keys)
 
     def get_summary_and_description(self):
         """描述信息"""
         summary, description = super().get_summary_and_description()
+
+        operation_id = self.get_operation_id()
+        summary_split = description.split(maxsplit=1)
+        summary = force_real_str(summary_split[0][:10]) if summary_split else summary
+        if summary:
+            url_name = operation_id
+            if url_name in description:
+                description = description.replace(url_name, '')
+            description = f'{url_name}\n{description}'
+            summary = '%s %s' % (force_real_str(summary), to_method_title(self.path))
         return summary, description
 
+    def get_app_name(self):
+        return self.view.__module__.split('.')[0]
+
+    def filter_request_apps(self):
+        if self.request:
+            filter_apps_text = self.request.GET.get('apps', '')
+            if filter_apps_text:
+                filter_apps = filter_apps_text.split(',')
+                app_name = self.get_app_name()
+                if filter_apps and app_name not in filter_apps:
+                    return True
+
     def get_operation(self, operation_keys=None):
+        if self.filter_request_apps():
+            return None
         # 只返回有 swagger_auto_schema 装饰器的方法
         action = getattr(self.view, 'action', self.method.lower())
         action_method = getattr(self.view, action, None)
@@ -84,9 +110,13 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         if not has_decorator_swagger_auto_schema:
             return None
         # 只有设置了参数才返回
-        if self.get_query_serializer() or self.get_request_serializer():
-            return super(CustomSwaggerAutoSchema, self).get_operation(operation_keys)
-
+        try:
+            if self.get_query_serializer() or self.get_request_serializer():
+                return super(CustomSwaggerAutoSchema, self).get_operation(operation_keys)
+        except Exception as e:
+            logging.error(f'  {self.path} 定义 {self.method} Serializer 错误!')
+            traceback.print_exc()
+            #raise e
     def get_responses(self):
         """Get the possible responses for this view as a swagger :class:`.Responses` object.
 
@@ -106,23 +136,9 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             of this view in the API; e.g. ``('snippets', 'list')``, ``('snippets', 'retrieve')``, etc.
         :rtype: str
         """
-        operation_keys = operation_keys or self.operation_keys
-        #  operation_keys = operation_keys[:3]
-        # if getattr(self.view, 'is_api_view', False):
-        #    operation_keys.pop()
-        #    # operation_keys.append('- %s' % self.method.lower())
-        operation_id = self.overrides.get('operation_id', '')
-        if not operation_id:
-            # operation_id = '/'.join(sort_set_list(operation_keys))
-            operation_id = self.path
-            # operation_id += ' [%s]' % self.method.lower()
-            summary, description = self.get_summary_and_description()
-            description_split = description.split(maxsplit=1)
-            description = force_real_str(description_split[0][:10]) if description_split else ''
-            if description:
-                # operation_id = '%s-%s' % (self.get_tags()[0], force_real_str(description))
-                operation_id = '%s %s %s' % (force_real_str(description), to_method_title(self.path), self.path)
-        return operation_id
+        url_name = resolve(self.path).url_name
+        operation_id = super().get_operation_id(operation_keys)
+        return url_name or operation_id
 
     def get_view_action(self):
         return getattr(self.view, 'action', '')
@@ -275,15 +291,14 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         """
 
         if rsp_data_serializer:
-            rep_code_errors: RspErrorEnum = getattr(rsp_data_serializer, 'Errors', None)
+            rep_code_errors: RspErrorEnum = getattr(rsp_data_serializer, 'Errors', None) or getattr(rsp_data_serializer, 'RspCode', None)
             default_declared_fields = RspSerializer._declared_fields
             rep_code_serializer = default_declared_fields['code']
             choices = rep_code_serializer.choices
             # 增加错误代码
-            if rep_code_errors and (
-                    issubclass(rep_code_errors, RspErrorEnum) or isinstance(rep_code_errors, RspErrorEnum)
-                    or hasattr(rep_code_errors, 'member_list')):
-                rsp_err_code_member_list = rep_code_errors.member_list()
+            if rep_code_errors and (issubclass(rep_code_errors, (RspErrorEnum, Enum)) or isinstance(rep_code_errors,(RspErrorEnum, list, tuple,Enum))):
+                if hasattr(rep_code_errors, 'member_list'):
+                    rsp_err_code_member_list = rep_code_errors.member_list()
                 choices = copy.copy(rep_code_serializer.choices)
                 choices.update(rsp_err_code_member_list)
             choices = list(choices.items())

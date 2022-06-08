@@ -22,7 +22,7 @@ from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 
-from .utils import json_dumps
+from .utils import json_dumps, DecoratorsPartial
 from objectdict import ObjectDict
 from .filters import MyFilterBackend, OrderingFilter
 from .route import Route
@@ -33,6 +33,7 @@ from .response import Response, RspError, RspErrorEnum, RspSerializer, render_to
 from django.http import HttpResponse
 from .serializer import EditParams, IdSerializer, IdsSerializer, s
 from .request import MyRequest
+from functools import partial
 
 render = _render
 LANGUAGES = settings.LANGUAGES
@@ -149,14 +150,46 @@ def model_search(request, model_objects, search=None, order=None, page_size=20, 
     return params
 
 
+def is_viewset_method(func):
+    """是否viewset的方法"""
+    args = inspect.getfullargspec(func).args
+    return args and args[0] == 'self'
+
+
 class MyApiView(APIView):
+
+    def dispatch(self, request, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        request = self.initialize_request(request, *args, **kwargs)
+        self.request = request
+        self.headers = self.default_response_headers  # deprecate?
+
+        try:
+            self.initial(request, *args, **kwargs)
+
+            # Get the appropriate handler method
+            if request.method.lower() in self.http_method_names:
+                handler = getattr(self, request.method.lower(),
+                                  self.http_method_not_allowed)
+            else:
+                handler = self.http_method_not_allowed
+
+            response = handler(request, *args, **kwargs)
+        except Exception as exc:
+            response = self.handle_exception(exc)
+
+        self.response = self.finalize_response(request, response, *args, **kwargs)
+        return self.response
+
     def initialize_request(self, request, *args, **kwargs):
         """
         Returns the initial request object.
         """
         from .middleware import CustomRequest
         parser_context = self.get_parser_context(request)
-
+        if hasattr(request, '_request'):
+            request = request._request
         return MyRequest(
                 request,
                 parsers=self.get_parsers(),
@@ -282,7 +315,7 @@ def action(methods=None, detail=False, url_path=None, url_name=None, **kwargs):
 
 def api_action_judge(*args, **kwargs):
     def decorator(func):
-        if inspect.getfullargspec(func).args[0] == 'self':
+        if is_viewset_method(func):
             return action(*args, **kwargs)(func)
         else:
             return api_view(*args, **kwargs)(func)
@@ -298,7 +331,7 @@ action_get_post = DecoratorsPartial(api_action_judge, ['post', 'get'])
 
 api_get = DecoratorsPartial(api_action_judge, 'get')
 api_post = DecoratorsPartial(api_action_judge, 'post')
-api_get_post = DecoratorsPartial(api_action_judge, ['post', 'get'])
+api_get_post: DecoratorsPartial = DecoratorsPartial(api_action_judge, ['post', 'get'])
 
 from django.views.generic import View
 
@@ -513,7 +546,7 @@ class CurdViewSet(BaseViewSet, MyApiView):
         return Response(serializer.data, msg=msg)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
-    def delete(self, request: CustomRequest):
+    def _delete(self, request: CustomRequest):
         """
         删除
         """

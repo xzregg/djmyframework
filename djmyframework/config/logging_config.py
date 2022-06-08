@@ -49,7 +49,7 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'format01'
+            'formatter': 'format02'
         },
         'root_handler': get_timed_rotating_file_config('', 'root.log'),
         'gm_handler': get_timed_rotating_file_config('gm', 'gm.log'),

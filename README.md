@@ -92,12 +92,17 @@ python3  manage.py create_curd {app_name}.{Model}
 ```
 
 #### 部署
- 1. 静态文件部署
+ - 安装依赖
+```
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+
+```
+ - 静态文件部署
  ```
  python manage.py collectstatic
  ```
- 
- #### 启动服务
+
+ - 启动服务
    参看 supervisorctl 用法
  ```
  mysupervisorctl start

@@ -34,6 +34,11 @@ class List${model_name}ReqSerializer(ModelFilterSerializer, ParamsPaginationSeri
     model_class = ${model_name}
     filter_fields = ${list(fields_name_list)}
 
+class Add${model_name}ReqSerializer(${model_name}Serializer):
+    id = None
+
+class Modify${model_name}ReqSerializer(IdSerializer, ${model_name}Serializer):
+    pass
 
 class List${model_name}RspSerializer(PaginationSerializer):
     results = ${model_name}Serializer(many=True, required=False)

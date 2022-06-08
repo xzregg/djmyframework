@@ -29,19 +29,27 @@ from .utils.cache import CacheAttribute, CachedClassAttribute
 Serializer = s.Serializer
 
 
+class Undefined(object):
+    def __bool__(self):
+        return False
+
+
+undefined = Undefined()
+
+
 class WritableSerializerReturnDict(ReturnDict):
     serializer = None
 
     def __get_declared_field(self, key):
-        declared_field = None
+        declared_field = undefined
         if self.serializer:
-            declared_field = self.serializer.declared_fields.get(key)
+            declared_field = self.serializer.declared_fields.get(key, undefined)
         return declared_field
 
     def __getattr__(self, key):
         declared_field = self.__get_declared_field(key)
-        if declared_field:
-            value = self.get(declared_field.field_name, None)
+        if declared_field is not undefined:
+            value = self.get(declared_field.field_name, undefined)
             return value
         raise AttributeError(key)
 
@@ -56,17 +64,19 @@ class WritableSerializerReturnDict(ReturnDict):
 
     def __setattr__(self, key, value):
         declared_field = self.__get_declared_field(key)
-        if declared_field:
+        if declared_field is not undefined:
             try:
                 self[declared_field.field_name] = declared_field.to_internal_value(value)
             except:
                 self[declared_field.field_name] = value
             return
+        if key != 'serializer':
+            self[key] = value
         return super().__setattr__(key, value)
 
     def __delattr__(self, key):
         declared_field = self.__get_declared_field(key)
-        if declared_field:
+        if declared_field is not undefined:
             self.pop(declared_field.field_name, None)
         else:
             return super().__delattr__(key)
@@ -101,11 +111,11 @@ class ParamsSerializer(s.Serializer):
                 initial_data[field.field_name] = copy.copy(value)  # 保证 DictField ListDict 类不重复
         return initial_data
 
-    @CacheAttribute
-    def params_data(self):
+    @property
+    def params_data(self):  # type: () -> self
         """返回设置的与验证过后的数据"""
         self.validation()
-        self.data.merge(self.initial_data)
+        #self.data.merge(self.initial_data)
         return self.o
 
     @property
@@ -113,6 +123,13 @@ class ParamsSerializer(s.Serializer):
         # type: () -> self
         # 返回自己 用来代码提示
         return self
+
+    @property
+    def object_data(self):
+        """
+        无需校验参数，直接返回数据对象
+        """
+        return ObjectDict(self.initial_data)
 
     def __getattribute__(self, key):
         # 实际返回 data
@@ -174,7 +191,7 @@ class ConfigOptionSerializer(ParamsSerializer):
 
 class NullDateTimeField(s.DateTimeField):
     """
-    空字符串的日期类型
+    空字符串的日期时间类型
     """
 
     def to_internal_value(self, value):
@@ -183,20 +200,51 @@ class NullDateTimeField(s.DateTimeField):
         return super(NullDateTimeField, self).to_internal_value(value)
 
 
+class NullDateField(s.DateField):
+    """空字符串的日期类型"""
+
+    def to_internal_value(self, value):
+        if not value:
+            return None
+        return super(NullDateField, self).to_internal_value(value)
 
 
+class NullChoiceField(s.ChoiceField):
+    """空字符串的选项类型"""
 
+    def to_internal_value(self, value):
+        if not value:
+            return None
+        return super(NullChoiceField, self).to_internal_value(value)
+
+
+class NullIntegerField(s.IntegerField):
+    """空字符串的整型类型"""
+
+    def to_internal_value(self, value):
+        if not value:
+            return 0
+        return super(NullIntegerField, self).to_internal_value(value)
+
+
+class NullBooleanField(s.BooleanField):
+    """空字符串的整型类型"""
+
+    def to_internal_value(self, value):
+        if not value:
+            return None
+        return super(NullBooleanField, self).to_internal_value(value)
 
 
 class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerializer):
     id = s.IntegerField(label=_('id'), required=False)
-    create_datetime = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=True,
+    create_time = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=True,
                                   allow_null=True, default=datetime.datetime.now)
-    update_datetime = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
+    update_time = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
                                   allow_null=True)
-    _version = s.IntegerField(label=_('内置版本号'), read_only=True, required=False)
+    _version = s.IntegerField(label=_('内置版本号'), read_only=True, required=False, allow_null=True)
 
-    # base_exclude = []
+    base_exclude = ['_version']
     has_init_meta_cls = False
 
     def __init__(self, *args, **kwargs):
@@ -271,7 +319,7 @@ class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerialize
             except SkipField:
                 pass
             else:
-                set_value(ret, field.source_attrs, validated_value)
+                set_value(ret, field.source_attrs[-1:], validated_value)
 
         if errors:
             raise ValidationError(errors)
@@ -317,7 +365,7 @@ class PaginationSerializer(ParamsSerializer):
     page = s.IntegerField(label=_('当前页数'))
     page_size = s.IntegerField(label=_('每页显示数量'))
     filter = s.DictField(label=_('查询条件'))
-    results = s.ModelSerializer(many=True)
+    results = s.ListField()
 
 
 class ModelFilterSerializer(ParamsSerializer):
@@ -342,5 +390,18 @@ class CeleryTaskResultSerializer(ParamsSerializer):
 
 
 class RelationModelIdField(RelatedField):
+    """关联字段, ManyToManyField 用"""
+
     def to_representation(self, value_model_list):
         return [value.pk for value in value_model_list]
+
+# class OrgReqSer(DataSerializer):
+#     """组织"""
+#     organization = IdSerializer(label=_('组织id'), required=True)
+
+class TreeSerializer(DataSerializer):
+    key = s.CharField(label=_('键'))
+    name = s.CharField(label=_('名称'))
+    parent = s.CharField(label=_('父级键'))
+    children = s.ListField(label=_('递归本对象'), required=False, read_only=True,
+                           child=RecursiveField(label=_('递归本对象')))
