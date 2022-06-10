@@ -103,7 +103,7 @@ class Menu(BaseModel):
 
 class MenuConfig(ObjectDict):
 
-    def __init__(self, von, menu_alias='', url='', is_log=0, is_show=1, name='', app_name='', *args, **kwargs):
+    def __init__(self, von='', menu_alias='', url='', is_log=0, is_show=1, name='', app_name='', *args, **kwargs):
         self.von = str(von)
         self.parent_id = '0' if self.von.count('.') == 0 else self.von.split('.', 2)[0]
         self.alias = menu_alias
@@ -190,7 +190,7 @@ class MenuConfig(ObjectDict):
                 if app_name not in app_name_list:
                     continue
             app_alias = apps.get_app_config(app_name).verbose_name or app_name
-            app_root_menu_config = MenuConfig()
+            app_root_menu_config = MenuConfig(str(app_i + 1))
             app_root_menu_config.von = str(app_i + 1)
             app_root_menu_config.alias = app_alias
             app_root_menu_config.name = app_name
