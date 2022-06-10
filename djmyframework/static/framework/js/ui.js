@@ -26,7 +26,7 @@ function initSelectTree() {
                     var placeholder = '&nbsp;&nbsp;&nbsp;'
                     text = placeholder.repeat(row.level) + '└─' + placeholder + text
                 }
-                var option_data = {id: row.id, text: text || row.alias, parent: row.parent ? row.parent : ''}
+                var option_data = {id: row.id, text: text || row.alias || row.name, parent: row.parent ? row.parent : ''}
 
                 $(ele).append('<option value="' + option_data.id + '" parent="' + option_data.parent + '">' + option_data.text + '</option>')
                 return option_data
@@ -80,7 +80,7 @@ function initSelect2() {
         if (url) {
             $.getJSON(url, {page_size: 1000, fields: 'id,name,alias,username'}, function (rsp) {
                 var results = $.map(rsp.data.results, function (row) {
-                    return {id: row.id, text: row[keyName] || row.alias}
+                    return {id: row.id, text: row[keyName] || row.alias || row.name}
                 })
                 // 添加默认 option 元素
                 $ele.find('option').each(function (i, op) {

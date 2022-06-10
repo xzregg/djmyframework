@@ -550,7 +550,7 @@ class CurdViewSet(BaseViewSet, MyApiView):
         return Response(serializer.data, msg=msg)
 
     @swagger_auto_schema(request_body=IdsSerializer, responses=IdsSerializer)
-    def _delete(self, request: CustomRequest):
+    def delete(self, request: CustomRequest):
         """
         删除
         """
