@@ -525,7 +525,11 @@ class CurdViewSet(BaseViewSet, MyApiView):
         model_instance = model_instance or self.get_model_instance(EditParams)
         if self.is_copy:
             model_instance = self.model()
-        partial = True if model_instance.id else False
+        if model_instance.id:
+            partial = True
+        else:
+            partial = False
+            request.data.pop('id', '')
         serializer = self.get_serializer(instance=model_instance, data=request.data, partial=partial)
         if self.is_copy:
             msg = _("复制成功")
