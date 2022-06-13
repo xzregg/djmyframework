@@ -236,7 +236,7 @@ from framework.utils import json_dumps
                         return false
                     }
                     var ids = this.getSelectIds()
-                    $.post("{{ url('${app_name}.${model_lower_name}.delete') }}", {id: ids}, (rsp) => {
+                    $.post("{{ url('${app_name}.${model_lower_name}.delete') }}", {ids: ids}, (rsp) => {
                         if (rsp.code == 0) {
                             $table.bootstrapTable('remove', {
                                 field: 'id',
