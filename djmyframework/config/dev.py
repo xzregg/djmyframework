@@ -69,6 +69,18 @@ DATABASES = {
     },
 
 }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+            'NAME'    : 'djframework',
+            'USER'    : 'root',
+            'PASSWORD': 'packerpacker',
+            'HOST'    : 'mysql.debug.packertec.com',
+            'PORT'    : '3307',
+        'OPTIONS': {'isolation_level': None}
+    },
+
+}
 
 _DATABASES = {
     'default': {
@@ -124,13 +136,13 @@ DEBUG_TOOLBAR_CONFIG = {
 
 # REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('framework.renderers.DebugRenderer')
 # REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
-logging.warning('This env is dev,DEBUG = True')
+logging.warning('This env is dev,DEBUG = %s' % DEBUG)
 logging.warning('BASE_DIR: %s' % settings.BASE_DIR)
 
 # 日志打印 sql
 from . import logging_config
 
-logging_config.LOGGING['loggers']['adjango.db.backends'] = {
+logging_config.LOGGING['loggers']['django.db.backends'] = {
     'handlers': ['console'],
     'propagate': False,
     'level': 'DEBUG',

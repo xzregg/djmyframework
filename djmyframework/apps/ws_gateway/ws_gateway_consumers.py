@@ -12,7 +12,7 @@ import time
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from rest_framework.exceptions import ValidationError
 
-from framework.utils import json_dumps, trace_msg
+from framework.utils import json_dumps, trace_msg, ObjectDict
 
 logger = logging.getLogger('uvicorn.access')
 
@@ -72,17 +72,28 @@ class WebsocketGateWayConsumer(AsyncJsonWebsocketConsumer):
             rsp_event_data.o.msg = str(e.args[0])
 
         rsp_event_data.o.req_id = rsp_event_data.o.req_id or self.req_id
-        await self.send_json(rsp_event_data)
+        # await self.send_json(rsp_event_data)
+        await self.group_send(DEFAULT_ALL_GROUP_NAME, rsp_event_data)
+
+    async def group_send(self, group_name, event_data: EventDataSer):
+        event_data.o.type = 'group_message'
+        await self.channel_layer.group_send(group_name, event_data.data)
 
     async def model_signal(self, event_data: ModelEventDataSer):
         """django 模型信号响应"""
-        await self.send_json(ModelEventDataSer(event_data))
+        await self.send_json(event_data)
 
-    async def system_message(self, event_data):
+    async def system_message(self, event_data: EventDataSer):
         """系统消息"""
-        await self.send_json(EventDataSer(event_data))
+        await self.send_json(event_data)
 
-    async def send_json(self, event_data: EventDataSer, close=False):
-        event_data.o.server_time = int(time.time() * 1000)
-        event_data.o.channel_name = self.channel_name
-        await super().send(text_data=json_dumps(event_data.data), close=close)
+    async def group_message(self, event_data):
+        """系统消息"""
+        await self.send_json(event_data)
+
+    async def send_json(self, event_data: dict, close=False):
+        event_data: EventDataSer = ObjectDict(event_data)
+        event_data.server_time = int(time.time() * 1000)
+        event_data.channel_name = self.channel_name
+        send_data = json_dumps(event_data)
+        await super().send(text_data=send_data, close=close)

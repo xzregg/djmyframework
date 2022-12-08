@@ -5,11 +5,11 @@ from channels.layers import get_channel_layer
 from django.db.models.signals import post_delete, post_save
 
 from framework.models import BaseModel
-from ..serializer import ModelEventActions, ModelEventDataSer
+from ..serializer import ModelEventActions, ModelEventDataSer, EventDataSer
 from ..settings import SUBSCRIBE_MODEL_CHANGE
 
 
-def group_send(group_name, event_data):
+def group_send(group_name, event_data:EventDataSer):
     channel_layer = get_channel_layer()
     if channel_layer:
         async_to_sync(channel_layer.group_send)(group_name, event_data)

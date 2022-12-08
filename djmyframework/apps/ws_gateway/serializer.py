@@ -21,12 +21,13 @@ class EventActions(Enum):
 class EventDataSer(DataSerializer):
     code = s.IntegerField(label=_('返回Code'), default=SUCCESS_CODE, required=False)
     msg = s.CharField(label=_("业务消息"), default='ok')
-    type = s.CharField(label=_('事件类型'), max_length=32, required=False)
+    type = s.CharField(label=_('事件类型,WebsocketGateWayConsumer 注册的函数名'), max_length=32, required=False)
     action = s.ChoiceField(label=_('事件操作'), choices=EventActions.member_list(), required=False)
     group = s.CharField(label=_('事件组名'), max_length=32, required=False, default=DEFAULT_ALL_GROUP_NAME)
     req_id = s.IntegerField(label=_('请求ID'), default=0, required=False)
     channel_name = s.CharField(label=_('通道名'), max_length=128, required=False)
     server_time = s.IntegerField(label=_('服务器时间'), required=False)
+    data = s.DictField(label=_('其他数据'), required=False)
 
 
 class ModelEventActions(EventActions):

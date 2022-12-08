@@ -22,7 +22,7 @@ from framework.serializer import CeleryTaskResultSerializer
 
 @Route('${app_name}/${model_lower_name}')
 class ${model_name}Set(CurdViewSet):
-    """${app_verbose_name}${model_desc}"""
+    """${app_verbose_name} ${model_desc}"""
 
     request: EnhanceRequest
 

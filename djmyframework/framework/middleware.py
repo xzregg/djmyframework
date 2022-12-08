@@ -29,7 +29,7 @@ class CustomRequest(MyRequest):
     """只是用作类型提示"""
     is_debug: bool
     real_ip: str
-    _start_time: datetime.datetime
+    _start_time: int
     language: str
     is_post: bool
     is_get: bool

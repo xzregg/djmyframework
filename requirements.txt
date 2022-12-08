@@ -42,7 +42,6 @@ python-ldap==3.3.1
 etcd3==0.12.0
 pycryptodome==3.9.4
 uvloop
-Twisted==20.3.0
 python-decouple==3.4
 django-timezone-field==4.2.1
 djangorestframework-recursive==0.1.2

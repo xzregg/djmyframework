@@ -22,17 +22,18 @@ errorlog = '-'  # '"%s/gunicornd.log" % LOGS_DIR
 accesslog = errorlog
 # 通过启动脚本控制daemon模式,配合在supervisord监控
 daemon = False
-workers = multiprocessing.cpu_count() + 1
+workers = multiprocessing.cpu_count()
+workers = 3
 
-#worker_class = 'sync'
+worker_class = 'sync'
 threads = workers * 4
-# worker_class = 'egg:meinheld#gunicorn_worker'
+#worker_class = 'egg:meinheld#gunicorn_worker'
 
 # use gunicorn asgi
-worker_class ='uvicorn.workers.UvicornWorker'
+#worker_class ='uvicorn.workers.UvicornWorker'
 
 
-max_requests = 10000
+max_requests = 50000
 max_requests_jitter = 100
 
 # https://stackoverflow.com/questions/27687867/is-there-a-way-to-log-python-print-statements-in-gunicorn
