@@ -237,7 +237,7 @@ class NullBooleanField(s.BooleanField):
 
 
 class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerializer):
-    id = s.IntegerField(label=_('id'), required=False)
+    id = s.IntegerField(label=_('id'), required=False, allow_null=True)
     create_time = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=True,
                                   allow_null=True, default=datetime.datetime.now)
     update_time = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
