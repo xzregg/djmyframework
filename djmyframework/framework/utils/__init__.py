@@ -429,7 +429,7 @@ def random_string(length: int = 32, choice=string.ascii_letters + string.digits)
 
 
 def string_color(msg, color='pink'):
-    from config.constants import CONSOLE_COLOR
+    from ..constants import CONSOLE_COLOR
     return f'{CONSOLE_COLOR[color]}{msg}{CONSOLE_COLOR["end"]}'
 
 
