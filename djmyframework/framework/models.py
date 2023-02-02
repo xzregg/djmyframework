@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import copy
 import datetime
+
 import hashlib
 import json
 import re
+import time
 from collections import OrderedDict
-
+import addict
 import timezone_field
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -13,17 +15,21 @@ from django.core.management.color import no_style
 from django.core.validators import RegexValidator
 from django.db import close_old_connections, connection, models
 from django.db.models import Model, Sum, Count, Avg, Subquery, QuerySet, ManyToManyField
+from django.db.models.manager import BaseManager
 from django.db.models.signals import post_init
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
+from mptt.managers import TreeManager
+from mptt.querysets import TreeQuerySet
 from rest_framework import serializers
 from rest_framework.fields import DictField, CharField
 from sqlalchemy import null
 from mptt.models import MPTTModel
 from mptt.fields import TreeForeignKey
 
+from .perf_orm_select import PerfOrmSelectModel, PerfOrmSelectManager, PerfOrmSelectQuerySet
 from .utils import json_dumps, ObjectDict, trace_msg, myenum, MyJsonEncoder
 from .utils.cache import CachedClassAttribute
 from .utils.log import logger
@@ -281,7 +287,7 @@ class SqlModelMixin(object):
 
 class BaseModelMixin(SqlModelMixin):
     """
-    基本模型
+    基本模型混合方法
     """
 
     def is_related_field(self, field):
@@ -393,6 +399,12 @@ class BaseModelMixin(SqlModelMixin):
 
     get_dict = to_dict
 
+    @property
+    def addict(self):
+        return addict.Addict(
+                {field.name: self.__dict__.get(field.name) for field in self._meta.fields if field.name in self.__dict__}
+        )
+
     def to_json(self, ignore_list=()):
         return json_dumps(self.to_dict(ignore_list))
 
@@ -483,6 +495,21 @@ class BaseModelMixin(SqlModelMixin):
         return cls.prefetch_related_all().select_related(
                 *[f.attname for f in cls.get_fields() if isinstance(f, (models.ForeignKey, models.OneToOneRel))])
 
+    @CachedClassAttribute
+    def concrete_fields_map(cls):
+        fields_map = OrderedDict([(field.name, field) for field in cls._meta.concrete_fields if
+                                  not field.primary_key])
+        # 外键 attrname 也算进去
+        for key in list(fields_map.keys()):
+            fields_map[fields_map[key].attname] = fields_map[key]
+        return fields_map
+
+    @CachedClassAttribute
+    def related_objects_map(cls):
+        fields_map = OrderedDict([(field.name, field) for field in cls._meta.related_objects])
+
+        return fields_map
+
     def copy(self):
         copy_obj = copy.copy(self)
         copy_obj.id = None
@@ -492,7 +519,7 @@ class BaseModelMixin(SqlModelMixin):
 class OptimisticLockException(Exception): pass
 
 
-class BaseModel(models.Model, BaseModelMixin):
+class BaseModel(PerfOrmSelectModel, BaseModelMixin):
     id = models.BigAutoField(primary_key=True)
     _version = models.IntegerField(_("版本"), default=0, null=False)
 
@@ -502,18 +529,60 @@ class BaseModel(models.Model, BaseModelMixin):
 
     _is_init = False
 
+    class Meta:
+        abstract = True
+        ordering = ['id']
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self._update_fields = set()
+        super().__init__(*args, **kwargs)
         self._is_init = True
 
     def _get_update_fileds(self):
+        """通过判断初始值是否有变化，而更新相应字段"""
+        pre_init_data = getattr(self, 'pre_init_data', None)
+        if pre_init_data:
+            __update_fields = []
+            self._is_init = False
+            for field_name in self._update_fields:
+                field = self.concrete_fields_map.get(field_name)
+                if field:
+                    attname = field.attname
+                    init_value = pre_init_data.get(attname, models.fields.Empty)
+                    if getattr(self, attname) != init_value or isinstance(init_value, (dict, list, tuple, set)):
+                        __update_fields.append(attname)
+            self._is_init = True
+            return __update_fields
         return self._update_fields
 
-    def optimistic_save(self, *args, raise_exception=True, **kwargs):
+    def _optimistic_save_again(self, new_data: dict, look_num: int, *args, **kwargs):
+        """
+        乐观锁保存失败，尝试从数据库中刷新值再对比差异
+        @return:
+        """
+        pre_init_data = getattr(self, 'pre_init_data', None)
+        if pre_init_data:
+            self.refresh_from_db()
+            new_data.pop('_version', None)
+            for attr_name, update_value in new_data.items():
+                value = getattr(self, attr_name)
+                init_value = pre_init_data.get(attr_name, models.fields.Empty)
+                if init_value is not models.fields.Empty:
+                    new_value = update_value
+                    if isinstance(value, (int, float)):
+                        diff_value = update_value - init_value
+                        new_value = value + diff_value
+                    setattr(self, attr_name, new_value)
+            return self.optimistic_save(look_num=look_num, *args, **kwargs)
+
+    def optimistic_save(self, *args, raise_exception=True, look_num=3, **kwargs):
         """
         乐观锁 保存
-        :return:
+        @param args:
+        @param raise_exception:
+        @param look_num: 更新失败重试次数
+        @param kwargs:
+        @return:
         """
         if self.id:
             new_data = {field_name: getattr(self, field_name) for field_name in self._get_update_fileds()}
@@ -526,20 +595,17 @@ class BaseModel(models.Model, BaseModelMixin):
                                                                                 ).update(**new_data)
             if has_save:
                 self._version = new_data['_version']
-            elif raise_exception:
-                raise OptimisticLockException(f'{self} {self.id} {self._version} Optimistic Save Error')
+            else:
+                _look_num = look_num - 1
+                if look_num >= 0:
+                    time.sleep(0.01)
+                    has_save = self._optimistic_save_again(new_data, look_num=_look_num)
+                if not has_save:
+                    if raise_exception:
+                        raise OptimisticLockException(f'{self} {self.id} {self._version} Optimistic Save Error look_num: {look_num}')
             return has_save
         else:
             return self.save(*args, **kwargs)
-
-    @CachedClassAttribute
-    def concrete_fields_map(cls):
-        fields_map = OrderedDict([(field.name, field) for field in cls._meta.concrete_fields if
-                                  not field.primary_key])
-        # 外键 attrname 也算进去
-        for key in list(fields_map.keys()):
-            fields_map[fields_map[key].attname] = fields_map[key]
-        return fields_map
 
     def __getattribute__(self, attrname):
         if super().__getattribute__('_is_init') and attrname in super().__getattribute__('concrete_fields_map'):
@@ -557,10 +623,6 @@ class BaseModel(models.Model, BaseModelMixin):
         if self.id and not kwargs.get('force_insert'):
             update_fields = update_fields or self._get_update_fileds()
         return super().save(*args, update_fields=update_fields, **kwargs)
-
-    class Meta:
-        abstract = True
-        ordering = ['id']
 
 
 class BaseNameModel(BaseModel):
@@ -677,17 +739,105 @@ def get_re_validate(pattern='', err_msg=''):
     return RegexValidator(validate_re, err_msg)
 
 
+class ModelStatus(myenum.Enum):
+    delete = ('delete', '删除')
+    enable = ('enable', '正常')
+    disable = ('disable', '禁用')
+    expire = ('expire', '过期')
+    unknown = ('unknown', '未知')
+
+
+class BaseStatusModel(BaseModel):
+    STATUS = ModelStatus
+    status = models.CharField('状态', max_length=10, null=False, choices=ModelStatus.member_list(),
+                              default=ModelStatus.enable)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True, null=True, db_index=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True, null=True)
+
+    @classmethod
+    def get_objects(cls):
+        return cls.objects
+
+    @property
+    def orgs(self):
+        return getattr(self, 'organizations', None)
+
+    @property
+    def org(self):
+        return getattr(self, 'organization', None)
+
+    def save(self, *args, **kwargs):
+        self.update_time = datetime.datetime.now()
+        self._version += 1
+        super().save(*args, **kwargs)
+
+    def remove(self):
+        self.status = ModelStatus.delete
+
+        self.save()
+
+    def get_display(self, key):
+        display = {}
+        display_func = f'get_{key}_display'
+        if hasattr(self, display_func):
+            display_func = getattr(self, display_func)
+            display = {
+                    f'{key}_verbose': display_func()
+            }
+        return display
+
+    def to_json(self):
+        result = {}
+        values = model_to_dict(self)
+
+        for key, value in values.items():
+            if key in ['password']:
+                continue
+            if isinstance(value, (datetime.datetime,)):
+                value = format_date(value)
+            if isinstance(value, (Decimal,)):
+                value = float(value)
+            if key == 'status':
+                # 这是EnumElement，因为子类可能有自己的status，status_ele可能为None
+                status_ele = ModelStatus(value)
+                if status_ele:
+                    status_verbose = status_ele.name
+                else:
+                    status_verbose = '未知状态'
+
+                item = {
+                        key             : value,
+                        'status_verbose': status_verbose,
+                }
+            else:
+                item = {key: value, **self.get_display(key)}
+            result.update(item)
+
+        result.update({
+                'create_time': format_date(self.create_time),
+                'update_time': format_date(self.update_time)
+        })
+        return result
+
+    class Meta:
+        abstract = True
+
 @receiver(post_init)
 def model_init(sender, instance, **kwargs):
     """所有模型初始化的时候,复制一份初始化数据
     """
-    if instance.pk:
+    # from django.forms.models import model_to_dict
+    if getattr(instance, "pk", None):
         pre_init_data = ObjectDict(instance.__dict__)
     else:
         pre_init_data = ObjectDict()
     instance.pre_init_data = pre_init_data
 
-class TreeModel(MPTTModel):
+class PerfOrmSelectTreeQuerySet(PerfOrmSelectQuerySet,TreeQuerySet):pass
+
+class PerfOrmSelectTreeManager(models.Manager.from_queryset(PerfOrmSelectTreeQuerySet), TreeManager): pass
+
+class TreeModel(PerfOrmSelectModel, MPTTModel):
     """MPTT模型实例方法:
     https://www.cnblogs.com/wuzdandz/p/10595416.html
     https://django-mptt.readthedocs.io/en/latest/
@@ -709,6 +859,8 @@ class TreeModel(MPTTModel):
     'first-child', 'last-child','left', 'right'
     """
 
+    objects = PerfOrmSelectTreeManager()
+
     parent = TreeForeignKey('self', verbose_name='上级ID', null=True, on_delete=models.CASCADE, blank=True,
                             related_name='children', db_constraint=False)
 
@@ -718,3 +870,76 @@ class TreeModel(MPTTModel):
 
     class Meta:
         abstract = True
+        base_manager_name = 'objects'
+        default_manager_name = 'objects'
+
+class AttributeModel(PerfOrmSelectModel, BaseModelMixin):
+    """
+    attribute 配置属性 高级版 多配置自用
+    """
+
+    class Meta:
+        abstract = True
+
+    # ATTRIBUTE_CONF = []
+    # attribute = models.PositiveIntegerField('二进制配置', default=0, blank=True, null=True)  # 参考 Bilibili attribute 8bit
+
+    def attribute_item(self, attribute, _attribute_list=None) -> dict:
+        result = {}
+        for attr_name in _attribute_list:
+            result[attr_name] = self.get_attribute(attr_name, attribute, _attribute_list)
+        return result
+
+    def get_attribute(self, attr_name, attribute=0, _attribute_list=None) -> bool:
+        # _attribute_list = _attribute_list if _attribute_list else self.ATTRIBUTE_CONF
+        _index = _attribute_list.index(attr_name)
+        return True if attribute & (1 << _index) else False
+
+    def set_attribute(self, items: dict, attribute=0, _attribute_list=None) -> int:
+        """ items{conf_name:bool} -> attribute # batch modify"""
+        # _attribute_list = _attribute_list if _attribute_list else self.ATTRIBUTE_CONF
+        for attribute_name, _bool in items.items():
+            _index = _attribute_list.index(attribute_name)
+            attribute = attribute | (1 << _index) if _bool else attribute & ~(1 << _index)
+        return attribute
+
+    def modify_attribute(self, attribute_name: str, _val: bool, attribute=0, _attribute_list=None) -> int:
+        """ attribute_name:conf_name _val:bool -> attribute """
+        # _attribute_list = _attribute_list if _attribute_list else self.ATTRIBUTE_CONF
+        _index = _attribute_list.index(attribute_name)
+        return attribute | (1 << _index) if _val else attribute & ~(1 << _index)
+
+
+class SimpleAttributeModel(PerfOrmSelectModel, BaseModelMixin):
+    """
+    简单易用的配置属性模型
+    灵感来自啊B 原理是 bit 按位标识配置开关 存储在十进制数字里面(参考 Redis Bitmap 可存放大量配置项,或者做签到,登陆统计,用户状态记录)
+    """
+
+    class Meta:
+        abstract = True
+
+    # ATTRIBUTE_CONF = []
+    # attribute = models.PositiveIntegerField('二进制配置', default=0, blank=True, null=True)  # max len 31
+
+    def attribute_item(self) -> dict:
+        return {attr_name: self.get_attribute(attr_name) for attr_name in self.ATTRIBUTE_CONF}
+
+    def attribute_list(self) -> list:
+        return list(filter(lambda _: _, self.attribute_item()))
+
+    def get_attribute(self, attr_name) -> bool:
+        return True if self.attribute & (1 << self.ATTRIBUTE_CONF.index(attr_name)) else False
+
+    @classmethod
+    def set_attribute(cls, items: dict) -> int:
+        attribute = 0
+        for attribute_name, _bool in items.items():
+            _index = cls.ATTRIBUTE_CONF.index(attribute_name)
+            attribute = attribute | (1 << _index) if _bool else attribute & ~(1 << _index)
+        return attribute
+
+    def modify_attribute(self, attribute_name: str, _val: bool) -> int:
+        """ attribute_name:conf_name _val:bool -> attribute """
+        _index = self.ATTRIBUTE_CONF.index(attribute_name)
+        return self.attribute | (1 << _index) if _val else self.attribute & ~(1 << _index)

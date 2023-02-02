@@ -145,6 +145,7 @@ MIDDLEWARE = [
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
     'framework.middleware.BaseMiddleware',
+    'framework.perf_orm_select.PerfOrmSelectMiddleware',
     'myadmin.middleware.AuthMiddleware'
 ]
 
