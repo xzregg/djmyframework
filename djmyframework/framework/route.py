@@ -192,25 +192,29 @@ def _import_module_from_file():
         app_config = apps.app_configs.get(app_module_name)
         if not app_config:
             continue
-        views_dir_path = os.path.join(app_config.path, VIEWS_DIR)
+        views_dir_names = VIEWS_DIR
+        if not isinstance(views_dir_names, list):
+            views_dir_names = [views_dir_names]
+        for views_name in views_dir_names:
+            views_dir_path = os.path.join(app_config.path, views_name)
 
-        if os.path.isfile('%s.py' % views_dir_path):
-            importlib.import_module('%s.%s' % (app_name, VIEWS_DIR))
-        else:
-            for filename, pyfile in _get_pyfile(views_dir_path):
-                # view_model_name = filename.replace('__init__', '')[:-3]
-                # _p_m = '.'.join([app_name, VIEWS_DIR, view_model_name]).strip('.')
+            if os.path.isfile('%s.py' % views_dir_path):
+                importlib.import_module('%s.%s' % (app_name, VIEWS_DIR))
+            else:
+                for filename, pyfile in _get_pyfile(views_dir_path):
+                    # view_model_name = filename.replace('__init__', '')[:-3]
+                    # _p_m = '.'.join([app_name, VIEWS_DIR, view_model_name]).strip('.')
 
-                view_model_name = pyfile.replace(app_config.path, '').replace('__init__', '')[:-3].replace(os.path.sep,
-                                                                                                           '.').strip(
-                        '.')
-                _p_m = '%s.%s' % (app_module_name, view_model_name)
+                    view_model_name = pyfile.replace(app_config.path, '').replace('__init__', '')[:-3].replace(os.path.sep,
+                                                                                                               '.').strip(
+                            '.')
+                    _p_m = '%s.%s' % (app_module_name, view_model_name)
 
-                try:
+                    try:
 
-                    importlib.import_module(_p_m)
-                except Exception as e:
-                    logging.error(trace_msg())
+                        importlib.import_module(_p_m)
+                    except Exception as e:
+                        logging.error(trace_msg())
 
 
 def reverse_view(view_or_name, *args, **kwargs):

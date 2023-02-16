@@ -58,7 +58,7 @@ AUTH_USER_MODEL = 'myadmin.User'
 
 APPS = settings.APPS or APPS
 
-VIEWS_DIR = 'views'
+VIEWS_DIR = ['views', 'controller']
 ROUTE_PREFIX = ''
 ROUTE_APP_PREFIX_MAP = {}
 

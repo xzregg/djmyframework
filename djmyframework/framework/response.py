@@ -53,6 +53,7 @@ class RspSerializer(DataSerializer):
 
 
 class Response(RestResponse):
+    rendering_attrs = RestResponse.rendering_attrs + ['data', 'context']
 
     def __init__(self, data=RspStruct.data, template_name='', code=RspStruct.code, msg=RspStruct.msg, request=None,
                  extra=None, *args, **kwargs):
@@ -100,7 +101,7 @@ class Response(RestResponse):
 
     def return_json_data(self):
         self.resolve_json_data()
-        return HttpResponse(json_dumps(self.context, indent=4 if settings.DEBUG else None))
+        return HttpResponse(json_dumps(self.context, indent=4 if settings.DEBUG else None), content_type='application/json')
 
     @property
     def rendered_content(self):
@@ -126,7 +127,7 @@ class Response(RestResponse):
         else:
             if self.request:
                 if self.request.is_json():
-                    return HttpResponse(json_dumps(self.context))
+                    return self.return_json_data()
             if self.template_name:
                 return render(self.request, self.template_name, self.context)
             if renderer:

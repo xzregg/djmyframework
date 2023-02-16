@@ -95,7 +95,7 @@ class AccessDomain(BaseNameModel):
 
     @property
     def basedn(self):
-        return 'dc=%s,dc=com' % self.name
+        return 'ou=user,dc=%s,dc=com' % self.name
 
     @property
     def authdn(self):
