@@ -11,7 +11,7 @@ export default {
 {% for path,pathitem in data.schema.paths.items() %}
 {% set name=data.self.to_method_title(path) %}{% for method,operation in  pathitem.operations %}
   /**
-  * {{ operation.tags }}
+  * {{ operation.tags|safe }}
   * {{ operation.description.replace('\n',' ') }}{% for parameter in operation.parameters %}{% if parameter['in'] == 'body' %}
   * @param {{ '{' }}{{ data.self.get_schema_text(parameter.schema,data.schema) }}{{ '}' }} param {{data.self.get_schema_properties_desc(parameter.schema,data.schema)}}{% endif %}{% endfor %}
   * @returns {% for http_code,response in operation.responses.items() %}{{ '{{' }}{% for key_name, schema in response.schema.properties.items() %}{{ key_name }}:{{ data.self.get_schema_text(schema,data.schema, False) }}{% if not loop
@@ -21,5 +21,5 @@ export default {
   */
   {{ name }}{{ method.title() }}(param) {
     return http.{{ method }}('{{ path }}', param)
-  }{% if not loop.last %}, {% endif %}{% endfor %}{% endfor %}
+  }{% endfor %}{% if not loop.last %}, {% endif %}{% endfor %}
 }

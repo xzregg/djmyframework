@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render
 
 from client_codegenerator.serializer import RspCodeChoicesSer
 from config.api_doc import schema_view
@@ -7,8 +6,6 @@ from framework.response import render_to_response
 from framework.route import Route
 from framework.utils.cache import cache_page
 from framework.views import Response, Request, BaseViewSet, api_get, api_post, api_doc
-from middlewares import EnhanceRequest
-from django.utils.decorators import method_decorator
 
 
 @Route('client_codegenerator')
@@ -16,7 +13,7 @@ class ClientCodeGeneratorViewSet(BaseViewSet):
 
     @api_doc(tags=['基础接口'], request_body=RspCodeChoicesSer, responses=RspCodeChoicesSer)
     @api_post
-    def choices(self, request: EnhanceRequest):
+    def choices(self, request: Request):
         """所有枚举类的
         只是告诉前端 枚举类含义
         """
@@ -59,7 +56,7 @@ class ClientCodeGeneratorViewSet(BaseViewSet):
         schema = rsp.data
         return schema
 
-    @cache_page(1)
+    @cache_page(10)
     @api_get
     def jscode(self, request: Request):
         schema = self.get_schema()
