@@ -126,7 +126,7 @@ class Response(RestResponse):
 
         else:
             if self.request:
-                if self.request.is_json():
+                if self.request.is_json:
                     return self.return_json_data()
             if self.template_name:
                 return render(self.request, self.template_name, self.context)

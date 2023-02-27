@@ -156,7 +156,7 @@ def phone_login(request):
     now = datetime.datetime.now()
     code = 0
     msg = ''
-    if request.is_post():
+    if request.is_post:
 
         try:
             phone = request.REQUEST.get('phone')
@@ -226,7 +226,7 @@ def register(request: Request, **kwargs):
     """
     管理员注册
     """
-    if request.is_post():
+    if request.is_post:
         params = RegisterAdminReqSerializer(request.data).params_data
 
         if request.session.get('verify', '') != params.verify:
