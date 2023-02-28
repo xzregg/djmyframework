@@ -347,8 +347,8 @@ class ListStrField(s.ListField):
 
 
 class IdsSerializer(ParamsSerializer):
-    ids = s.ListField(label='IDS', child=s.IntegerField(allow_null=True, required=False, ), help_text=_('对象ID列表'),
-                      required=True, allow_null=False)
+    id = s.ListField(label='IDS', child=s.IntegerField(allow_null=True, required=False, ), help_text=_('对象ID列表'))
+    ids = s.ListField(label='IDS', child=s.IntegerField(allow_null=True, required=False, ), help_text=_('对象ID列表'),required=True, allow_null=False)
 
 
 class ParamsPaginationSerializer(ParamsSerializer):
