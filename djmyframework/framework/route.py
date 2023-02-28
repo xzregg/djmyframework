@@ -199,7 +199,7 @@ def _import_module_from_file():
             views_dir_path = os.path.join(app_config.path, views_name)
 
             if os.path.isfile('%s.py' % views_dir_path):
-                importlib.import_module('%s.%s' % (app_name, VIEWS_DIR))
+                importlib.import_module('%s.%s' % (app_name, views_name))
             else:
                 for filename, pyfile in _get_pyfile(views_dir_path):
                     # view_model_name = filename.replace('__init__', '')[:-3]

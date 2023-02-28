@@ -16,23 +16,13 @@ Including another URLconf
 import re
 
 from django.urls import include, re_path
-from drf_yasg.views import get_schema_view
-from rest_framework import permissions
-from rest_framework.documentation import include_docs_urls
-
-
-from framework.route import get_urlpatterns
-from framework.utils import import_view
-from settings import settings
-from config.api_doc import urlpatterns as api_doc_urlpatterns
-
-
 from django.urls import path
 
+from config.api_doc import urlpatterns as api_doc_urlpatterns
+from framework.route import get_urlpatterns
 from framework.static import serve as static_view
-from framework.views import notauth
-from django.conf.urls import url
-from django.contrib import admin
+from framework.utils import import_view
+from settings import settings
 
 urlpatterns = [  # url(r'^admin/', admin.site.urls),
                   re_path('^[/]?$', import_view(settings.INDEX_VIEW), name='index'),

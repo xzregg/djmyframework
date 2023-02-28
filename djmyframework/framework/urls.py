@@ -36,6 +36,9 @@ def create_all_ulrs_py_file(file_name='_all_urls.py'):
         if isinstance(url_pattern, URLPattern):
             module_name, cls_name = url_pattern.lookup_str.rsplit('.', 1)
             import_text = f'from {module_name} import {url_pattern.callback.__name__}'
+            if hasattr(url_pattern.callback, 'actions'):
+                for __, val in url_pattern.callback.actions.items():
+                    import_text += f';{url_pattern.callback.__name__}.{val}'
             url_path = ''
             if url_pattern.name:
                 if url_pattern.pattern.regex.groupindex:
