@@ -224,7 +224,7 @@ class DBDictType(DictBaseType):
     """数据表
     """
     NAME = '数据表'
-    DEFAULT_JSON = '{"db":"","table_name":"","key_name":"","value_name":"","sql":""}'
+    DEFAULT_JSON = '{"db":"","table_name":"","key_name":"","show_name":"","sql":""}'
 
     def get_dict(self):
         from analysis.models import QueryServer
@@ -243,7 +243,7 @@ class DBDictType(DictBaseType):
         _r = {}
         sql = self.dict.get('sql', '')
         if not sql:
-            sql = 'SELECT DISTINCT `{key_name}` a,`{value_name}` b FROM {table_name} LIMIT 10000;'
+            sql = 'SELECT DISTINCT `{key_name}` a,`{show_name}` b FROM {table_name} LIMIT 10000;'
             sql = sql.format(**self.dict)
         cur = the_conn.cursor()
         cur.execute(sql)
@@ -259,7 +259,7 @@ class UrlDictType(DictBaseType):
     """从url请求地址获取
     """
     NAME = 'URL'
-    DEFAULT_JSON = '{"url":"","method":"get","key_name":"","value_name":""}'
+    DEFAULT_JSON = '{"url":"","method":"get","key_name":"","show_name":""}'
 
     def get_dict(self):
         _r = {}
@@ -277,7 +277,7 @@ class FileDictType(DictBaseType):
     """从文件内拿json
     """
     NAME = '文件'
-    DEFAULT_JSON = '{"file_path":"","key_name":"","value_name":""}'
+    DEFAULT_JSON = '{"file_path":"","key_name":"","show_name":""}'
 
     def get_dict(self):
         _r = {}
@@ -297,7 +297,7 @@ class DirDictType(DictBaseType):
     """目录里拿字典
     """
     NAME = '目录'
-    DEFAULT_JSON = '{"dir_path":"","key_name":"","value_name":""}'
+    DEFAULT_JSON = '{"dir_path":"","key_name":"","show_name":""}'
 
     def get_dict(self):
         _r = {}
@@ -311,10 +311,10 @@ class DirDictType(DictBaseType):
                         json_str = fp.read()
                         json_data = json.loads(json_str)
                         key_name = self.dict.get('key_name', '')
-                        value_name = self.dict.get('value_name', '')
-                        if key_name and value_name:
+                        show_name = self.dict.get('show_name', '')
+                        if key_name and show_name:
                             key = json_data.get(key_name, '')
-                            value = json_data.get(value_name, '')
+                            value = json_data.get(show_name, '')
                             if key:
                                 _r[key] = value
         except:
