@@ -39,7 +39,7 @@ class QuerySerializer(BaseModelSerializer):
         model = Query
         fields = ['id', 'log_key', 'log_type', 'field_config', 'key', 'name', 'select', 'where', 'group', 'order',
                   'order_type', 'sql', 'other_sql', 'cache_validate', 'remark', 'template_name', 'create_datetime',
-                  'update_datetime', 'order_type_alias', 'is_paging'] or '__all__'
+                  'update_datetime', 'order_type_alias', 'is_paging', 'use_tpl_engine'] or '__all__'
         # exclude = ['session_key']
         read_only_fields = ['create_datetime', 'update_datetime']
         extra_kwargs = {'password': {'write_only': True}}
@@ -303,7 +303,7 @@ def query_do(request, query_compiler: QueryCompiler, built_in=False, list_data_h
         # 知道结果的数量情况下,添加_分页,不执行count设置分页
         if not query_compiler.query.is_paging:
             total_record = 10000
-            page_size = max(page_size,total_record)
+            page_size = max(page_size, total_record)
             page_num = 1
         # 设置 limit 限制
         query_compiler.set_limit(page_size, page_num)
@@ -345,7 +345,7 @@ def query_do(request, query_compiler: QueryCompiler, built_in=False, list_data_h
                     query_compiler, list_data, page_num, page_size), timeout=cache_time)
             tfoot_sql = query_compiler.get_tfoot_sql()
             if not query_compiler.query.is_paging:
-                total_record = min(total_record,len(list_data))
+                total_record = min(total_record, len(list_data))
 
             if tfoot_sql:
                 tfoot_sql_key = md5('%s_%s' % (tfoot_sql, server_id))

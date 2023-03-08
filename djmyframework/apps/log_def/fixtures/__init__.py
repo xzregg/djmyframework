@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2021-03-12 14:44
+# @Time    : 2023/3/8 09:54 
 # @Author  : xzr
-# @File    : __init__
+# @File    : __init__.py
 # @Software: PyCharm
 # @Contact : xzregg@gmail.com
-# @Desc    : 
-
-__version__ = '0.1.40'
+# @Desc    :

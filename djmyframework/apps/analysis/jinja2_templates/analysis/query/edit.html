@@ -104,8 +104,17 @@
                 </td>
             </tr>
             <tr>
-                <th>字段定义:</th>
+                <th>字段定义:
+                </th>
                 <td>
+<pre>
+字段定义:
+排序:此列可以排序,指定的字段名必须与SQL语句的字段名相同,
+条件:页面显示条件
+多选:多选条件,如果有指定映射字典则下拉多选控件,否则为textarea多选输入
+定值(开关):控件为checkbox勾选则传递定值,定值在映射字典填写
+单选:控件为radio,必选
+</pre>
                     <a id="add_field_config" href="javascript:;">[添加字段定义]</a>
                     <a id="show_config_btn" href="javascript:;">[查看配置]</a>
                 </td>
@@ -173,6 +182,13 @@
                 <th>是否使用分页：</th>
                 <td><input type="checkbox" class="checkbox" name="is_paging" {% if data.is_paging %} checked {% endif %}
                            value="1"/> 知道总数量情况下，可不分页，通常用于报表，限制最大条目 10000 </td>
+            </tr>
+            <tr>
+                <th>是否使用 <a target="blank" href="https://jinja.palletsprojects.com/en/2.10.x/api/">jinjia2</a> 模板引擎：</th>
+                <td><input type="checkbox" class="checkbox" name="use_tpl_engine" {% if data.use_tpl_engine %} checked {% endif %}
+                           value="true"/>
+                       模板变量: field_config=self.query.field_config, data=self.params, model=self.query
+                </td>
             </tr>
             <tr>
                 <th>排序字段：</th>
@@ -252,19 +268,11 @@
                             {% endif %}
                         {% endfor %}
                         <p>取统计id:
-                            <
-                            <统计名称>>
+                            <<统计名称>>
                         </p>
-
                         <hr>
-                        <pre>
-字段定义:
-排序:此列可以排序,指定的字段名必须与SQL语句的字段名相同,
-条件:页面显示条件
-多选:多选条件,如果有指定映射字典则下拉多选控件,否则为textarea多选输入
-定值(开关):控件为checkbox勾选则传递定值,定值在映射字典填写
-单选:控件为radio,必选
-</pre>
+
+
                     </div>
                 </td>
             </tr>
@@ -399,7 +407,7 @@
                 fieldContEle.append('<div class="well">' + remark + '</div>')
                 //console.dir(fields)
             })
-            $('[name="log_key"]').click()
+            if ($('[name="log_key"]').val()) $('[name="log_key"]').click()
 
             function FieldEditor() {
                 this.cont = $('#field-config-cont')

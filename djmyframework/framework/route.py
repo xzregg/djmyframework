@@ -88,6 +88,8 @@ class CustomRestRouter(rest_route.DefaultRouter):
 rest_router = CustomRestRouter()
 rest_router.include_root_view = False
 VIEWS_DIR = settings.VIEWS_DIR
+if not isinstance(VIEWS_DIR, list):
+    VIEWS_DIR = [VIEWS_DIR]
 GLOBAL_ROUTE_PREFIX = settings.ROUTE_PREFIX
 ROUTE_APP_PREFIX_MAP = settings.ROUTE_APP_PREFIX_MAP
 
@@ -117,8 +119,9 @@ class Route(object):
     def __call__(self, obj):
         _m = obj.__module__
         p_m_f = '%s.%s' % (_m, obj.__name__)
-        name = p_m_f.replace('%s.' % VIEWS_DIR, '', 1).strip('.')
-        names = name.lower().split('.')
+        for view_dir_name in VIEWS_DIR:
+            p_m_f = p_m_f.replace('%s.' % view_dir_name, '', 1).strip('.')
+        names = p_m_f.lower().split('.')
 
         # 重复路径去重
         names_set = list(set(names))
@@ -193,8 +196,6 @@ def _import_module_from_file():
         if not app_config:
             continue
         views_dir_names = VIEWS_DIR
-        if not isinstance(views_dir_names, list):
-            views_dir_names = [views_dir_names]
         for views_name in views_dir_names:
             views_dir_path = os.path.join(app_config.path, views_name)
 

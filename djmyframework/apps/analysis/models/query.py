@@ -121,6 +121,7 @@ class SqlBuilder(object):
         self.order_str = ''
         self.limit_str = ''
         self.mark_map = copy.copy(SqlMarkManager.mark_map)
+        self.data = {}
 
     def query_sql_handle(self, sql=''):
         """查询sql转换
@@ -175,6 +176,7 @@ class SqlBuilder(object):
                 values = self.convert_input_value(values, {}, config.get('type'))
         else:
             values = config.get('default_value', '')
+        self.data[param_name] = values
         return values
 
     def convert_input_value(self, values, value_def, value_type):
@@ -265,7 +267,7 @@ class SqlBuilder(object):
 class QueryCompiler(SqlBuilder):
 
     def __init__(self, query_model, params):
-        self.query = query_model
+        self.query: Query = query_model
         self.already_get_query_sql = False
         the_sql = self.query.sql or self.query.get_default_sql()
         super(QueryCompiler, self).__init__(the_sql, params)
@@ -326,7 +328,10 @@ class QueryCompiler(SqlBuilder):
         if self.has_mark("statistic"):
             statistic_list = self.get_statistic()
             self.replace_mark_to_value("statistic", ",".join([s_id for s_id, _ in statistic_list]))
-
+        if self.query.use_tpl_engine:
+            from jinja2 import Template
+            temp = Template(self.query_sql)
+            self.query_sql = temp.render(field_config=self.query.field_config, data=self.params, model=self.query)
         return self.query_sql
 
     def has_mark(self, mark_name):
@@ -343,14 +348,15 @@ class QueryCompiler(SqlBuilder):
 
 
 class Query(BaseModel):
-    """查询
+    """查询 模型
     """
-    log_key = models.CharField('关联表标识', max_length=30, db_index=True, null=False)
-    log_type = models.IntegerField(default=0)
 
     class OrderType(Enum):
         DESC = 1, _('倒序')
         AESC = 0, _('正序')
+
+    log_key = models.CharField('关联表标识', max_length=30, db_index=True, null=False)
+    log_type = models.IntegerField(default=0)
 
     key = models.CharField('查询标识', default='', max_length=100, null=False, blank=True, db_index=True)
     name = models.CharField('查询名称', default='', max_length=100, null=False, blank=False, unique=True)
@@ -367,6 +373,7 @@ class Query(BaseModel):
     remark = models.CharField('备注', max_length=1000, blank=True)
     _field_config = models.TextField('查询字段定义', default="", blank=True)
     template_name = models.CharField('模版名', max_length=32, blank=True)
+    use_tpl_engine = models.BooleanField('是否使用模板引擎', default=False,help_text='是否使用 jinjia2 模板引擎渲染sql')
 
     _DEFAULT_FIELD_CONFIG = {
             "标记名": {"name"  : "参数名", "dict": "", "sort": False, "order_num": 99, "multiple": False,

@@ -556,9 +556,8 @@ class CurdViewSet(BaseViewSet, MyApiView):
         """
 
         params = IdsSerializer(request.data).params_data
-
-        if params.ids:
-            ids = params.ids or params.id
+        ids = params.ids or params.id
+        if ids:
             self.get_queryset().filter(id__in=ids).delete()
             return Response(data=params)
 

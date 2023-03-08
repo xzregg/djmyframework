@@ -17,7 +17,7 @@ import sys
 from django.conf import settings
 from decouple import config
 
-REDIS_URL = config('REDIS_URL', default='redis://:123456@127.0.0.1:6379')
+REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379')
 
 # session引擎设置
 # SESSION_ENGINE='django.contrib.sessions.backends.cache'

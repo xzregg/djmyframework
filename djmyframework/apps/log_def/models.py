@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 日志类模型
-#
 
+import requests
 from django.db import connections, models
 from django.db.models import fields
 
@@ -224,13 +224,26 @@ class DBDictType(DictBaseType):
     """数据表
     """
     NAME = '数据表'
-    DEFAULT_JSON = '{"table_name":"","key_name":"","value_name":""}'
+    DEFAULT_JSON = '{"db":"","table_name":"","key_name":"","value_name":""}'
 
     def get_dict(self):
+        from analysis.models import QueryServer
+        db = self.dict.get('db', '')
+        if db:
+            the_server = QueryServer.objects.using('read').filter(name=db).first()
+            if the_server:
+                the_conn = the_server.mysql_conn(True)
+                the_conn.autocommit(1)
+
+            else:
+                the_conn = connections[db]
+        else:
+            the_conn = connections['read']
+
         _r = {}
         sql = 'SELECT DISTINCT `{key_name}` a,`{value_name}` b FROM {table_name} LIMIT 10000;'
         sql = sql.format(**self.dict)
-        cur = connections['read'].cursor()
+        cur = the_conn.cursor()
         cur.execute(sql)
         for row in cur.fetchall():
             _r[str(row[0])] = row[1]
@@ -240,7 +253,25 @@ class DBDictType(DictBaseType):
 ROOT_PATH = settings.BASE_DIR
 
 
-class FileDicType(DictBaseType):
+class UrlDictType(DictBaseType):
+    """从url请求地址获取
+    """
+    NAME = 'URL'
+    DEFAULT_JSON = '{"url":"","method":"get","key_name":"","value_name":""}'
+
+    def get_dict(self):
+        _r = {}
+        url = self.dict.get('url')
+        try:
+            if url:
+                rsp = requests.request(self.dict.get('method'))
+                _r = rsp.json()
+        except Exception as e:
+            traceback.print_exc()
+        return _r
+
+
+class FileDictType(DictBaseType):
     """从文件内拿json
     """
     NAME = '文件'
@@ -295,8 +326,9 @@ class DictDefine(BaseModel):
     """
     TYPE_DICT = {0: DictBaseType,
                  1: DBDictType,
-                 2: FileDicType,
-                 3: DirDictType
+                 2: FileDictType,
+                 3: DirDictType,
+                 4: UrlDictType
                  }
 
     SELECT_CHOICES = [(k, v.NAME, v.DEFAULT_JSON) for k, v in TYPE_DICT.items()]
