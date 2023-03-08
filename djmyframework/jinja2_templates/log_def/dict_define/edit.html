@@ -62,7 +62,7 @@
                 <div class="form-group" style="">
                     <label class="col-sm-3 control-label no-padding-right" for="id_key">
                         <span class="text-danger">*</span>
-                        {{ _('标识名') }} </label>
+                        {{ _('标识KEY名') }} </label>
 
                     <div class="col-sm-8">
                         <input type="text" id="id_key" name="key"
@@ -163,6 +163,7 @@
         table_name: 查询的表名
         key_name: 显示名称 如 name
         value_name: 值的名称 如 id
+        sql: 自定 SQL 查询语句, 第一列为 key, 第二列为 value
 
  图片键值：
         例如：img_path_format：showGirlWholeBody/sg___key__.png

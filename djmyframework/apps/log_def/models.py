@@ -7,10 +7,10 @@ from django.db.models import fields
 
 from framework.models import BaseModel, JSONField, SqlModelMixin
 from framework.translation import _
-from framework.validators import LetterValidator
 from framework.utils import datetime_to_str, json_dumps
 from framework.utils.cache import CacheAttribute
 from framework.utils.myenum import Enum
+from framework.validators import LetterValidator
 
 try:
     import cPickle as pickle
@@ -224,7 +224,7 @@ class DBDictType(DictBaseType):
     """数据表
     """
     NAME = '数据表'
-    DEFAULT_JSON = '{"db":"","table_name":"","key_name":"","value_name":""}'
+    DEFAULT_JSON = '{"db":"","table_name":"","key_name":"","value_name":"","sql":""}'
 
     def get_dict(self):
         from analysis.models import QueryServer
@@ -241,8 +241,10 @@ class DBDictType(DictBaseType):
             the_conn = connections['read']
 
         _r = {}
-        sql = 'SELECT DISTINCT `{key_name}` a,`{value_name}` b FROM {table_name} LIMIT 10000;'
-        sql = sql.format(**self.dict)
+        sql = self.dict.get('sql', '')
+        if not sql:
+            sql = 'SELECT DISTINCT `{key_name}` a,`{value_name}` b FROM {table_name} LIMIT 10000;'
+            sql = sql.format(**self.dict)
         cur = the_conn.cursor()
         cur.execute(sql)
         for row in cur.fetchall():
@@ -337,9 +339,9 @@ class DictDefine(BaseModel):
     name = models.CharField('字典名', max_length=100, blank=False)
     key = models.CharField('标识名', max_length=50, unique=True, db_index=True, validators=[LetterValidator])
     json_dict = JSONField('存键值', default='{}', null=False, blank=True)
-    group = models.CharField('组', max_length=50, default="")
+    group = models.CharField('组', max_length=50, default="", blank=True)
     type = models.IntegerField('字典的类型', default=0, choices=_TYPE_CHOICES)
-    remark = models.CharField('备注', max_length=400)
+    remark = models.CharField('备注', max_length=400, default='', blank=True)
 
     __cache_dict = {}
 
