@@ -241,8 +241,7 @@ class Command(BaseCommand):
         parmas['model_many_to_many'] = model_class._meta.many_to_many
         parmas['model_foreigns'] = [f for f in _fields if isinstance(f, ForeignKey)]
         parmas['model_choices_fields'] = [f for f in _fields if f.choices]
-        parmas['model_desc'] = model_class._meta.verbose_name or model_class.__doc__.strip().split('\n')[0]
-
+        parmas['model_desc'] = model_class._meta.original_attrs.get('verbose_name', '') or model_class.__doc__.strip().split('\n')[0] or model_name
         parmas['fields_name_list'] = [f.name for f in fields]
         parmas['all_fields_name_list'] = parmas['fields_name_list'] + ['%s_alias' % f.name for f in
                                                                        parmas['model_choices_fields']]

@@ -40,13 +40,11 @@ class ModelTemplateCreater(object):
     def get_app_tempalte_path(self):
         return os.path.join(self.get_app_path(), 'jinja2_templates')
 
-
-
     @property
     def template_dir(self):
 
         code_tpl_dir = os.path.abspath(
-            os.path.join(os.path.abspath(__file__), '..', '..', '..', 'code_tpl', self.tpl_dir))
+                os.path.join(os.path.abspath(__file__), '..', '..', '..', 'code_tpl', self.tpl_dir))
         print(code_tpl_dir)
         return code_tpl_dir
 
@@ -180,7 +178,7 @@ class Command(BaseCommand):
             model_class = type(
                     model_class.__name__,
                     (model_class, BaseModelMixin),
-                    {'__module__': model_class.__module__, '__doc__': model_class.__doc__}
+                    {'__module__': model_class.__module__, '__doc__': model_class.__name__}
             )
         if not model_class:
             self.stderr.write('%s 模型载入失败' % model_name)
@@ -232,7 +230,7 @@ class Command(BaseCommand):
         parmas['model_foreigns'] = [f for f in _fields if isinstance(f, ForeignKey)]
         parmas['model_choices_fields'] = [f for f in _fields if f.choices]
         parmas['model_desc'] = model_class.__doc__.strip().split('\n')[0] or model_name
-        print((model_class,model_class.__doc__))
+        parmas['model_desc'] = model_class._meta.original_attrs.get('verbose_name', '') or model_class.__doc__.strip().split('\n')[0] or model_name
         parmas['fields_name_list'] = [f.name for f in fields]
         parmas['all_fields_name_list'] = parmas['fields_name_list'] + ['%s_alias' % f.name for f in
                                                                        parmas['model_choices_fields']]
