@@ -67,7 +67,7 @@
                 this.selectCallback ? this.selectCallback(selectNode.dataRef) : null
 
             },
-            genrateTreeNode(projectName, path, title) {
+            generateTreeNode(projectName, path, title) {
                 return {
                     title: title,
                     key: projectName + path,
@@ -91,7 +91,7 @@
                         for (k in rsp.data) {
                             var children = rsp.data[k].map((currentValue, index, arr) => {
 
-                                return this.genrateTreeNode(projectName, currentValue, currentValue.substr(path.length)  )
+                                return this.generateTreeNode(projectName, currentValue, currentValue.substr(path.length)  )
                             })
                             treeNode.dataRef.children = children
                             this.treeData = [...this.treeData];
@@ -112,7 +112,7 @@
                     if (rsp.code == 0) {
                         console.dir(rsp)
                         this.treeData = rsp.data.results.map((item) => {
-                            return this.genrateTreeNode(item.id, '/', item.alias)
+                            return this.generateTreeNode(item.id, '/', item.alias)
                         })
                     } else {
                         this.$message.error('{{ _("获取 SVN 项目路径") }} ');

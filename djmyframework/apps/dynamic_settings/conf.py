@@ -84,16 +84,16 @@ class Etcd3SettingsLoader(DefaultsSettingsLoader):
             config_name = self.get_config_name_from_event_key(metadata.key)
             self.config[config_name] = self.decode_value(value)
 
-    def genrate_key(self, name):
+    def generate_key(self, name):
         return '%s%s' % (self.prefix_key, name.strip())
 
     def set_value(self, name, value):
-        self.etcd.put(self.genrate_key(name), self.encode_value(value))
+        self.etcd.put(self.generate_key(name), self.encode_value(value))
 
     def get_value(self, name, default_value=None):
         value = self.config.get(name, None)
         if value is None:
-            value, metadata = self.etcd.get(self.genrate_key(name))
+            value, metadata = self.etcd.get(self.generate_key(name))
             if metadata:
                 value = self.decode_value(value)
             else:
@@ -147,7 +147,7 @@ class SettingOptionsManager(SingleInstance):
     loader: DefaultsSettingsLoader = None
 
 
-    def genrate_options_key(self, options):
+    def generate_options_key(self, options):
         return '%s/%s' % (options.group, options.name)
 
     def get_value(self, name):
@@ -156,14 +156,14 @@ class SettingOptionsManager(SingleInstance):
             return
         options: SettingOptions = self.settings_options_map.get(name, None)
         if options is not None:
-            name = self.genrate_options_key(options)
+            name = self.generate_options_key(options)
             value = self.loader.get_value(name, options.default_value)
             return value if value is not None else options.default_value
 
     def set_value(self, name, value):
         options: SettingOptions = self.settings_options_map.get(name, None)
         if options is not None:
-            name = self.genrate_options_key(options)
+            name = self.generate_options_key(options)
             return self.loader.set_value(name, value)
 
     def watch_config(self):

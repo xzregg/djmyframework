@@ -335,9 +335,9 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                     'user_set__userinfo_set').filter(name=role_name).first()
                 if role:
                     data = self.access_domain.create_role(role)
-        self.genrate_for_receive_data(data)
+        self.generate_for_receive_data(data)
 
-    def genrate_for_receive_data(self, data):
+    def generate_for_receive_data(self, data):
         parser = StoreParsedLDIF()
         parser.dataReceived(to_bytes(data))
         parser.connectionLost(failure.Failure(error.ConnectionDone()))
@@ -373,7 +373,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                         dn = distinguishedname.DistinguishedName(
                             to_bytes('cn=%s,ou=user,%s' % (user.username, self.access_domain.basedn)))
                         user_dn = self.__class__(dn=dn)
-                        user_dn.genrate_for_receive_data(data)
+                        user_dn.generate_for_receive_data(data)
                         results.append(user_dn)
             elif first_attr_type.value == 'role':
                 for role in self.roles:
@@ -381,7 +381,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                     dn = distinguishedname.DistinguishedName(
                         to_bytes('cn=%s,ou=role,%s' % (role.name, self.access_domain.basedn)))
                     role_dn = self.__class__(dn=dn)
-                    role_dn.genrate_for_receive_data(data)
+                    role_dn.generate_for_receive_data(data)
                     results.append(role_dn)
         if callback:
             for dn in results:
@@ -419,7 +419,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                     dn = distinguishedname.DistinguishedName(
                         to_bytes('cn=%s,ou=user,%s' % (user.username, self.access_domain.basedn)))
                     user_dn = self.__class__(dn=dn)
-                    user_dn.genrate_for_receive_data(data)
+                    user_dn.generate_for_receive_data(data)
                     children.append(user_dn)
             elif first_attr_type.value == 'role':
                 for role in self.roles:
@@ -427,7 +427,7 @@ class ModelTreeEntry(entry.EditableLDAPEntry,
                     dn = distinguishedname.DistinguishedName(
                         to_bytes('cn=%s,ou=role,%s' % (role.name, self.access_domain.basedn)))
                     role_dn = self.__class__(dn=dn)
-                    role_dn.genrate_for_receive_data(data)
+                    role_dn.generate_for_receive_data(data)
                     children.append(role_dn)
         return children
 

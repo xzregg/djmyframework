@@ -31,7 +31,7 @@ def create_all_ulrs_py_file(file_name='_all_urls.py'):
     url_patterns = resolver.url_patterns
     all_import_text_list = []
 
-    def genrate_import_text(url_pattern: Union[URLPattern, URLResolver]):
+    def generate_import_text(url_pattern: Union[URLPattern, URLResolver]):
         import_text_list = []
         if isinstance(url_pattern, URLPattern):
             module_name, cls_name = url_pattern.lookup_str.rsplit('.', 1)
@@ -54,11 +54,11 @@ def create_all_ulrs_py_file(file_name='_all_urls.py'):
         elif isinstance(url_pattern, URLResolver):
             print('URLResolver')
             for url_p in url_pattern.url_patterns:
-                import_text_list += genrate_import_text(url_p)
+                import_text_list += generate_import_text(url_p)
         return import_text_list
 
     for url_pattern in url_patterns:
-        all_import_text_list += genrate_import_text(url_pattern)
+        all_import_text_list += generate_import_text(url_pattern)
 
     all_import_text = '\n'.join(all_import_text_list)
     with Path(settings.BASE_DIR, file_name).open('w') as f:

@@ -35,7 +35,7 @@ default_supervisor_config = dict(
 )
 
 
-def genrate_supervisor_conf(daemon_service_map, is_force=False):
+def generate_supervisor_conf(daemon_service_map, is_force=False):
     supervisor_config_ini_tpl = '''
 # http://supervisord.org/configuration.html#program-x-section-values
 
@@ -99,7 +99,7 @@ def main():
         argv_str = ' '.join(sys.argv[2:])
         cmd = '%s %s %s' % (supervisorctl_cmd, action, argv_str)
 
-    genrate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action in ['update', 'nodaemon'])
+    generate_supervisor_conf(DAEMON_SERVICE_MAP, is_force=action in ['update', 'nodaemon'])
 
     is_supervisord_running = os.system(supervisorctl_cmd + ' pid') == 0
     if not is_supervisord_running:
