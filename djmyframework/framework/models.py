@@ -549,8 +549,10 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
                 if field:
                     attname = field.attname
                     init_value = pre_init_data.get(attname, models.fields.Empty)
-                    if getattr(self, attname) != init_value or isinstance(init_value, (dict, list, tuple, set)):
+                    new_value = getattr(self, attname)
+                    if new_value != init_value or isinstance(init_value, (dict, list, tuple, set)):
                         __update_fields.append(attname)
+                        pre_init_data[attname] = new_value
             self._is_init = True
             return __update_fields
         return self._update_fields
