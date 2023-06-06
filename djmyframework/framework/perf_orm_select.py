@@ -48,10 +48,12 @@ def check_req_orm_select_init():
 
 def reset_req_orm_select_store():
     try:
-        get_accesss_models_data()['is_init'] = True
+        accesss_models_data = get_accesss_models_data()
+        if accesss_models_data is not None:
+            accesss_models_data['is_init'] = True
         del req_orm_select_store.current_req_name
     except Exception as e:
-        traceback.print_exc()
+        pass
 
 
 class PerfOrmSelectQuerySet(QuerySet):
@@ -69,7 +71,7 @@ class PerfOrmSelectQuerySet(QuerySet):
                 prefix_lookup_sep = f'{parent_field_name}{LOOKUP_SEP}'
             else:
                 prefix_lookup_sep = f'{filed_name}{LOOKUP_SEP}'
-                
+
             for related_model_field_name in model_only_fileds:
                 select_fields.add(f'{prefix_lookup_sep}{related_model_field_name}')
 
@@ -90,12 +92,16 @@ class PerfOrmSelectQuerySet(QuerySet):
         if check_req_orm_select_init():
             existing, defer = self.query.deferred_loading
             only_fileds = get_req_thread_model_fields(self.model)
+            has_related = False
             if isinstance(self.query.select_related, dict):
                 for select_related_filed_name, child_dict in self.query.select_related.items():
+                    has_related = True
                     self.set_related_select_fields(only_fileds, self.model, '', select_related_filed_name, child_dict, 0)
             # 自定 defer 和 没自定 only  则自动添加字段
             if (defer and existing) or (not existing):
-                self.query.add_immediate_loading(only_fileds)
+                # 有关联模型时,访问要多余1个属性才添加
+                if not has_related or (has_related and len(only_fileds) > 1):
+                    self.query.add_immediate_loading(only_fileds)
 
     def _fetch_all(self):
         self._deduction_select_filed()
