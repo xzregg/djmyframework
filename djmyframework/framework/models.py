@@ -1,48 +1,45 @@
 # -*- coding: utf-8 -*-
 import copy
 import datetime
-
 import hashlib
 import json
 import re
 import time
 from collections import OrderedDict
+from decimal import Decimal
+from urllib.parse import urlparse
+
 import addict
 import timezone_field
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.management.color import no_style
 from django.core.validators import RegexValidator
-from django.db import close_old_connections, connection, models
-from django.db.models import Model, Sum, Count, Avg, Subquery, QuerySet, ManyToManyField
-from django.db.models.manager import BaseManager
+from django.db import close_old_connections, connection
+from django.db import models
+from django.db.models import JSONField as DjJSONField
+from django.db.models import QuerySet
 from django.db.models.signals import post_init
 from django.dispatch import receiver
+from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
+from mptt.fields import TreeForeignKey
 from mptt.managers import TreeManager
+from mptt.models import MPTTModel
 from mptt.querysets import TreeQuerySet
 from rest_framework import serializers
 from rest_framework.fields import DictField, CharField
-from sqlalchemy import null
-from mptt.models import MPTTModel
-from mptt.fields import TreeForeignKey
 
-from .perf_orm_select import PerfOrmSelectModel, PerfOrmSelectManager, PerfOrmSelectQuerySet
+from .encryption.aes.aes import AESCrypt
+from .perf_orm_select import PerfOrmSelectModel, PerfOrmSelectQuerySet
 from .utils import json_dumps, ObjectDict, trace_msg, myenum, MyJsonEncoder
 from .utils.cache import CachedClassAttribute
 from .utils.log import logger
-from .validators import LetterValidator
-import datetime
-from django.db.models import JSONField as DjJSONField
-from django.db import models
-from django.forms.models import model_to_dict
-
-from decimal import Decimal
-from mptt.models import MPTTModel
-
 from .utils.time import format_date
+from .validators import LetterValidator
 
 
 def truncate_name(name, length=None, hash_len=4):
@@ -524,8 +521,8 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
     _version = models.IntegerField(_("版本"), default=0, null=False)
 
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
-    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
+    # create_time = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
+    # update_time = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
 
     _is_init = False
 
@@ -538,11 +535,12 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
         super().__init__(*args, **kwargs)
         self._is_init = True
 
-    def _get_update_fileds(self):
+    def _get_update_fields(self):
         """通过判断初始值是否有变化，而更新相应字段"""
         pre_init_data = getattr(self, 'pre_init_data', None)
         if pre_init_data:
-            __update_fields = []
+            _update_fields = set()
+            is_second_save = self._version - pre_init_data.get('_version', self._version) > 1
             self._is_init = False
             for field_name in self._update_fields:
                 field = self.concrete_fields_map.get(field_name)
@@ -550,11 +548,12 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
                     attname = field.attname
                     init_value = pre_init_data.get(attname, models.fields.Empty)
                     new_value = getattr(self, attname)
-                    if new_value != init_value or isinstance(init_value, (dict, list, tuple, set)):
-                        __update_fields.append(attname)
-                        pre_init_data[attname] = new_value
+                    if new_value != init_value or isinstance(init_value, (dict, list, tuple, set)) or is_second_save:
+                        _update_fields.add(attname)
+            if is_second_save:
+                pre_init_data['_version'] = self._version
             self._is_init = True
-            return __update_fields
+            return _update_fields
         return self._update_fields
 
     def _optimistic_save_again(self, new_data: dict, look_num: int, *args, **kwargs):
@@ -587,7 +586,7 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
         @return:
         """
         if self.id:
-            new_data = {field_name: getattr(self, field_name) for field_name in self._get_update_fileds()}
+            new_data = {field_name: getattr(self, field_name) for field_name in self._get_update_fields()}
             # new_data = {f.name: getattr(self, f.name) for f in self.get_fields(has_private=True) if  not self.is_related_field(f)}
 
             new_data['_version'] = self._version + 1
@@ -623,7 +622,7 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
         """只更新有改的字段"""
         update_fields = kwargs.pop('update_fields', None)
         if self.id and not kwargs.get('force_insert'):
-            update_fields = update_fields or self._get_update_fileds()
+            update_fields = update_fields or self._get_update_fields()
         return super().save(*args, update_fields=update_fields, **kwargs)
 
 
@@ -687,6 +686,41 @@ class _JSONField(models.TextField):
             logger.error('get_prep_value Failed. %s' % value, exc_info=e)
             _v = '{}'
         return _v
+
+
+class URLTrokenField(models.URLField):
+    """生成的链接地址带上token"""
+    _iv = b'\x9b+\x16U\xabZ\xfb\x91\x0bLd\xa7\xd9\x05\xde]'
+
+    def from_db_value(self, value, expression=None, connection=None):
+        return self.to_python(value)
+
+    def to_python(self, value):
+        if value:
+            return self.set_token(value)
+        return value
+
+    def set_token(self, url):
+        # todo 阿里云 oss 的？
+        url_p = urlparse(url)
+        token = AESCrypt(settings.SECRET_KEY[:32], self._iv).encrypt(str(int(time.time()))).hex()
+        # url = url_p._replace(query='_tk=%s&%s' % (token, url_p.query)).geturl()
+        url = url_p._replace(query='_tk=%s' % token).geturl()
+        return url
+
+    def check_token(self, token):
+        """检验token
+        5分钟内有效"""
+
+        try:
+            t = AESCrypt(settings.SECRET_KEY[:32], self._iv).decrypt(bytes.fromhex(token))
+            if int(time.time()) - int(t) < 60 * 5:
+                return True
+        except Exception as error:
+            return False
+
+    def get_prep_value(self, value):
+        return value
 
 
 class ObjectDictField(models.TextField):
@@ -824,6 +858,7 @@ class BaseStatusModel(BaseModel):
     class Meta:
         abstract = True
 
+
 @receiver(post_init)
 def model_init(sender, instance, **kwargs):
     """所有模型初始化的时候,复制一份初始化数据
@@ -835,9 +870,12 @@ def model_init(sender, instance, **kwargs):
         pre_init_data = ObjectDict()
     instance.pre_init_data = pre_init_data
 
-class PerfOrmSelectTreeQuerySet(PerfOrmSelectQuerySet,TreeQuerySet):pass
+
+class PerfOrmSelectTreeQuerySet(PerfOrmSelectQuerySet, TreeQuerySet): pass
+
 
 class PerfOrmSelectTreeManager(models.Manager.from_queryset(PerfOrmSelectTreeQuerySet), TreeManager): pass
+
 
 class TreeModel(PerfOrmSelectModel, MPTTModel):
     """MPTT模型实例方法:
@@ -874,6 +912,7 @@ class TreeModel(PerfOrmSelectModel, MPTTModel):
         abstract = True
         base_manager_name = 'objects'
         default_manager_name = 'objects'
+
 
 class AttributeModel(PerfOrmSelectModel, BaseModelMixin):
     """
@@ -945,3 +984,75 @@ class SimpleAttributeModel(PerfOrmSelectModel, BaseModelMixin):
         """ attribute_name:conf_name _val:bool -> attribute """
         _index = self.ATTRIBUTE_CONF.index(attribute_name)
         return self.attribute | (1 << _index) if _val else self.attribute & ~(1 << _index)
+
+
+class ShardingModelMixin(object):
+    """分表的模型"""
+
+    # 预先创建的分表数量
+    pre_sharding_num = 12
+
+    __sharding_model_cls_cache = {}
+
+    last_create_time = None
+
+    @classmethod
+    def get_sharding_key(cls, sharding_num):
+        return str(sharding_num)
+
+    @classmethod
+    def create_sharding_table(cls):
+        """
+        预先创建分表
+        @return:
+        """
+        for i in range(cls.pre_sharding_num):
+            sharding_key = cls.get_sharding_key(i)
+            dst_table = cls.get_shanrding_table_name(sharding_key)
+            sql = f'CREATE TABLE IF NOT EXISTS {dst_table} LIKE {cls._meta.db_table}'
+            with connection.cursor() as cursor:
+                print(sql)
+                # cursor.execute(sql)
+
+    @classmethod
+    def get_shanrding_table_name(cls, shanrding_key):
+        return f'{cls._meta.db_table}_{shanrding_key}'
+
+    @classmethod
+    def get_sharding(cls, shanrding_key=''):  # type: () -> cls
+        cls._meta.abstract = True
+
+        if not cls.last_create_time:
+            cls.create_sharding_table()
+            cls.last_create_time = datetime.datetime.now()
+        model_cls = cls.__sharding_model_cls_cache.get(shanrding_key, None)
+        if not model_cls:
+            class Meta:
+                app_label = cls._meta.app_label
+                db_table = cls.get_shanrding_table_name(shanrding_key)
+
+            attrs = {
+                    '__module__': cls.__module__,
+                    'Meta'      : Meta
+            }
+            model_cls = type(str(f'{cls.__name__}_{shanrding_key}'), (cls,), attrs)
+            cls.__sharding_model_cls_cache[shanrding_key] = model_cls
+        return model_cls
+
+
+class MonthShardingModel(ShardingModelMixin):
+    """按月分表"""
+
+    table_date_fmt = '%Y%m01'
+
+    @classmethod
+    def get_sharding_key(cls, sharding_num):
+        now = datetime.datetime.now()
+        date = now + relativedelta(months=sharding_num)
+        month_text = date.strftime(cls.table_date_fmt)
+        return month_text
+
+    @classmethod
+    def get_sharding(cls, shanrding_datetime: datetime.datetime = None):  # type: () -> cls
+        shanrding_datetime = shanrding_datetime or datetime.datetime.now()
+        return super().get_sharding(shanrding_datetime.strftime(cls.table_date_fmt))
