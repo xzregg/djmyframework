@@ -3,6 +3,8 @@
 import time
 from functools import wraps
 
+import redis
+from django.conf import settings
 from django.core.cache import cache
 
 from django.middleware.cache import CacheMiddleware

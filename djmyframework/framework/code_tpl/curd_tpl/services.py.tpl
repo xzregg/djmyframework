@@ -26,10 +26,7 @@ class ${model_name}Service(BaseService):
         queryset = ${model_name}.objects.using('readonly').prefetch_related(*${[f.name for f in model_many_to_many]}).select_related(*${[f.name for f in model_foreigns]})
         queryset = queryset.filter(filter_q)
         count, num_pages, page_contents = safe_pagination(queryset,page_size,page_num)
-        #pagination = Paginator(queryset, page_size)
-        #num_pages = pagination.num_pages
-        #page_contents = pagination.page(page_num)
-        #count = pagination.count
+
         return count, num_pages, page_contents
 
     def save(self, params_data):

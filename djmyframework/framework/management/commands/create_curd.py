@@ -64,7 +64,7 @@ class ModelTemplateCreater(object):
         if os.path.isfile(single_view_file):
             target_file = single_view_file
         else:
-            target_file = os.path.join(self.get_app_path(), settings.VIEWS_DIR, '%s.py' % self.model_lower_name)
+            target_file = os.path.join(self.get_app_path(), 'views', '%s.py' % self.model_lower_name)
         self._create_base_file(template_file, target_file)
 
     def create_model_services_file(self):

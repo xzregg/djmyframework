@@ -6,7 +6,6 @@ import json
 import re
 import time
 from collections import OrderedDict
-from decimal import Decimal
 from urllib.parse import urlparse
 
 import addict
@@ -22,7 +21,6 @@ from django.db.models import JSONField as DjJSONField
 from django.db.models import QuerySet
 from django.db.models.signals import post_init
 from django.dispatch import receiver
-from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
@@ -38,7 +36,6 @@ from .perf_orm_select import PerfOrmSelectModel, PerfOrmSelectQuerySet
 from .utils import json_dumps, ObjectDict, trace_msg, myenum, MyJsonEncoder
 from .utils.cache import CachedClassAttribute
 from .utils.log import logger
-from .utils.time import format_date
 from .validators import LetterValidator
 
 
@@ -521,8 +518,8 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
     _version = models.IntegerField(_("版本"), default=0, null=False)
 
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    # create_time = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
-    # update_time = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
+    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
+    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
 
     _is_init = False
 
@@ -620,6 +617,8 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
 
     def save(self, *args, **kwargs):
         """只更新有改的字段"""
+        self.update_datetime = datetime.datetime.now()
+        self._version += 1
         update_fields = kwargs.pop('update_fields', None)
         if self.id and not kwargs.get('force_insert'):
             update_fields = update_fields or self._get_update_fields()
@@ -776,84 +775,20 @@ def get_re_validate(pattern='', err_msg=''):
 
 
 class ModelStatus(myenum.Enum):
-    delete = ('delete', '删除')
-    enable = ('enable', '正常')
-    disable = ('disable', '禁用')
-    expire = ('expire', '过期')
-    unknown = ('unknown', '未知')
+    delete = (0, _('删除'))
+    enable = (1, _('正常'))
+    disable = (2, _('禁用'))
+    expire = (3, _('过期'))
+    unknown = (4, _('未知'))
 
 
 class BaseStatusModel(BaseModel):
     STATUS = ModelStatus
-    status = models.CharField('状态', max_length=10, null=False, choices=ModelStatus.member_list(),
-                              default=ModelStatus.enable)
-    create_time = models.DateTimeField('创建时间', auto_now_add=True, null=True, db_index=True)
-    update_time = models.DateTimeField('更新时间', auto_now=True, null=True)
-
-    @classmethod
-    def get_objects(cls):
-        return cls.objects
-
-    @property
-    def orgs(self):
-        return getattr(self, 'organizations', None)
-
-    @property
-    def org(self):
-        return getattr(self, 'organization', None)
-
-    def save(self, *args, **kwargs):
-        self.update_time = datetime.datetime.now()
-        self._version += 1
-        super().save(*args, **kwargs)
+    status = models.SmallIntegerField('状态', null=False, choices=ModelStatus.choices, default=ModelStatus.enable)
 
     def remove(self):
         self.status = ModelStatus.delete
-
         self.save()
-
-    def get_display(self, key):
-        display = {}
-        display_func = f'get_{key}_display'
-        if hasattr(self, display_func):
-            display_func = getattr(self, display_func)
-            display = {
-                    f'{key}_verbose': display_func()
-            }
-        return display
-
-    def to_json(self):
-        result = {}
-        values = model_to_dict(self)
-
-        for key, value in values.items():
-            if key in ['password']:
-                continue
-            if isinstance(value, (datetime.datetime,)):
-                value = format_date(value)
-            if isinstance(value, (Decimal,)):
-                value = float(value)
-            if key == 'status':
-                # 这是EnumElement，因为子类可能有自己的status，status_ele可能为None
-                status_ele = ModelStatus(value)
-                if status_ele:
-                    status_verbose = status_ele.name
-                else:
-                    status_verbose = '未知状态'
-
-                item = {
-                        key             : value,
-                        'status_verbose': status_verbose,
-                }
-            else:
-                item = {key: value, **self.get_display(key)}
-            result.update(item)
-
-        result.update({
-                'create_time': format_date(self.create_time),
-                'update_time': format_date(self.update_time)
-        })
-        return result
 
     class Meta:
         abstract = True

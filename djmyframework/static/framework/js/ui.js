@@ -10,11 +10,12 @@ function initSelectTree() {
         var keyName = $(this).attr('data-keyName') || $(this).attr('data-key') || 'alias'
         var defaultVal = $ele.val()
         var parentKeyName = $(this).attr('data-parentKeyName') || 'parent'
+        var queryFields = $(this).attr('data-queryFields') || 'id,name,alias,username,parent,parent_id'
         if ($(ele).attr('data-already-init')) {
             return
         }
 
-        $.getJSON(url, {page_size: 1000, fields: 'id,name,alias,username,parent,parent_id'}, function (rsp) {
+        $.getJSON(url, {page_size: 1000, fields: queryFields}, function (rsp) {
             $(ele).html('')
             $(ele).append('<option value="">*</option>')
             var data = rsp.data.results
@@ -72,13 +73,14 @@ function initSelect2() {
         var $ele = $(ele)
         var url = $(this).attr('data-url')
         var keyName = $(this).attr('data-keyName') || $(this).attr('data-key') || 'alias'
+        var queryFields = $(this).attr('data-queryFields') || 'id,name,alias,username'
         var defaultVal = $ele.val()
         if ($(ele).attr('data-already-init')) {
             return
         }
 
         if (url) {
-            $.getJSON(url, {page_size: 1000, fields: 'id,name,alias,username'}, function (rsp) {
+            $.getJSON(url, {page_size: 1000, fields: queryFields}, function (rsp) {
                 var results = $.map(rsp.data.results, function (row) {
                     return {id: row.id, text: row[keyName] || row.alias || row.name}
                 })

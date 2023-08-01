@@ -462,7 +462,7 @@
                 }
                 this.save = function () {
                     var config = this.get_json_config()
-                    this.textarea.val(config)
+                    !this.textarea.val() ? this.textarea.val(config) : null
 
                 }
             }

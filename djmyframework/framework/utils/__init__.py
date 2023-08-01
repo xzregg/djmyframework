@@ -2,53 +2,42 @@
 # 一堆工具
 import base64
 import calendar
-import contextlib
 import datetime
 import hashlib
 import importlib
 import io
-import json
-import logging
-import os
-import random
-import re
-import threading
-import traceback
-from collections import OrderedDict
-from importlib import import_module as _import_module
-
-from requests import Timeout
-
-import hashlib
 import itertools
 import json
 import logging
 import os
 import random
+import re
 import shutil
 import string
+import threading
+import traceback
 import uuid
 import warnings
 import zipfile
-
+from collections import OrderedDict
 from decimal import Decimal
+from importlib import import_module as _import_module
 
 import redis
-
 import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from raven.contrib.django.raven_compat.models import client
-from log_request_id import local
-
-from .time import get_current_hours, get_now
 from django.db import models
 from django.db.models.query import QuerySet
+from log_request_id import local
 from objectdict import ObjectDict as _ObjectDict
+from raven.contrib.django.raven_compat.models import client
+from requests import Timeout
 from rest_framework import serializers
 from rest_framework.utils.encoders import JSONEncoder
-import functools
+
+from .time import get_current_hours, get_now
 
 try:
     from hashlib import sha1
@@ -837,6 +826,15 @@ class Dict2Obj(dict):
             value = Dict2Obj(value)
         return value
 
+
+_redis_client = None
+
+
+def get_redis_client():
+    global _redis_client
+    if not _redis_client:
+        _redis_client = redis.Redis.from_url(settings.REDIS_URL)
+    return _redis_client
 
 if __name__ == '__main__':
     test_d = {'openId': ['4095339'], 'code': ['1'], 'userType': ['55'], 'timestamp': ['1446705211'],

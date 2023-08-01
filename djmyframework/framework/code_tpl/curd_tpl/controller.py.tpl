@@ -19,6 +19,7 @@ from framework.serializer import CeleryTaskResultSerializer
 from ${app_name}.serializer.${model_lower_name} import *
 from middlewares import EnhanceRequest
 from framework.serializer import CeleryTaskResultSerializer
+from ${app_name}.service.${model_lower_name} import ${model_name}Service
 
 @Route('${app_name}/${model_lower_name}')
 class ${model_name}Set(CurdViewSet):
@@ -35,6 +36,8 @@ class ${model_name}Set(CurdViewSet):
     queryset_fields = ${list(fields_name_list)}
 
     model = ${model_name}
+
+    service =  ${model_name}Service()
 
     def get_queryset(self) -> QuerySet:
         return ${model_name}.objects.filter().prefetch_related(*${[f.name for f in model_many_to_many]}).select_related(*${[f.name for f in model_foreigns]}).only(*${model_name}Set.queryset_fields)

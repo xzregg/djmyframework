@@ -66,7 +66,7 @@ class BaseMiddleware(MiddlewareMixin):
         request.is_post = request.method == 'POST'
         request.is_get = request.method == 'GET'
         request.is_json = 'json' in request.content_type or request.path.endswith(
-                '.json') or request.is_ajax() or request.GET.get('format', '') == 'json'
+                '.json')  or request.GET.get('format', '') == 'json'
         request.user_agent = RequestUserAgent(request)
         try:
             # 将 body 数据放到 post 里

@@ -8,23 +8,27 @@ import json
 import logging
 import traceback
 
+from django.contrib.auth import SESSION_KEY
 from django.core.cache import cache
 from django.shortcuts import HttpResponseRedirect
 
 import settings
 from framework.middleware import BaseMiddleware
+from framework.middleware import CustomRequest
 from framework.response import Response
 from framework.translation import _
-from framework.views import is_notauth, is_notcheck
 from framework.utils import md5
+from framework.views import is_notauth, is_notcheck
 from .models.user import User
-from django.contrib.auth import SESSION_KEY
 
 # ==========================================
 
 # 日志记录
 _log = logging.getLogger('root')
 
+
+class AuthRequest(CustomRequest):
+    user: User
 
 def get_real_ip(request):
     """获取真实ip
