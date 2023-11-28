@@ -11,7 +11,6 @@ import datetime
 from collections.abc import Mapping
 
 from django.db import models
-
 from django.utils.translation import gettext_lazy as _
 from drf_dynamic_fields import DynamicFieldsMixin
 from rest_framework import serializers as s
@@ -23,6 +22,7 @@ from rest_framework.request import Request
 from rest_framework.settings import api_settings
 from rest_framework.utils.serializer_helpers import ReturnDict
 from rest_framework_recursive.fields import RecursiveField
+
 from .utils import DATETIMEFORMAT, ObjectDict
 from .utils.cache import CacheAttribute, CachedClassAttribute
 
@@ -115,7 +115,7 @@ class ParamsSerializer(s.Serializer):
     def params_data(self):  # type: () -> self
         """返回设置的与验证过后的数据"""
         self.validation()
-        #self.data.merge(self.initial_data)
+        # self.data.merge(self.initial_data)
         return self.o
 
     @property
@@ -239,9 +239,9 @@ class NullBooleanField(s.BooleanField):
 class BaseModelSerializer(DynamicFieldsMixin, s.ModelSerializer, ParamsSerializer):
     id = s.IntegerField(label=_('id'), required=False, allow_null=True)
     create_datetime = s.DateTimeField(label=_('创建时间'), format=DATETIMEFORMAT, required=False, read_only=True,
-                                  allow_null=True, default=datetime.datetime.now)
+                                      allow_null=True, default=datetime.datetime.now)
     update_datetime = s.DateTimeField(label=_('更新时间'), format=DATETIMEFORMAT, required=False, read_only=True,
-                                  allow_null=True)
+                                      allow_null=True)
     _version = s.IntegerField(label=_('内置版本号'), read_only=True, required=False, allow_null=True)
 
     base_exclude = ['_version']
@@ -333,7 +333,7 @@ class EmptySerializer(DataSerializer):
 
 
 class IdSerializer(ParamsSerializer):
-    id = s.IntegerField(label='ID', help_text=_('对象ID'), required=False, allow_null=True, allow_blank=True)
+    id = s.IntegerField(label='ID', help_text=_('对象ID'), required=False, allow_null=True)
 
 
 class ListIntField(s.ListField):
@@ -394,6 +394,7 @@ class RelationModelIdField(RelatedField):
 
     def to_representation(self, value_model_list):
         return [value.pk for value in value_model_list]
+
 
 # class OrgReqSer(DataSerializer):
 #     """组织"""
