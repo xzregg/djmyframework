@@ -26,6 +26,7 @@ from settings import settings
 
 urlpatterns = [  # url(r'^admin/', admin.site.urls),
                   re_path('^[/]?$', import_view(settings.INDEX_VIEW), name='index'),
+                  re_path('^home[/]?$', import_view(settings.HOME_VIEW), name='home'),
                   # 静态资源
                   re_path(r'^%s(?P<path>.*)$' % re.escape(settings.STATIC_URL.lstrip('/')), static_view)
               ] + get_urlpatterns() + api_doc_urlpatterns

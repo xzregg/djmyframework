@@ -47,6 +47,7 @@ LOGIN_URL = SettingOptions('/myadmin/login', _('系统标题'), 'LOGIN_URL', 'Sy
 INDEX_URL = SettingOptions('/', _('登录后主页跳转地址'), 'INDEX_URL', 'System',
                            choices=[('/index', _('主页')), ('/myadmin/index', _('管理主页'))])
 INDEX_VIEW = 'myadmin.views.index'
+HOME_VIEW = 'myadmin.views.home'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = settings.DEBUG

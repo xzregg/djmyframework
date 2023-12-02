@@ -8,9 +8,9 @@
 import datetime
 import time
 
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
-from django.db import connection
+
 from framework.route import Route
 from framework.serializer import ParamsSerializer, s
 from framework.utils import TIMEFORMAT
@@ -35,6 +35,13 @@ def index(request: Request):
 
     now_timestamp = int(time.time())
     return Response(locals(), template_name='myadmin/index.html')
+
+
+@notcheck
+@api_view('get')
+def home(reqquest: Request):
+    return Response(locals(), template_name='myadmin/home.html')
+
 
 class LoginError(RspError): pass
 

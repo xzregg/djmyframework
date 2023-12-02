@@ -8,6 +8,7 @@
 
 import copy
 import datetime
+from abc import ABC
 from collections.abc import Mapping
 
 from django.db import models

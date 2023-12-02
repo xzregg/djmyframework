@@ -588,8 +588,6 @@ $(document).on('focus', '.datetime', function () {
 // daterange  end --
 
 
-
-
 // Wdate
 $(document).on('focus', '.Wdate', function () {
     WdatePicker({
@@ -663,6 +661,12 @@ $(document).on('click', '.ask', function (e) {
     }
 })
 
+function HistoryMenu() {
+    this.menu_list = [];
+    this.add_history_menu = function (aObj) {
+        console.dir(this)
+    }
+}
 
 function makeToolTips(ele, tooltipText, time) {
 
@@ -673,6 +677,7 @@ function makeToolTips(ele, tooltipText, time) {
         tooltipEle.hide()
     }
 }
+
 $(document).on('blur', '.input-number', function () {
     var tooltipText = ''
     var $this = $(this)
