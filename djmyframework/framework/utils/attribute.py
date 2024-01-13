@@ -29,7 +29,10 @@ class CachedClassAttribute(CacheAttribute):
     """
 
     def __get__(self, inst, cls):
-        for sub_cls in cls.__subclasses__():
+        subclasses = cls.__subclasses__()
+        if not subclasses and inst:
+            return self.method(cls)
+        for sub_cls in subclasses:
             # 缓存一次所有的子类属性
             if not hasattr(sub_cls, self.name):
                 super(CachedClassAttribute, self).__get__(sub_cls, sub_cls)
