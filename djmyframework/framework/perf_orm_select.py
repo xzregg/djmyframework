@@ -140,7 +140,7 @@ class PerfOrmSelectModel(models.Model):
             self._is_load_from_db = True
 
     def __getattribute__(self, attrname):
-        if super().__getattribute__('_is_load_from_db') and attrname in super().__getattribute__('concrete_fields_map'):
+        if super().__getattribute__('_is_load_from_db') and attrname in super().__getattribute__('__class__').concrete_fields_map:
             add_access_models_field(self._meta.model, attrname)
         return super().__getattribute__(attrname)
 

@@ -606,7 +606,7 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
             return self.save(*args, **kwargs)
 
     def __getattribute__(self, attrname):
-        if super().__getattribute__('_is_init') and attrname in super().__getattribute__('concrete_fields_map'):
+        if super().__getattribute__('_is_init') and attrname in super().__getattribute__('__class__').concrete_fields_map:
             super().__getattribute__('_update_fields').add(attrname)
         return super().__getattribute__(attrname)
 
