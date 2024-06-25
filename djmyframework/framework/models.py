@@ -611,7 +611,7 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
         return super().__getattribute__(attrname)
 
     def __setattr__(self, attrname, value):
-        if self._is_init and attrname in self.concrete_fields_map:
+        if self._is_init and attrname in self.__class__.concrete_fields_map:
             self._update_fields.add(attrname)
         return super().__setattr__(attrname, value)
 
