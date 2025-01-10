@@ -36,8 +36,10 @@ from raven.contrib.django.raven_compat.models import client
 from requests import Timeout
 from rest_framework import serializers
 from rest_framework.utils.encoders import JSONEncoder
-
+from .log import logger
 from .time import get_current_hours, get_now
+import functools
+from inspect import isfunction
 
 try:
     from hashlib import sha1
@@ -51,10 +53,6 @@ TIMEFORMAT = '%H:%M:%S'
 DATEFORMAT = '%Y-%m-%d'
 DATETIMEFORMAT: str = '%Y-%m-%d %H:%M:%S'
 CONVERT_FORMAT = {"datetime": DATETIMEFORMAT, "date": DATEFORMAT, "time": TIMEFORMAT}
-
-logger = logging.getLogger('root')
-
-
 
 
 def find_djapp_name(app_root_path):
@@ -118,9 +116,6 @@ def import_func(name):
 
 import_view = import_func
 import_module_attr = import_view
-
-import functools
-from inspect import isfunction
 
 
 class DecoratorsPartial(object):
@@ -704,9 +699,6 @@ def delete_cache(cache_key):
         pass
 
 
-
-
-
 def get_client_ip(request=None):
     """
     获取请求的ip
@@ -835,6 +827,7 @@ def get_redis_client():
     if not _redis_client:
         _redis_client = redis.Redis.from_url(settings.REDIS_URL)
     return _redis_client
+
 
 if __name__ == '__main__':
     test_d = {'openId': ['4095339'], 'code': ['1'], 'userType': ['55'], 'timestamp': ['1446705211'],

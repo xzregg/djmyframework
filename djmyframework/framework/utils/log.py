@@ -10,17 +10,7 @@ import time
 from .multiprocesslogging import MultiProcessTimedRotatingFileHandler
 
 
-class Logger(object):
-    '''#使用django 的logging
-    @name 记录的名字 需在setting里设置
-    '''
-
-    def __new__(cls, name='root'):
-        logger = logging.getLogger(name)
-        return logger
-
-
-logger = Logger()
+logger = logging.getLogger('root')
 log = logger
 
 

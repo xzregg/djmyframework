@@ -15,7 +15,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.management.color import no_style
 from django.core.validators import RegexValidator
-from django.db import close_old_connections, connection
+from django.db import close_old_connections, connection, IntegrityError
 from django.db import models
 from django.db.models import JSONField as DjJSONField
 from django.db.models import QuerySet
@@ -324,13 +324,14 @@ class BaseModelMixin(SqlModelMixin):
             field_name = f.name
             data = dict_data.get(f.name, models.fields.Empty)
             if data is not models.fields.Empty:
+                if not f.null and data is None:
+                    continue
                 if isinstance(f, (models.ForeignKey, models.OneToOneRel)):
                     if not isinstance(data, (models.Model, int)):
                         continue
                 if f.default is not models.fields.NOT_PROVIDED and use_default:
                     data = f.default
-                if not f.null and data is None:
-                    continue
+
                 self.set_attr(field_name, data, null=True)
 
     def set_attr(self, name, value, value_handler=None, null=False):
@@ -510,6 +511,23 @@ class BaseModelMixin(SqlModelMixin):
         return copy_obj
 
 
+    @CachedClassAttribute
+    def fields_verbose_name_map(self):
+        return OrderedDict([(f.name, f.verbose_name) for f in self.get_fields()])
+
+
+
+@receiver(post_init)
+def model_init(sender, instance, **kwargs):
+    """所有模型初始化的时候,复制一份初始化数据
+    """
+    if getattr(instance, "pk", None):
+        pre_init_data = ObjectDict(instance.__dict__)
+    else:
+        pre_init_data = ObjectDict()
+    instance.pre_init_data = pre_init_data
+
+
 class OptimisticLockException(Exception): pass
 
 
@@ -518,8 +536,8 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
     _version = models.IntegerField(_("版本"), default=0, null=False)
 
     # auto_now_add = True    #创建时添加的时间  修改数据时，不会发生改变
-    create_datetime = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
-    update_datetime = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
+    create_time = models.DateTimeField(_("创建时间"), auto_now_add=True, blank=True, null=False, db_index=True)
+    update_time = models.DateTimeField(_("更新时间"), auto_now=True, blank=True, null=False)
 
     _is_init = False
 
@@ -617,13 +635,23 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
 
     def save(self, *args, **kwargs):
         """只更新有改的字段"""
-        self.update_datetime = datetime.datetime.now()
+        self.update_time = datetime.datetime.now()
         self._version += 1
         update_fields = kwargs.pop('update_fields', None)
         if self.id and not kwargs.get('force_insert'):
             update_fields = update_fields or self._get_update_fields()
         return super().save(*args, update_fields=update_fields, **kwargs)
 
+    @classmethod
+    def get_or_create_object(cls,**kwargs):
+        try:
+            # Try to get or create the object
+            obj, created = cls.objects.get_or_create(**kwargs)
+        except IntegrityError:
+            # If a duplicate error occurs, try fetching the object again
+            obj = cls.objects.get(**kwargs)
+            created = False
+        return obj, created
 
 class BaseNameModel(BaseModel):
     name = models.CharField(_('名称'), max_length=100, null=False, blank=False, validators=[LetterValidator],
@@ -786,24 +814,12 @@ class BaseStatusModel(BaseModel):
     STATUS = ModelStatus
     status = models.SmallIntegerField('状态', null=False, choices=ModelStatus.choices, default=ModelStatus.enable)
 
-    def remove(self):
+    def remove(self, *args, **kwargs):
         self.status = ModelStatus.delete
-        self.save()
+        self.save(*args,**kwargs)
 
     class Meta:
         abstract = True
-
-
-@receiver(post_init)
-def model_init(sender, instance, **kwargs):
-    """所有模型初始化的时候,复制一份初始化数据
-    """
-    # from django.forms.models import model_to_dict
-    if getattr(instance, "pk", None):
-        pre_init_data = ObjectDict(instance.__dict__)
-    else:
-        pre_init_data = ObjectDict()
-    instance.pre_init_data = pre_init_data
 
 
 class PerfOrmSelectTreeQuerySet(PerfOrmSelectQuerySet, TreeQuerySet): pass
@@ -848,77 +864,6 @@ class TreeModel(PerfOrmSelectModel, MPTTModel):
         base_manager_name = 'objects'
         default_manager_name = 'objects'
 
-
-class AttributeModel(PerfOrmSelectModel, BaseModelMixin):
-    """
-    attribute 配置属性 高级版 多配置自用
-    """
-
-    class Meta:
-        abstract = True
-
-    # ATTRIBUTE_CONF = []
-    # attribute = models.PositiveIntegerField('二进制配置', default=0, blank=True, null=True)  # 参考 Bilibili attribute 8bit
-
-    def attribute_item(self, attribute, _attribute_list=None) -> dict:
-        result = {}
-        for attr_name in _attribute_list:
-            result[attr_name] = self.get_attribute(attr_name, attribute, _attribute_list)
-        return result
-
-    def get_attribute(self, attr_name, attribute=0, _attribute_list=None) -> bool:
-        # _attribute_list = _attribute_list if _attribute_list else self.ATTRIBUTE_CONF
-        _index = _attribute_list.index(attr_name)
-        return True if attribute & (1 << _index) else False
-
-    def set_attribute(self, items: dict, attribute=0, _attribute_list=None) -> int:
-        """ items{conf_name:bool} -> attribute # batch modify"""
-        # _attribute_list = _attribute_list if _attribute_list else self.ATTRIBUTE_CONF
-        for attribute_name, _bool in items.items():
-            _index = _attribute_list.index(attribute_name)
-            attribute = attribute | (1 << _index) if _bool else attribute & ~(1 << _index)
-        return attribute
-
-    def modify_attribute(self, attribute_name: str, _val: bool, attribute=0, _attribute_list=None) -> int:
-        """ attribute_name:conf_name _val:bool -> attribute """
-        # _attribute_list = _attribute_list if _attribute_list else self.ATTRIBUTE_CONF
-        _index = _attribute_list.index(attribute_name)
-        return attribute | (1 << _index) if _val else attribute & ~(1 << _index)
-
-
-class SimpleAttributeModel(PerfOrmSelectModel, BaseModelMixin):
-    """
-    简单易用的配置属性模型
-    灵感来自啊B 原理是 bit 按位标识配置开关 存储在十进制数字里面(参考 Redis Bitmap 可存放大量配置项,或者做签到,登陆统计,用户状态记录)
-    """
-
-    class Meta:
-        abstract = True
-
-    # ATTRIBUTE_CONF = []
-    # attribute = models.PositiveIntegerField('二进制配置', default=0, blank=True, null=True)  # max len 31
-
-    def attribute_item(self) -> dict:
-        return {attr_name: self.get_attribute(attr_name) for attr_name in self.ATTRIBUTE_CONF}
-
-    def attribute_list(self) -> list:
-        return list(filter(lambda _: _, self.attribute_item()))
-
-    def get_attribute(self, attr_name) -> bool:
-        return True if self.attribute & (1 << self.ATTRIBUTE_CONF.index(attr_name)) else False
-
-    @classmethod
-    def set_attribute(cls, items: dict) -> int:
-        attribute = 0
-        for attribute_name, _bool in items.items():
-            _index = cls.ATTRIBUTE_CONF.index(attribute_name)
-            attribute = attribute | (1 << _index) if _bool else attribute & ~(1 << _index)
-        return attribute
-
-    def modify_attribute(self, attribute_name: str, _val: bool) -> int:
-        """ attribute_name:conf_name _val:bool -> attribute """
-        _index = self.ATTRIBUTE_CONF.index(attribute_name)
-        return self.attribute | (1 << _index) if _val else self.attribute & ~(1 << _index)
 
 
 class ShardingModelMixin(object):

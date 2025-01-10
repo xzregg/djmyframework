@@ -14,6 +14,8 @@ import time
 import ulid as ulid
 from celery import Celery, Task
 
+from config.celery_schedule import BEAT_SCHEDULE
+
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
@@ -83,8 +85,6 @@ def debug_task(self):
 # app.conf.task_routes = {'myadmin.tasks.*': {'queue': 'myadmin'}}
 app.conf.task_routes = {}
 
-celerybeat_schedule = {}
-
 app.conf.update(
         CELERY_REDIS_MAX_CONNECTIONS=12,
         CELERY_POOL_LIMIT=13,
@@ -96,5 +96,5 @@ app.conf.update(
         CELERY_TRANSPORT_OPTIONS={
                 'max_connections': 40,
         },
-        CELERYBEAT_SCHEDULE=celerybeat_schedule,
+        CELERYBEAT_SCHEDULE=BEAT_SCHEDULE,
 )

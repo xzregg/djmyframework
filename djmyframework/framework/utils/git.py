@@ -10,8 +10,9 @@ import os
 
 os.environ["GIT_PYTHON_REFRESH"] = "quiet"
 
+
 def find_git_author(repo_path, file_path, line_num):
-    from git import Repo, Commit
+    from git import Repo
     repo = Repo(repo_path)
     tlc = 0
     for commit, lines in repo.blame('HEAD', file_path):
@@ -30,9 +31,11 @@ def get_last_frame_fileinfo(filter_root_path='') -> (str, int):
     yield '', 0
 
 
-def get_track_msg_author_info(filename='', lineno=0, repo_path='./', ) -> str:
+def get_track_msg_author_info(filename='', lineno=0, repo_path='./') -> str:
     try:
         commit = find_git_author(repo_path, filename, lineno)
-        return f'@{commit.author.name} : {commit.summary}' if commit else ''
+        if commit:
+            return f'@{commit.author.name} : {commit.summary}', commit
+        return '', None
     except Exception as e:
-        return ''
+        return '', None

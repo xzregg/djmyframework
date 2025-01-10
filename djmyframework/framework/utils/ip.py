@@ -1,17 +1,28 @@
 # coding:utf-8
-
-
-import fcntl
+try:
+    import fcntl
+except:
+    # 不支持windows
+    class fcntl:
+        @staticmethod
+        def flock(*args):
+            return 0
+import os
+import pathlib
 import socket
 import struct
-import os
+from dataclasses import dataclass
+
+import ipaddress
+from .xdbSearcher import XdbSearcher
+
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
-        s.fileno(),
-        0x8915,  # SIOCGIFADDR
-        struct.pack('256s', ifname[:15])
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
     )[20:24])
 
 
@@ -35,17 +46,65 @@ def guess_ipaddres(ifnames=['eth0', 'eth1', 'eth2', 'em1', 'em2']):
 
 HOST_IP = get_host_ip()
 
-
 ip_db = None
+
+
 def ip_transform(ip):
     import ipdb
     global ip_db
     if not ip_db:
         # 服务依赖：https://www.ipip.net/product/client.html IPv4 免费地址库
-        file_path = os.path.join(os.path.dirname(__file__)  , "ipipfree.ipdb")
+        file_path = os.path.join(os.path.dirname(__file__), "ipipfree.ipdb")
         ip_db = ipdb.BaseStation(file_path)
     location = ip_db.find_map(ip, "CN")
     return "{country_name}|{region_name}|{city_name}".format(**location)
+
+
+@dataclass
+class RegionData:
+    country: str
+    province: str
+    city: str
+    provider: str
+    region: str
+
+
+class IpRegion(object):
+    def __init__(self):
+        dbPath = pathlib.Path(__file__).parents[0] / "ip2region.xdb"
+        cb = XdbSearcher.loadContentFromFile(dbfile=dbPath)
+        self.searcher = XdbSearcher(contentBuff=cb)
+
+    def search(self, ip) -> RegionData:
+        region_text = self.searcher.search(ip)
+        region_text_split = [item if item != '0' else '' for item in region_text.split('|')]
+        data = RegionData(
+                country=region_text_split[0],
+                province=region_text_split[2],
+                city=region_text_split[3],
+                provider=region_text_split[4],
+                region='-'.join(item for item in region_text_split[:-1] if item),
+        )
+        return data
+
+    def __del__(self):
+        self.searcher.close()
+
+
+_ip_region = IpRegion()
+
+
+def ip2region(ip: str):
+    return _ip_region.search(ip)
+
+
+def is_private(ip):
+    try:
+        network = ipaddress.ip_network(ip)
+        return network.is_private
+    except ValueError as e:
+        print("Invalid IP address")
+        return False
 
 
 if __name__ == '__main__':

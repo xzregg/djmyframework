@@ -6,8 +6,7 @@ import threading
 import time
 import traceback
 import queue
-
-
+import vthread
 
 def async_func(func):
     @functools.wraps(func)

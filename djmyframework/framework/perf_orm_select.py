@@ -107,6 +107,23 @@ class PerfOrmSelectQuerySet(QuerySet):
         self._deduction_select_filed()
         return super()._fetch_all()
 
+    def use_indexs(self, table, *indexs):
+        clone = self._chain()
+        clone.query.get_initial_alias()
+        alias_map = clone.query.alias_map
+        table_obj = alias_map.get(table)
+        if table_obj:
+            indexs_str = ','.join(indexs)
+            table_alias = table_obj.table_alias
+            if indexs_str:
+                if not 'USE INDEX' in table_obj.table_alias:
+                    table_alias = '' if table_obj.table_alias == table_obj.table_name else table_obj.table_name
+                    table_alias = f'{table_alias} USE INDEX ({indexs_str})'
+            else:
+                table_alias = table_obj.table_name
+            table_obj.table_alias = table_alias
+        return clone
+
 
 class PerfOrmSelectManager(BaseManager.from_queryset(PerfOrmSelectQuerySet), models.Manager):
     def get_queryset(self):
