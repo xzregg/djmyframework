@@ -571,14 +571,18 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
             return _update_fields
         return self._update_fields
 
-    def _optimistic_save_again(self, new_data: dict, look_num: int, *args, **kwargs):
+    @CachedClassAttribute
+    def _refresh_fields(cls):
+        return [f.name for f in cls.fields if isinstance(f, (models.IntegerField, models.FloatField))]
+
+    def _optimistic_save_again(self, new_data: dict, loop_num: int, *args, **kwargs):
         """
         乐观锁保存失败，尝试从数据库中刷新值再对比差异
         @return:
         """
         pre_init_data = getattr(self, 'pre_init_data', None)
         if pre_init_data:
-            self.refresh_from_db()
+            self.refresh_from_db(fields=self._refresh_fields)
             new_data.pop('_version', None)
             for attr_name, update_value in new_data.items():
                 value = getattr(self, attr_name)
@@ -589,9 +593,11 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
                         diff_value = update_value - init_value
                         new_value = value + diff_value
                     setattr(self, attr_name, new_value)
-            return self.optimistic_save(look_num=look_num, *args, **kwargs)
+            # 循环次数大于一次,用第一次计算的数据,避免叠加
+            first_update_data = new_data if loop_num >= 1 else None
+            return self.optimistic_save(loop_num=loop_num, first_update_data=first_update_data, *args, **kwargs)
 
-    def optimistic_save(self, *args, raise_exception=True, look_num=3, **kwargs):
+    def optimistic_save(self, *args, raise_exception=True, loop_num=0, first_update_data=None, **kwargs):
         """
         乐观锁 保存
         @param args:
@@ -609,16 +615,18 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
             has_save = self.__class__.objects.using(kwargs.get('using')).filter(id=self.id,
                                                                                 _version=self._version,
                                                                                 ).update(**new_data)
+
+            #print(f'version:{has_save}:{loop_num}', self._version, new_data['_version'], new_data)
             if has_save:
                 self._version = new_data['_version']
             else:
-                _look_num = look_num - 1
-                if look_num >= 0:
-                    time.sleep(0.01)
-                    has_save = self._optimistic_save_again(new_data, look_num=_look_num)
+                loop_num += 1
+                if loop_num <= 5:
+                    time.sleep(0.01 * loop_num)
+                    has_save = self._optimistic_save_again(first_update_data or new_data, loop_num=loop_num)
                 if not has_save:
                     if raise_exception:
-                        raise OptimisticLockException(f'{self} {self.id} {self._version} Optimistic Save Error look_num: {look_num}')
+                        raise OptimisticLockException(f'{self} {self.id} {self._version} Optimistic Save Error look_num: {loop_num}')
             return has_save
         else:
             return self.save(*args, **kwargs)
