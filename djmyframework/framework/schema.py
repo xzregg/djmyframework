@@ -6,22 +6,25 @@
 # @Contact : xzregg@gmail.com
 # @Desc    :
 import copy
+import inspect
 import logging
 import traceback
 from collections import OrderedDict
+
 import coreschema
+from django.urls import resolve
 from drf_yasg import openapi
 from drf_yasg.errors import SwaggerGenerationError
 from drf_yasg.inspectors.field import FieldInspector
 from drf_yasg.inspectors.view import SwaggerAutoSchema
 from drf_yasg.utils import force_serializer_instance, guess_response_status, no_body, param_list_to_odict, \
-    swagger_auto_schema, force_real_str
+    force_real_str
 from rest_framework import serializers, status
 from rest_framework.relations import ManyRelatedField, RelatedField
-from django.urls import resolve
-from .filters import MyFilterSerializer
-from .response import RspError, RspErrorEnum, RspSerializer
+
+from .response import RspErrorEnum, RspSerializer
 from .serializer import ModelFilterSerializer
+from .utils import ObjectDict
 from .utils.myenum import Enum
 
 _api_info = openapi.Info(
@@ -94,11 +97,18 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def filter_request_apps(self):
         if self.request:
             filter_apps_text = self.request.GET.get('apps', '')
+            is_exclude = self.request.GET.get('is_exclude', '')
+            filter_tags_text = self.request.GET.get('tags', '')  # 通过tags过滤
             if filter_apps_text:
                 filter_apps = filter_apps_text.split(',')
                 app_name = self.get_app_name()
-                if filter_apps and app_name not in filter_apps:
-                    return True
+                if filter_apps:
+                    return (app_name in filter_apps) if is_exclude else (app_name not in filter_apps)
+            elif filter_tags_text:
+                filter_tags = filter_tags_text.split(',')
+                tags_text = self.overrides.get('tags', [''])[0]
+                if tags_text:
+                    return not any(s in tags_text for s in filter_tags)
 
     def get_operation(self, operation_keys=None):
         if self.filter_request_apps():
@@ -114,9 +124,10 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             if self.get_query_serializer() or self.get_request_serializer():
                 return super(CustomSwaggerAutoSchema, self).get_operation(operation_keys)
         except Exception as e:
-            logging.error(f'  {self.path} 定义 {self.method} Serializer 错误!')
             traceback.print_exc()
-            #raise e
+            logging.error(f'  {self.path} 定义 {self.method} Serializer 错误!')
+
+
     def get_responses(self):
         """Get the possible responses for this view as a swagger :class:`.Responses` object.
 
@@ -155,6 +166,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def get_view_annotations_serializer(self, key):
         serializer = self.get_view_annotations().get(key, None)
         if serializer:
+            self.set_serializer_ref_name(serializer)
             return force_serializer_instance(serializer)
         return serializer
 
@@ -173,6 +185,22 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
 
         if body_override is no_body:
             return None
+        self.set_serializer_ref_name(body_override)
+        return body_override
+
+    def _get_request_body_override(self):
+        """Parse the request_body key in the override dict. This method is not public API."""
+        body_override = self.overrides.get('request_body', None)
+
+        if body_override is not None:
+            if body_override is no_body:
+                return no_body
+            # if self.method not in self.body_methods:
+            #     raise SwaggerGenerationError("request_body can only be applied to (" + ','.join(self.body_methods) +
+            #                                  "); are you looking for query_serializer or manual_parameters?")
+            if isinstance(body_override, openapi.Schema.OR_REF):
+                return body_override
+            return force_serializer_instance(body_override)
 
         return body_override
 
@@ -184,6 +212,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         params_serializer = self.get_view_annotations_serializer('params')
         query_serializer = self.overrides.get('query_serializer', None) or params_serializer
         if query_serializer is not None:
+            self.set_serializer_ref_name(query_serializer)
             query_serializer = force_serializer_instance(query_serializer)
         return query_serializer
 
@@ -218,10 +247,24 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
                 **OrderedDict((attr, getattr(schema, attr, None)) for attr in coreschema_attrs)
         )
 
+    # 设置序列化 ref_name
+    def set_serializer_ref_name(self, serializer):
+        if serializer:
+            serializer_meta = getattr(serializer, 'Meta', None)
+            serializer_name = getattr(serializer, '__name__', None) or type(serializer).__name__
+            if not serializer_meta:
+                setattr(serializer, 'Meta', ObjectDict())
+            serializer_meta = getattr(serializer, 'Meta', None)
+            if not hasattr(serializer_meta, 'ref_name'):
+                app_name = serializer.__module__.replace('.', '_').replace('_serializer_', '_')
+                ref_name = f'{app_name}_{serializer_name}'
+                setattr(serializer_meta, 'ref_name', ref_name)
+        return serializer
     def get_request_body_parameters(self, consumes):
 
         parameters = super().get_request_body_parameters(consumes)
         serializer = self.get_request_serializer()
+        self.set_serializer_ref_name(serializer)
         return parameters + self.get_myfilter_parameters(serializer, openapi.IN_BODY)
 
     def get_request_body_schema(self, serializer):
@@ -251,7 +294,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         query_serializer = self.get_query_serializer()
 
         serializer_parameters = []
-
+        self.set_serializer_ref_name(query_serializer)
         if query_serializer is not None:
             filter_parameters = self.get_myfilter_parameters(query_serializer, in_=openapi.IN_QUERY)
             serializer_parameters = self.serializer_to_parameters(query_serializer, in_=openapi.IN_QUERY)
@@ -291,12 +334,13 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         """
 
         if rsp_data_serializer:
+            self.set_serializer_ref_name(rsp_data_serializer)
             rep_code_errors: RspErrorEnum = getattr(rsp_data_serializer, 'Errors', None) or getattr(rsp_data_serializer, 'RspCode', None)
             default_declared_fields = RspSerializer._declared_fields
             rep_code_serializer = default_declared_fields['code']
             choices = rep_code_serializer.choices
             # 增加错误代码
-            if rep_code_errors and (issubclass(rep_code_errors, (RspErrorEnum, Enum)) or isinstance(rep_code_errors,(RspErrorEnum, list, tuple,Enum))):
+            if rep_code_errors and (issubclass(rep_code_errors, (RspErrorEnum, Enum)) or isinstance(rep_code_errors, (RspErrorEnum, list, tuple, Enum))):
                 if hasattr(rep_code_errors, 'member_list'):
                     rsp_err_code_member_list = rep_code_errors.member_list()
                 choices = copy.copy(rep_code_serializer.choices)
@@ -304,6 +348,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             choices = list(choices.items())
             rsp_code_schema = self.serializer_to_schema(
                     serializers.ChoiceField(label=rep_code_serializer.label, choices=choices))
+
             rsp_data_serializer = force_serializer_instance(rsp_data_serializer)
         else:
             rsp_code_schema = self.serializer_to_schema(RspSerializer._declared_fields['code'])

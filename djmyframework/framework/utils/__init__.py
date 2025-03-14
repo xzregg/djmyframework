@@ -40,6 +40,7 @@ from .log import logger
 from .time import get_current_hours, get_now
 import functools
 from inspect import isfunction
+import socket
 
 try:
     from hashlib import sha1
@@ -825,7 +826,15 @@ _redis_client = None
 def get_redis_client():
     global _redis_client
     if not _redis_client:
-        _redis_client = redis.Redis.from_url(settings.REDIS_URL)
+        _redis_client = redis.Redis.from_url(settings.REDIS_URL, socket_timeout=70, socket_connect_timeout=5,
+                             socket_keepalive=True,
+                             socket_keepalive_options={
+                                     socket.TCP_KEEPINTVL: 30,
+                                     socket.TCP_KEEPCNT  : 3
+                             },
+                             max_connections=20,
+                             health_check_interval=30
+                             )
     return _redis_client
 
 
