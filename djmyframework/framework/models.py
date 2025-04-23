@@ -322,13 +322,16 @@ class BaseModelMixin(SqlModelMixin):
             if isinstance(f, (models.ManyToManyField,)) or f.attname == 'id':
                 continue
             field_name = f.name
-            data = dict_data.get(f.name, models.fields.Empty)
+            data = dict_data.get(field_name, models.fields.Empty)
+            if isinstance(f, (models.ForeignKey, models.OneToOneRel)):
+                if data is models.fields.Empty:
+                    field_name = f.attname
+                    data = dict_data.get(field_name, models.fields.Empty)
+                elif not isinstance(data, models.Model):
+                    data = models.fields.Empty
             if data is not models.fields.Empty:
                 if not f.null and data is None:
                     continue
-                if isinstance(f, (models.ForeignKey, models.OneToOneRel)):
-                    if not isinstance(data, (models.Model, int)):
-                        continue
                 if f.default is not models.fields.NOT_PROVIDED and use_default:
                     data = f.default
 

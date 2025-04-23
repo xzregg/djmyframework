@@ -6,10 +6,12 @@
 # @Contact : xzregg@gmail.com
 # @Desc    :
 import copy
+import functools
 import inspect
 import logging
 import traceback
 from collections import OrderedDict
+from functools import lru_cache
 
 import coreschema
 from django.urls import resolve
@@ -25,7 +27,9 @@ from rest_framework.relations import ManyRelatedField, RelatedField
 from .response import RspErrorEnum, RspSerializer
 from .serializer import ModelFilterSerializer
 from .utils import ObjectDict
+import addict
 from .utils.myenum import Enum
+from functools import wraps
 
 _api_info = openapi.Info(
         title="Myadmin API",
@@ -67,48 +71,74 @@ class CustomChoicesFieldInspector(FieldInspector):
                 setattr(result, 'has_add_enum_desc', True)
         return result
 
+def cache_decorator(cache_key):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if not self._cache[self.path].get(cache_key):
+                self._cache[self.path][cache_key] = func(self, *args, **kwargs)
+            return self._cache[self.path][cache_key]
+
+        return wrapper
+
+    return decorator
 
 class CustomSwaggerAutoSchema(SwaggerAutoSchema):
+    _cache = {}
 
     def __init__(self, view, path, method, components, request, overrides, operation_keys=None):
         overrides['field_inspectors'] = [CustomChoicesFieldInspector]
         # overrides['filter_inspectors'] = [CustomChoicesFieldInspector]
         super(CustomSwaggerAutoSchema, self).__init__(view, path, method, components, request, overrides,
                                                       operation_keys)
+        if self.path not in self._cache:
+            self._cache[self.path] = addict.Addict()
 
+    @cache_decorator('summary')
     def get_summary_and_description(self):
         """描述信息"""
         summary, description = super().get_summary_and_description()
-
-        operation_id = self.get_operation_id()
         summary_split = description.split(maxsplit=1)
         summary = force_real_str(summary_split[0][:10]) if summary_split else summary
         if summary:
+            operation_id = self.get_operation_id()
             url_name = operation_id
             if url_name in description:
                 description = description.replace(url_name, '')
             description = f'{url_name}\n{description}'
             summary = '%s %s' % (force_real_str(summary), to_method_title(self.path))
+
         return summary, description
 
     def get_app_name(self):
         return self.view.__module__.split('.')[0]
 
     def filter_request_apps(self):
+        result = False
         if self.request:
             filter_apps_text = self.request.GET.get('apps', '')
             is_exclude = self.request.GET.get('is_exclude', '')
+            filter_summary_text = self.request.GET.get('summary', '')  # 通过summary过滤
             filter_tags_text = self.request.GET.get('tags', '')  # 通过tags过滤
+            filter_path_text = self.request.GET.get('path', '')  # 通过tags过滤
             if filter_apps_text:
                 filter_apps = filter_apps_text.split(',')
                 app_name = self.get_app_name()
                 if filter_apps:
-                    return (app_name in filter_apps) if is_exclude else (app_name not in filter_apps)
-            elif filter_tags_text:
+                    result = (app_name not in filter_apps)
+            if filter_tags_text:
                 filter_tags = filter_tags_text.split(',')
                 tags_text = self.overrides.get('tags', [''])[0]
                 if tags_text:
-                    return not any(s in tags_text for s in filter_tags)
+                    result = not any(s in tags_text for s in filter_tags)
+            if filter_summary_text:
+                summary, description = self.get_summary_and_description()
+                result = not ((summary and filter_summary_text in summary) or (description and filter_summary_text in description))
+            if filter_path_text:
+                result = not (self.path and filter_path_text.find(filter_path_text) >= 0)
+            if is_exclude:
+                result = not result
+        return result
 
     def get_operation(self, operation_keys=None):
         if self.filter_request_apps():
@@ -125,7 +155,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
                 return super(CustomSwaggerAutoSchema, self).get_operation(operation_keys)
         except Exception as e:
             traceback.print_exc()
-            logging.error(f'  {self.path} 定义 {self.method} Serializer 错误!')
+            print(f'  {self.path} 定义 {self.method} Serializer 错误!')
 
 
     def get_responses(self):
@@ -139,6 +169,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
                 responses=self.get_response_schemas(response_serializers)
         )
 
+    @cache_decorator('operation_id')
     def get_operation_id(self, operation_keys=None):
         """Return an unique ID for this operation. The ID must be unique across
         all :class:`.Operation` objects in the API.
@@ -147,9 +178,12 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             of this view in the API; e.g. ``('snippets', 'list')``, ``('snippets', 'retrieve')``, etc.
         :rtype: str
         """
-        url_name = resolve(self.path).url_name
-        operation_id = super().get_operation_id(operation_keys)
-        return url_name or operation_id
+        try:
+            url_name = resolve(self.path).url_name
+            return url_name
+        except Exception:
+            operation_id = super().get_operation_id(operation_keys)
+            return operation_id
 
     def get_view_action(self):
         return getattr(self.view, 'action', '')
@@ -160,7 +194,6 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         if action_name:
             action_func = getattr(self.view, action_name)
         view_annotations = getattr(action_func, '__annotations__', {})
-
         return view_annotations
 
     def get_view_annotations_serializer(self, key):
@@ -169,6 +202,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
             self.set_serializer_ref_name(serializer)
             return force_serializer_instance(serializer)
         return serializer
+
 
     def get_request_serializer(self):
         """Return the request serializer (used for parsing the request payload) for this endpoint.
@@ -204,6 +238,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
 
         return body_override
 
+    @cache_decorator('query_serializer')
     def get_query_serializer(self):
         """Return the query serializer (used for parsing query parameters) for this endpoint.
 
@@ -247,19 +282,27 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
                 **OrderedDict((attr, getattr(schema, attr, None)) for attr in coreschema_attrs)
         )
 
+    def _get_ref_name(self, serializer):
+        app_name = serializer.__module__.replace('.', '_').replace('_serializer_', '_')
+        serializer_name = getattr(serializer, '__name__', None) or type(serializer).__name__
+        ref_name = f'{app_name}_{serializer_name}'
+        return ref_name
+
     # 设置序列化 ref_name
     def set_serializer_ref_name(self, serializer):
         if serializer:
             serializer_meta = getattr(serializer, 'Meta', None)
-            serializer_name = getattr(serializer, '__name__', None) or type(serializer).__name__
             if not serializer_meta:
                 setattr(serializer, 'Meta', ObjectDict())
+
             serializer_meta = getattr(serializer, 'Meta', None)
-            if not hasattr(serializer_meta, 'ref_name'):
-                app_name = serializer.__module__.replace('.', '_').replace('_serializer_', '_')
-                ref_name = f'{app_name}_{serializer_name}'
-                setattr(serializer_meta, 'ref_name', ref_name)
+            ref_name = getattr(serializer_meta, 'ref_name', '')
+            real_ref_name = self._get_ref_name(serializer)
+            if ref_name != real_ref_name:
+                setattr(serializer_meta, 'ref_name', real_ref_name)
+
         return serializer
+
     def get_request_body_parameters(self, consumes):
 
         parameters = super().get_request_body_parameters(consumes)
@@ -280,6 +323,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
                                      serializer_parameters_fields]
             return serializer_parameters
         return []
+
 
     def get_query_parameters(self):
         """Return the query parameters accepted by this view.
@@ -307,6 +351,7 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
                 )
 
         return natural_parameters + serializer_parameters
+
 
     def get_response_serializers(self):
         """Return the response codes that this view is expected to return, and the serializer for each response body.
