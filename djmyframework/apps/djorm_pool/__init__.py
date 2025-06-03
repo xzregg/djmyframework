@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import logging
 from functools import partial
 
@@ -11,6 +9,9 @@ from sqlalchemy import event
 from sqlalchemy.pool import manage
 from sqlalchemy.pool import Pool
 from sqlalchemy.event import listens_for
+
+from django.db.models.sql import compiler
+from django.db.models.sql.constants import MULTI
 
 
 POOL_PESSIMISTIC_MODE = getattr(settings, "DJORM_POOL_PESSIMISTIC", False)
@@ -49,7 +50,7 @@ def _on_connect(*args, **kwargs):
 def patch_mysql():
     class hashabledict(dict):
         def __hash__(self):
-            return hash(frozenset(self))
+            return hash(tuple(sorted(self.items())))
 
     class hashablelist(list):
         def __hash__(self):
@@ -95,7 +96,7 @@ def patch_mysql():
 
 def patch_postgresql():
     try:
-        from django.db.backends.postgresql_psycopg2 import base as pgsql_base
+        from django.db.backends.postgresql import base as pgsql_base
     except (ImproperlyConfigured, ImportError) as e:
         return
 
@@ -115,10 +116,37 @@ def patch_sqlite3():
         sqlite3_base.Database = manage(sqlite3_base._Database, **POOL_SETTINGS)
 
 
+def install_django_orm_patch():
+    """
+    在访问完数据库后，马上归还连接，而不是在请求完成时再归还。
+    :return:
+    """
+    execute_sql = compiler.SQLCompiler.execute_sql
+
+    # Django 1.11
+    def patched_execute_sql(self, result_type=MULTI, chunked_fetch=False):
+        result = execute_sql(self, result_type, chunked_fetch)
+        if not self.connection.in_atomic_block:
+            self.connection.close()  # return connection to pool by db_pool_patch
+        return result
+
+    compiler.SQLCompiler.execute_sql = patched_execute_sql
+
+    insert_execute_sql = compiler.SQLInsertCompiler.execute_sql
+
+    def patched_insert_execute_sql(self, return_id=False):
+        result = insert_execute_sql(self, return_id)
+        if not self.connection.in_atomic_block:
+            self.connection.close()  # return connection to pool by db_pool_patch
+        return result
+
+    compiler.SQLInsertCompiler.execute_sql = patched_insert_execute_sql
+
 def patch_all():
     patch_mysql()
     patch_postgresql()
-
+    patch_sqlite3()
+    install_django_orm_patch()
 
 
 patch_all()
