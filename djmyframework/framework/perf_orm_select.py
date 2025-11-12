@@ -11,13 +11,17 @@ from collections import OrderedDict
 from threading import local as threading_local
 
 from celery.signals import task_prerun, task_postrun
+from django.core.exceptions import EmptyResultSet
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import QuerySet, FilteredRelation, Q
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.manager import BaseManager
-
+from django.db.models.sql.datastructures import Join
+from django.db.models.sql.where import WhereNode
 from framework.middleware import BaseMiddleware
 from framework.utils.attribute import CachedClassAttribute
+from django.db.models.fields.related_lookups import RelatedExact
+from django.conf import settings
 
 req_orm_select_store = threading_local()
 req_orm_select_store.current_req_name = None
@@ -56,26 +60,117 @@ def reset_req_orm_select_store():
         pass
 
 
+
+class JoinFilteredRelation(FilteredRelation):
+    """关联 Join on 的条件
+    JoinFilteredRelation(
+                        datastructure.table_alias,
+                        condition=Q(company_id=company_id)
+                    )
+    """
+    def __init__(self, relation_alias, condition):
+        super().__init__(relation_alias, condition=condition)
+        self.alias = self.relation_name
+
+    def __eq__(self, other):
+        if other is None:
+            return True
+        return (
+                self.relation_name == other.relation_name and
+                self.alias == other.alias and
+                self.condition == other.condition
+        )
+    def as_sql(self, compiler, connection):
+        qn = compiler.quote_name_unless_alias
+        qn2 = connection.ops.quote_name
+        field_name, value = self.condition.children[0]
+        sql, params = f'{qn(self.relation_name)}.{qn2(field_name)} = %s', [value]
+        return sql, params
+
+    @classmethod
+    def has_join_field(cls, field_name, join_model, related_model):
+        """join的两个 model 是否用关联字段"""
+        return cls.has_relation_field(field_name, join_model) and cls.has_relation_field(field_name, related_model)
+
+    @classmethod
+    def has_relation_field(cls, field_name, model):
+        return isinstance(getattr(model, 'concrete_fields_map', {}).get(field_name), models.ForeignKey)
+
+    @classmethod
+    def has_relation_filter(cls, base_table_alias, field_name, where: WhereNode):
+        field_attrname = f'{field_name}_id'
+        for child in where.children:
+            if isinstance(child, RelatedExact):
+                if child.lhs.alias == base_table_alias and child.lhs.field.attname == field_attrname:
+                    return True
+        return False
+
+
 class PerfOrmSelectQuerySet(QuerySet):
+    _queryset_handlers = set()
+
+    def set_relation_filter(self, field_name, value):
+        queryset = self
+        model_cls: PerfOrmSelectModel = queryset.model
+        fields_map = getattr(model_cls, 'concrete_fields_map', {})
+        filter_map = {}
+        try:
+            if settings.DEBUG:
+                print('set_relation_filter', queryset.db, queryset.query.base_table, len(queryset.query.where.children))
+            if fields_map and queryset.query.base_table:
+                field_name_attrname = f'{field_name}_id'
+                model_field = fields_map.get(field_name)
+                if isinstance(model_field, models.ForeignKey):
+                    filter_map[field_name_attrname] = value
+                    if not JoinFilteredRelation.has_relation_filter(queryset.query.base_table, field_name, queryset.query.where):
+                        queryset.query.add_q(Q(**filter_map))
+                    if queryset.query.select_related:
+                        # 这里要执行下，queryset.query.alias_map 才有值
+                        if not queryset.query.is_empty():
+                            queryset.query.get_compiler(queryset.db).as_sql()
+                        # 增加 join on a.field_name_id=b.field_name_id
+                        for table_name in queryset.query.alias_map.keys():
+                            datastructure: Join = queryset.query.alias_map[table_name]
+                            if isinstance(datastructure, Join):
+                                join_model = datastructure.join_field.model
+                                related_model = datastructure.join_field.related_model
+                                if JoinFilteredRelation.has_join_field(field_name, join_model, related_model):
+                                    if (field_name_attrname, field_name_attrname) not in datastructure.join_cols:
+                                        datastructure.join_cols += ((field_name_attrname, field_name_attrname),)
+                                    if not datastructure.filtered_relation:
+                                        datastructure.filtered_relation = JoinFilteredRelation(
+                                                datastructure.table_alias,
+                                                condition=Q(**filter_map)
+                                        )
+        except KeyError as e:
+            pass
+        except EmptyResultSet as e:
+            pass
+        return self
+
+    @classmethod
+    def register_queryset_handler(cls, queryset_handler):
+        """不能使用返回 copy 对象的方法，例如 filter only 之类的"""
+        cls._queryset_handlers.add(queryset_handler)
 
     def get_req_thread_fields(self) -> set:
         return get_req_thread_model_fields(self.model)
 
-    def set_related_select_fields(self, taget_select_fields, model, parent_field_name, filed_name, parent_dict, cur_depth=0):
-        select_fields = taget_select_fields
+    def _set_related_select_fields(self, target_select_fields, model, parent_field_name, field_name, parent_dict, cur_depth=0):
+        select_fields = target_select_fields
         if cur_depth < self.query.max_depth:
-            related_field = model.concrete_fields_map.get(filed_name) or model.related_objects_map.get(filed_name)
+            related_field = model.concrete_fields_map.get(field_name) or model.related_objects_map.get(field_name)
             related_model = related_field.related_model
-            model_only_fileds = get_req_thread_model_fields(related_model)
+            model_only_fields = get_req_thread_model_fields(related_model)
             if parent_field_name:
                 prefix_lookup_sep = f'{parent_field_name}{LOOKUP_SEP}'
             else:
-                prefix_lookup_sep = f'{filed_name}{LOOKUP_SEP}'
-
-            for related_model_field_name in model_only_fileds:
+                prefix_lookup_sep = f'{field_name}{LOOKUP_SEP}'
+                
+            for related_model_field_name in model_only_fields:
                 select_fields.add(f'{prefix_lookup_sep}{related_model_field_name}')
 
-            if not model_only_fileds:
+            if not model_only_fields:
                 if parent_field_name:
                     select_fields.add(f'{prefix_lookup_sep}{model._meta.pk.attname}')
                 else:
@@ -84,30 +179,45 @@ class PerfOrmSelectQuerySet(QuerySet):
             if parent_dict:
                 for child_field_name, child_dict in parent_dict.items():
                     parent_field_name = f'{prefix_lookup_sep}{child_field_name}'
-                    self.set_related_select_fields(select_fields, related_model, parent_field_name, child_field_name, child_dict, cur_depth + 1)
+                    self._set_related_select_fields(select_fields, related_model, parent_field_name, child_field_name, child_dict, cur_depth + 1)
         return select_fields
 
-    def _deduction_select_filed(self):
+    def _deduction_select_field(self):
         # 通过执行一次查询，下次推导字段
-        if check_req_orm_select_init():
-            existing, defer = self.query.deferred_loading
-            only_fileds = get_req_thread_model_fields(self.model)
-            has_related = False
-            if isinstance(self.query.select_related, dict):
-                for select_related_filed_name, child_dict in self.query.select_related.items():
-                    has_related = True
-                    self.set_related_select_fields(only_fileds, self.model, '', select_related_filed_name, child_dict, 0)
-            # 自定 defer 和 没自定 only  则自动添加字段
-            if (defer and existing) or (not existing):
-                # 有关联模型时,访问要多余1个属性才添加
-                if not has_related or (has_related and len(only_fileds) > 1):
-                    self.query.add_immediate_loading(only_fileds)
+        if check_req_orm_select_init() and not self.query.combinator:
+            only_model_fields = get_req_thread_model_fields(self.model)
+            if only_model_fields:
+                only_fields = only_model_fields
+                existing, defer = self.query.deferred_loading
+                only_select_fields = set()
+                if isinstance(self.query.select_related, dict):
+                    for select_related_field_name, child_dict in self.query.select_related.items():
+                        self._set_related_select_fields(only_select_fields, self.model, '', select_related_field_name, child_dict, 0)
+                # 有设置 only  合并 existing 字段
+                if not defer and existing:
+                    only_fields = existing
+                if only_fields:
+                    self.query.add_immediate_loading(only_fields|only_select_fields)
+
+    def set_queryset_handler(self):
+        for queryset_handler in self.__class__._queryset_handlers:
+            if callable(queryset_handler):
+                queryset_handler(self)
+
+    def count(self, *args, **kwargs):
+        self.set_queryset_handler()
+        return super().count(*args, **kwargs)
+
+    def aggregate(self, *args, **kwargs):
+        self.set_queryset_handler()
+        return super().aggregate(*args, **kwargs)
 
     def _fetch_all(self):
-        self._deduction_select_filed()
+        self._deduction_select_field()
+        self.set_queryset_handler()
         return super()._fetch_all()
 
-    def use_indexs(self, table, *indexs):
+    def use_indexs(self, table, *indexs, is_force=False):
         clone = self._chain()
         clone.query.get_initial_alias()
         alias_map = clone.query.alias_map
@@ -116,20 +226,26 @@ class PerfOrmSelectQuerySet(QuerySet):
             indexs_str = ','.join(indexs)
             table_alias = table_obj.table_alias
             if indexs_str:
-                if not 'USE INDEX' in table_obj.table_alias:
+                use_index_mark = 'FORCE' if is_force else 'USE'
+                if not f'{use_index_mark} INDEX' in table_obj.table_alias:
                     table_alias = '' if table_obj.table_alias == table_obj.table_name else table_obj.table_name
-                    table_alias = f'{table_alias} USE INDEX ({indexs_str})'
+                    table_alias = f'{table_alias} {use_index_mark} INDEX ({indexs_str})'
             else:
                 table_alias = table_obj.table_name
             table_obj.table_alias = table_alias
         return clone
+
+    def force_index(self, table, *indexs):
+        return self.use_indexs(table, *indexs, is_force=True)
+
+
+
 
 
 class PerfOrmSelectManager(BaseManager.from_queryset(PerfOrmSelectQuerySet), models.Manager):
     def get_queryset(self):
         """重写 get_queryset"""
         return super().get_queryset()
-
 
 class PerfOrmSelectModel(models.Model):
     """优化 orm 查询 字段选择，适合多字段的表
@@ -179,7 +295,7 @@ class PerfOrmSelectMiddleware(BaseMiddleware):
         pass
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        path = request.path
+
         req_view_func = self.get_check_view_func(request, view_func)
         req_name = f'{req_view_func.__module__}.{req_view_func.__name__}'
         req_orm_select_store.current_req_name = req_name

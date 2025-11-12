@@ -6,34 +6,32 @@ import json
 import re
 import time
 from collections import OrderedDict
-from urllib.parse import urlparse
+
 
 import addict
 import timezone_field
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, MultipleObjectsReturned
 from django.core.management.color import no_style
 from django.core.validators import RegexValidator
-from django.db import close_old_connections, connection, IntegrityError
-from django.db import models
-from django.db.models import JSONField as DjJSONField
-from django.db.models import QuerySet
+from django.db import close_old_connections, connection, IntegrityError, models
+from django.db.models import JSONField as DjJSONField, Model, QuerySet
 from django.db.models.signals import post_init
 from django.dispatch import receiver
+
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.managers import TreeManager
-from mptt.models import MPTTModel
+from mptt.models import MPTTModel, MPTTModel
 from mptt.querysets import TreeQuerySet
 from rest_framework import serializers
-from rest_framework.fields import DictField, CharField
+from rest_framework.fields import CharField, DictField
 
-from .encryption.aes.aes import AESCrypt
 from .perf_orm_select import PerfOrmSelectModel, PerfOrmSelectQuerySet
-from .utils import json_dumps, ObjectDict, trace_msg, myenum, MyJsonEncoder
+from .utils import json_dumps, myenum, MyJsonEncoder, ObjectDict, trace_msg
 from .utils.cache import CachedClassAttribute
 from .utils.log import logger
 from .validators import LetterValidator
@@ -471,7 +469,7 @@ class BaseModelMixin(SqlModelMixin):
                 has_private or not f.name.startswith('_')]
 
     @classmethod
-    def get_many_to_many_fileds(cls):
+    def get_many_to_many_fields(cls):
         return cls._meta.many_to_many
 
     @CachedClassAttribute
@@ -513,6 +511,12 @@ class BaseModelMixin(SqlModelMixin):
         copy_obj.id = None
         return copy_obj
 
+    def copy_model(self):
+        new_model = self.__class__()
+        for field in self.get_fields():
+            if field.name != self._meta.pk.attname:  # 排除主键字段
+                setattr(new_model, field.name, getattr(self, field.name))
+        return new_model
 
     @CachedClassAttribute
     def fields_verbose_name_map(self):
@@ -610,7 +614,8 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
         @return:
         """
         if self.id:
-            new_data = {field_name: getattr(self, field_name) for field_name in self._get_update_fields()}
+
+            new_data = {field_name: getattr(self, field_name) for field_name in kwargs.get('update_fields', []) or self._get_update_fields()}
             # new_data = {f.name: getattr(self, f.name) for f in self.get_fields(has_private=True) if  not self.is_related_field(f)}
 
             new_data['_version'] = self._version + 1
@@ -640,7 +645,7 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
         return super().__getattribute__(attrname)
 
     def __setattr__(self, attrname, value):
-        if self._is_init and attrname in self.__class__.concrete_fields_map:
+        if self._is_init and attrname in self.concrete_fields_map:
             self._update_fields.add(attrname)
         return super().__setattr__(attrname, value)
 
@@ -662,7 +667,11 @@ class BaseModel(PerfOrmSelectModel, BaseModelMixin):
             # If a duplicate error occurs, try fetching the object again
             obj = cls.objects.get(**kwargs)
             created = False
+        except MultipleObjectsReturned:
+            created = False
+            obj = cls.objects.filter(**kwargs).first()
         return obj, created
+
 
 class BaseNameModel(BaseModel):
     name = models.CharField(_('名称'), max_length=100, null=False, blank=False, validators=[LetterValidator],
@@ -899,15 +908,15 @@ class ShardingModelMixin(object):
         """
         for i in range(cls.pre_sharding_num):
             sharding_key = cls.get_sharding_key(i)
-            dst_table = cls.get_shanrding_table_name(sharding_key)
+            dst_table = cls.get_sharding_table_name(sharding_key)
             sql = f'CREATE TABLE IF NOT EXISTS {dst_table} LIKE {cls._meta.db_table}'
             with connection.cursor() as cursor:
                 print(sql)
                 # cursor.execute(sql)
 
     @classmethod
-    def get_shanrding_table_name(cls, shanrding_key):
-        return f'{cls._meta.db_table}_{shanrding_key}'
+    def get_sharding_table_name(cls, sharding_key):
+        return f'{cls._meta.db_table}_{sharding_key}'
 
     @classmethod
     def get_sharding(cls, shanrding_key=''):  # type: () -> cls
@@ -920,7 +929,7 @@ class ShardingModelMixin(object):
         if not model_cls:
             class Meta:
                 app_label = cls._meta.app_label
-                db_table = cls.get_shanrding_table_name(shanrding_key)
+                db_table = cls.get_sharding_table_name(shanrding_key)
 
             attrs = {
                     '__module__': cls.__module__,
@@ -944,6 +953,6 @@ class MonthShardingModel(ShardingModelMixin):
         return month_text
 
     @classmethod
-    def get_sharding(cls, shanrding_datetime: datetime.datetime = None):  # type: () -> cls
-        shanrding_datetime = shanrding_datetime or datetime.datetime.now()
-        return super().get_sharding(shanrding_datetime.strftime(cls.table_date_fmt))
+    def get_sharding(cls, sharding_datetime: datetime.datetime = None):  # type: () -> cls
+        sharding_datetime = sharding_datetime or datetime.datetime.now()
+        return super().get_sharding(sharding_datetime.strftime(cls.table_date_fmt))

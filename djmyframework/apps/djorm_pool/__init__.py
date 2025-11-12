@@ -50,7 +50,8 @@ def _on_connect(*args, **kwargs):
 def patch_mysql():
     class hashabledict(dict):
         def __hash__(self):
-            return hash(tuple(sorted(self.items())))
+            return hash(frozenset(self))
+            #return hash(tuple(sorted(self.items())))
 
     class hashablelist(list):
         def __hash__(self):
@@ -124,8 +125,8 @@ def install_django_orm_patch():
     execute_sql = compiler.SQLCompiler.execute_sql
 
     # Django 1.11
-    def patched_execute_sql(self, result_type=MULTI, chunked_fetch=False):
-        result = execute_sql(self, result_type, chunked_fetch)
+    def patched_execute_sql(self, *args, **kwargs):
+        result = execute_sql(self, *args, **kwargs)
         if not self.connection.in_atomic_block:
             self.connection.close()  # return connection to pool by db_pool_patch
         return result
