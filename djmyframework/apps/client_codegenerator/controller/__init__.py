@@ -3,6 +3,7 @@
 from client_codegenerator.serializer import RspCodeChoicesSer
 from config.api_doc import schema_view
 from framework.response import render_to_response
+from django.shortcuts import render
 from framework.route import Route
 from framework.utils.cache import cache_page
 from framework.views import Response, Request, BaseViewSet, api_get, api_post, api_doc

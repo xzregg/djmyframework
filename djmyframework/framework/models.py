@@ -250,17 +250,18 @@ class SqlModelMixin(object):
         return SqlModel.sql_indexes_for_model(cls, no_style())
 
     @classmethod
-    def get_create_model_sql(cls, replace_table_name='') -> str:
+    def get_create_model_sql(cls, replace_table_name='', engine='InnoDB') -> str:
         """获取创建模型的SQL语句
         @replace_table_name 需要替换的表名
         """
 
         sql, _ = SqlModel.sql_create_model(cls, no_style())
         sql = sql[0].replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS').rstrip(';')
-        sql = '%s ENGINE=InnoDB ;' % sql
+        if engine:
+            sql = '%s ENGINE=%s ;' % (sql, engine)
         if replace_table_name:
             sql = sql.replace(cls._meta.db_table, replace_table_name)
-        return sql
+        return sql + ';'
 
     @classmethod
     def get_db_name(cls):

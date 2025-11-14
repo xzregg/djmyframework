@@ -6,7 +6,12 @@ from framework.translation import _
 from framework.serializer import s, BaseModelSerializer, EditParams, IdSerializer, IdsSerializer, ParamsSerializer, \
     ParamsPaginationSerializer, PaginationSerializer, ModelFilterSerializer, ListIntField, ListStrField
 from ${app_name}.models import ${model_name}
-
+from framework.utils import DATETIMEFORMAT
+<%!
+from django.db.models.fields import IntegerField,CharField,DateTimeField,BigAutoField,TextField,NOT_PROVIDED,BooleanField,FloatField,EmailField,DateTimeField
+from django.db.models.fields.related import ManyToManyField,ForeignKey,OneToOneField
+from framework.models import BaseModelMixin
+%>
 
 class ${model_name}Serializer(BaseModelSerializer):
     # https://www.django-rest-framework.org/api-guide/serializers/
@@ -19,7 +24,10 @@ class ${model_name}Serializer(BaseModelSerializer):
 % endfor
 % for f in fields:
     % if f.choices:
-    ${f.name}_alias = s.CharField(source='get_${f.name}_display', required=False, read_only=True)
+    ${f.name} = s.DateTimeField(label=_(${f.verbose_name}), format=DATETIMEFORMAT, required=False, read_only=True, allow_null=True, default=datetime.datetime.now)
+    % endif
+    % if isinstance(f,(DateTimeField,)):
+    ${f.name} = s.CharField(source='get_${f.name}_display', required=False, read_only=True)
     % endif
 % endfor
 

@@ -60,7 +60,7 @@ PROJECT_ROOT = BASE_DIR
 
         shutil.copytree(config_dir, project_conf_dir)
         print('add config %s' % project_conf_dir)
-
+        shutil.copyfile(os.path.join(djframework_dir, 'pytest.ini'), os.path.join(project_dir, 'pytest.ini'))
         shutil.copyfile(os.path.join(djframework_dir, 'wsgi.py'), os.path.join(project_dir, 'wsgi.py'))
         shutil.copyfile(os.path.join(djframework_dir, 'asgi.py'), os.path.join(project_dir, 'asgi.py'))
         shutil.copyfile(os.path.join(djframework_dir, 'manage.py'), os.path.join(project_dir, 'manage.py'))
@@ -81,5 +81,5 @@ PROJECT_ROOT = BASE_DIR
 
 
 if __name__ == '__main__':
-    os.system('yum install openldap-devel')
+    #os.system('yum install openldap-devel')
     os.system('pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --ignore-installed')

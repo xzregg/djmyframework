@@ -14,7 +14,7 @@ from ${app_name}.models import ${model_name}
 from django.db import transaction
 from framework.shortcut import APIError,Response,api_doc,api_get,api_post
 from ${app_name}.serializer.${model_lower_name} import *
-from ${app_name}.service.${model_lower_name} import ${model_name}Service
+from ${app_name}.services.${model_lower_name} import ${model_name}Service
 
 @Route('${app_name}/${model_lower_name}')
 class ${model_name}Set(CurdViewSet):

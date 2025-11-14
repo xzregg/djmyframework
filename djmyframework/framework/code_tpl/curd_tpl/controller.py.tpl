@@ -19,7 +19,7 @@ from framework.serializer import CeleryTaskResultSerializer
 from ${app_name}.serializer.${model_lower_name} import *
 from middlewares import EnhanceRequest
 from framework.serializer import CeleryTaskResultSerializer
-from ${app_name}.service.${model_lower_name} import ${model_name}Service
+from ${app_name}.services.${model_lower_name} import ${model_name}Service
 
 @Route('${app_name}/${model_lower_name}')
 class ${model_name}Set(CurdViewSet):

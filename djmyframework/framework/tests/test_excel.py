@@ -9,7 +9,7 @@
 import xlsxwriter
 import openpyxl
 
-from config.export_file import ExportExcelFile
+
 from ..utils.excel import bold_format
 
 
@@ -27,6 +27,7 @@ def test_excel():
 
 
 def test_ExportExcelFile():
+    from config.export_file import ExportExcelFile
     file_name = 'test_excel.xls'
     template_excel = 'order_withdraw_details_list_export_task'
 
