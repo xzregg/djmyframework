@@ -23,10 +23,10 @@ class ${model_name}Serializer(BaseModelSerializer):
     #${f.name} = s.RelatedField(label=_("${f.verbose_name}"), queryset=${model_name}.${f.name}.field.related_model.objects.all())
 % endfor
 % for f in fields:
-    % if f.choices:
-    ${f.name} = s.DateTimeField(label=_(${f.verbose_name}), format=DATETIMEFORMAT, required=False, read_only=True, allow_null=True, default=datetime.datetime.now)
-    % endif
     % if isinstance(f,(DateTimeField,)):
+    ${f.name} = s.DateTimeField(label=_("${f.verbose_name}"), format=DATETIMEFORMAT, required=False, read_only=True, allow_null=True, default=datetime.datetime.now)
+    % endif
+    % if f.choices:
     ${f.name} = s.CharField(source='get_${f.name}_display', required=False, read_only=True)
     % endif
 % endfor
@@ -35,7 +35,7 @@ class ${model_name}Serializer(BaseModelSerializer):
         model = ${model_name}
         fields = ${all_fields_name_list} or '__all__'
         #exclude = ['session_key']
-        read_only_fields = ['create_time', 'update_time']
+        read_only_fields = ['create_datetime', 'update_datetime']
         #extra_kwargs = {'password': {'write_only': True}}
 
 class List${model_name}ReqSerializer(ModelFilterSerializer, ParamsPaginationSerializer):
