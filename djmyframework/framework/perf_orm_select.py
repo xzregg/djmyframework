@@ -124,7 +124,7 @@ class PerfOrmSelectQuerySet(QuerySet):
                     filter_map[field_name_attrname] = value
                     if not JoinFilteredRelation.has_relation_filter(queryset.query.base_table, field_name, queryset.query.where):
                         queryset.query.add_q(Q(**filter_map))
-                    if queryset.query.select_related:
+                    if queryset.query.select_related or queryset.query.values_select:
                         # 这里要执行下，queryset.query.alias_map 才有值
                         if not queryset.query.is_empty():
                             queryset.query.get_compiler(queryset.db).as_sql()

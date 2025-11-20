@@ -85,6 +85,12 @@ class ModelTemplateCreater(object):
             target_file = os.path.join(self.get_app_path(), 'serializer', '%s.py' % self.model_lower_name)
         self._create_base_file(template_file, target_file)
 
+    def create_tests_file(self):
+        template_file = 'test.py.tpl'
+        target_file = os.path.join(self.get_app_path(), 'tests', 'test_%s.py' % self.model_lower_name)
+        if not os.path.isfile(target_file) :
+            self._create_base_file(template_file, target_file)
+
     def create_files(self):
         if self.is_force or self.options.get('view', False):
             self.create_model_v_file()
@@ -94,7 +100,8 @@ class ModelTemplateCreater(object):
            self.create_edit_t_file()
         if self.options.get('tpl', False) or self.is_force or self.options.get('list', False):
            self.create_list_t_file()
-
+        if self.options.get('test', False):
+            self.create_tests_file()
     def _create_base_file(self, template_file, target_file):
         mylookup = TemplateLookup(directories=[self.template_dir], input_encoding='utf-8', output_encoding='utf-8')
         template = mylookup.get_template(template_file)
@@ -132,7 +139,9 @@ class Command(BaseCommand):
         parser.add_argument('-vi', '--view', action='store_true',
                             dest='view', default=False,
                             help='只创建 view 视图 模版')
-
+        parser.add_argument('-te', '--test', action='store_true',
+                            dest='test', default=False,
+                            help='只创建 test 模版')
         parser.add_argument('-e', '--edit', action='store_true',
                             dest='edit', default=False,
                             help='只创建 edit 模版')

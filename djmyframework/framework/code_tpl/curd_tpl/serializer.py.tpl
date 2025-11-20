@@ -7,6 +7,7 @@ from framework.serializer import s, BaseModelSerializer, EditParams, IdSerialize
     ParamsPaginationSerializer, PaginationSerializer, ModelFilterSerializer, ListIntField, ListStrField
 from ${app_name}.models import ${model_name}
 from framework.utils import DATETIMEFORMAT
+import datetime
 <%!
 from django.db.models.fields import IntegerField,CharField,DateTimeField,BigAutoField,TextField,NOT_PROVIDED,BooleanField,FloatField,EmailField,DateTimeField
 from django.db.models.fields.related import ManyToManyField,ForeignKey,OneToOneField
